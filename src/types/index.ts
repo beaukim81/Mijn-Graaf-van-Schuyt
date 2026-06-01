@@ -3,7 +3,6 @@ export type Role = "bewoner" | "admin";
 export type ContactCategory =
   | "Verhuur"
   | "Spoed"
-  | "VvE / beheer"
   | "Gemeente"
   | "Leveranciers"
   | "Onderhoud"

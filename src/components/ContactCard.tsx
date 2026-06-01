@@ -1,4 +1,4 @@
-import { ExternalLink, Mail, Phone } from "lucide-react";
+import { ExternalLink, Mail, MessageCircle, Phone } from "lucide-react";
 import type { Contact } from "../types";
 
 interface ContactCardProps {
@@ -9,6 +9,8 @@ interface ContactCardProps {
 }
 
 export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardProps) {
+  const isWhatsappLink = contact.website?.includes("wa.me/");
+
   return (
     <article className="item-card">
       <div className="item-card__header">
@@ -31,7 +33,8 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
         )}
         {contact.website && (
           <a className="button button--soft" href={contact.website} target="_blank" rel="noreferrer">
-            <ExternalLink aria-hidden="true" size={18} /> Website
+            {isWhatsappLink ? <MessageCircle aria-hidden="true" size={18} /> : <ExternalLink aria-hidden="true" size={18} />}
+            {isWhatsappLink ? "WhatsApp" : "Website"}
           </a>
         )}
       </div>

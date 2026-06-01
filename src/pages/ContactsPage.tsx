@@ -49,10 +49,10 @@ export function ContactsPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Contacten</h2>
-        <p>Handige gegevens voor verhuur, beheer, onderhoud en gemeente.</p>
+        <p>Telefoonnummers, websites en e-mailadressen voor het gebouw.</p>
       </div>
-      <div className="filter-row">
-        <SearchBar value={query} onChange={setQuery} placeholder="Zoek op naam of categorie" />
+      <div className="filter-row filter-row--equal">
+        <SearchBar value={query} onChange={setQuery} placeholder="Zoek contact" />
         <CategoryFilter label="Categorie" value={category} options={contactCategories} onChange={setCategory} />
       </div>
       {isAdmin && (

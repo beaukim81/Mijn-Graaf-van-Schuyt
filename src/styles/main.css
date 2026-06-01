@@ -364,6 +364,33 @@ textarea {
   flex: 1 1 180px;
 }
 
+.filter-row--equal {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.filter-row--equal .search-bar,
+.filter-row--equal .field {
+  flex: initial;
+  min-width: 0;
+}
+
+.filter-row--equal .field span {
+  display: none;
+}
+
+.filter-row--equal .search-bar,
+.filter-row--equal .field select {
+  height: 50px;
+  min-height: 50px;
+}
+
+@media (min-width: 560px) {
+  .filter-row--equal {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .suggestion-strip {
   display: flex;
   gap: 8px;

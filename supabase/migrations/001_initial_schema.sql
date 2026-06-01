@@ -222,7 +222,6 @@ insert into public.contacts (naam, categorie, beschrijving, telefoonnummer, emai
 ('REBO huurvragen', 'Verhuur', 'Voor vragen over huur en individuele huurzaken.', '088 220 16 10', 'huren@rebogroep.nl', null, true),
 ('Mijn REBO portal', 'Verhuur', 'Voor individuele meldingen en zaken die je rechtstreeks bij REBO moet melden.', null, null, 'https://www.thuisbijrebo.nl/mijn-rebo/inloggen', true),
 ('REBO schade melden', 'Spoed', 'Voor het melden van schade bij REBO.', '088 434 99 47', null, null, true),
-('REBO VvE beheer', 'VvE / beheer', 'Voor vragen over VvE-beheer.', '088 220 16 30', 'vve@rebogroep.nl', null, true),
 ('Vattenfall Warmte storing', 'Spoed', 'Voor storingen met warmte.', '0800 0513', null, null, true),
 ('Vattenfall Warmte klantenservice', 'Leveranciers', 'Klantenservice warmte. WhatsApp kan via 020 892 02 30.', '0900 0808', null, 'https://wa.me/31208920230', true),
 ('Vitens klantenservice', 'Leveranciers', 'Voor vragen over water.', '088 884 50 60', null, null, true),

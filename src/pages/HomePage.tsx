@@ -6,35 +6,35 @@ const cards = [
   {
     icon: Phone,
     title: "Contacten",
-    description: "Belangrijke nummers, e-mails en websites rustig bij elkaar.",
+    description: "Belangrijke telefoonnummers, e-mails en websites.",
     buttonText: "Bekijk contacten",
     to: paths.contacts,
   },
   {
     icon: ClipboardList,
     title: "Meldingen",
-    description: "Geef rustig door wat je merkt in of rond het gebouw.",
+    description: "Meld problemen in je woning of in het gebouw.",
     buttonText: "Bekijk meldingen",
     to: paths.reports,
   },
   {
     icon: BookOpen,
     title: "Kennisbank",
-    description: "Handleidingen, tips en oplossingen voor bewoners.",
+    description: "Bekijk handleidingen, tips en onderdeleninformatie.",
     buttonText: "Open kennisbank",
     to: paths.knowledge,
   },
   {
     icon: HandHeart,
     title: "Hulp & Buren",
-    description: "Vraag iets kleins, bied hulp aan of nodig buren uit.",
+    description: "Vraag hulp, bied hulp aan of nodig buren uit.",
     buttonText: "Vraag of bied hulp",
     to: paths.help,
   },
   {
     icon: Megaphone,
     title: "Prikbord",
-    description: "Praktische berichten zoals gevonden spullen of tips.",
+    description: "Plaats een tip, mededeling of gevonden voorwerp.",
     buttonText: "Bekijk prikbord",
     to: paths.bulletin,
   },
@@ -47,7 +47,6 @@ export function HomePage() {
         <img src="/images/graaf-van-schuyt-hero.png" alt="Appartementencomplex Graaf van Schuyt" />
       </figure>
       <div className="intro">
-        <h2>Rustig overzicht voor bewoners</h2>
         <p>Vind snel contacten, meldingen, handleidingen, hulpvragen en berichten voor het gebouw.</p>
       </div>
       <div className="home-grid">

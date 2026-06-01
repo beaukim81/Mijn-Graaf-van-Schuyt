@@ -74,7 +74,7 @@ export function HelpPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Hulp & Buren</h2>
-        <p>Kleine hulpvragen en rustige uitnodigingen om elkaar wat makkelijker te ontmoeten.</p>
+        <p>Vraag hulp, bied hulp aan of organiseer iets met buren.</p>
       </div>
       {openCategoryFilters.length > 0 && (
         <div className="suggestion-strip" aria-label="Snelle filters voor open hulpvragen">

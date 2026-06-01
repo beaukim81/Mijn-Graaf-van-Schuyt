@@ -58,17 +58,6 @@ export const contacts: Contact[] = [
     bijgewerkt_op: now,
   },
   {
-    id: "contact-rebo-vve",
-    naam: "REBO VvE beheer",
-    categorie: "VvE / beheer",
-    beschrijving: "Voor vragen over VvE-beheer.",
-    telefoonnummer: "088 220 16 30",
-    emailadres: "vve@rebogroep.nl",
-    zichtbaar: true,
-    aangemaakt_op: now,
-    bijgewerkt_op: now,
-  },
-  {
     id: "contact-vattenfall-warmte-storing",
     naam: "Vattenfall Warmte storing",
     categorie: "Spoed",
