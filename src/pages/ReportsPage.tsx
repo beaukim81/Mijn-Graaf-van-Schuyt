@@ -122,7 +122,7 @@ export function ReportsPage() {
         <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>
       )}
-      <div className="filter-row">
+      <div className="filter-row filter-row--equal">
         <SearchBar value={query} onChange={setQuery} placeholder="Zoek in meldingen" />
         <CategoryFilter label="Categorie" value={category} options={reportCategories} onChange={setCategory} />
       </div>
