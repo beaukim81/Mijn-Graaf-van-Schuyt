@@ -16,6 +16,7 @@ interface ReportCardProps {
 export function ReportCard({ report, documents, canResolve, onConfirm, onDecline, onResolve }: ReportCardProps) {
   const relatedDocuments = relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
+  const forwardedToRebo = report.status === "Doorgezet naar REBO";
 
   async function copySummary() {
     await navigator.clipboard.writeText(reboSummary(report));
@@ -45,6 +46,12 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
         <strong>{collectiveMessage(report.confirmations)}</strong>
         <p>{adviceForReport(report)}</p>
       </div>
+      {forwardedToRebo && (
+        <aside className="related-box">
+          <strong>Al doorgegeven aan REBO</strong>
+          <span>Deze melding is al doorgegeven aan REBO. Herken je dit ook? Dan kun je eventueel zelf ook een melding doen met dezelfde samenvatting.</span>
+        </aside>
+      )}
       {report.status !== "Opgelost" && (
         <div className="action-row report-actions">
           <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
@@ -54,7 +61,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
             <X aria-hidden="true" size={18} /> Ik heb dit niet
           </button>
           <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
-            <Send aria-hidden="true" size={18} /> Melding bij REBO doen
+            <Send aria-hidden="true" size={18} /> {forwardedToRebo ? "Zelf ook melden bij REBO" : "Melding bij REBO doen"}
           </a>
           <button className="button button--soft" onClick={copySummary} type="button">
             <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
