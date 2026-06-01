@@ -1,6 +1,6 @@
 import type { BulletinCategory, ContactCategory, HelpCategory, KnowledgeCategory, ReportCategory } from "../types";
 
-export const contactCategories: ContactCategory[] = ["Verhuur", "Spoed", "Gemeente", "Leveranciers", "Onderhoud", "Overig"];
+export const contactCategories: ContactCategory[] = ["Verhuur", "Spoed", "Gemeente", "Veiligheid", "Leveranciers", "Onderhoud", "Overig"];
 
 export const reportCategories: ReportCategory[] = [
   "Lift",

@@ -4,6 +4,7 @@ export type ContactCategory =
   | "Verhuur"
   | "Spoed"
   | "Gemeente"
+  | "Veiligheid"
   | "Leveranciers"
   | "Onderhoud"
   | "Overig";

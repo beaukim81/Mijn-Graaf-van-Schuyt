@@ -228,7 +228,9 @@ insert into public.contacts (naam, categorie, beschrijving, telefoonnummer, emai
 ('Vattenfall Warmte klantenservice', 'Leveranciers', 'Klantenservice warmte. WhatsApp kan via 020 892 02 30.', '0900 0808', null, 'https://wa.me/31208920230', true),
 ('Vitens klantenservice', 'Leveranciers', 'Voor vragen over water.', '088 884 50 60', null, null, true),
 ('Vitens waterstoring', 'Spoed', 'Voor waterstoringen. WhatsApp kan via 06 8273 4859.', '0800 0359', null, 'https://wa.me/31682734859', true),
-('Gemeente Arnhem', 'Gemeente', 'Gemeentelijke zaken rond afval, openbare ruimte en meldingen buiten het gebouw.', null, null, null, true);
+('Gemeente Arnhem', 'Gemeente', 'Gemeentelijke zaken rond afval, openbare ruimte en meldingen buiten het gebouw.', '0800 1809', null, 'https://www.arnhem.nl/', true),
+('Gemeente Arnhem WhatsApp', 'Gemeente', 'WhatsApp-contact met de gemeente Arnhem.', null, null, 'https://wa.me/31612521130', true),
+('Wijkagent Arno Nieman', 'Veiligheid', 'Voor contact met de wijkagent via de politie. Bel bij spoed altijd 112.', '0900 8844', null, null, true);
 
 insert into public.knowledge_documents (titel, categorie, documenttype, korte_samenvatting, pdf_url, tags, leverancier_of_fabrikant, faq, status) values
 ('Bediening draaikiepramen', 'Draaikiepramen', 'Officiële handleiding', 'Uitleg over het veilig openen, kiepen en sluiten van de draaikiepramen.', '/kennisbank/01_Bediening_Draaikiepramen.pdf', '{"raam","kiepstand","hendel","bediening","onderdeel"}', null, '[{"vraag":"Hoe voorkom ik dat het raam tegelijk open en op kiepstand staat?"}]', 'Gepubliceerd'),
