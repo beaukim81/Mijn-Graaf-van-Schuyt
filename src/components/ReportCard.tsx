@@ -1,4 +1,4 @@
-import { Check, ClipboardCopy, Send, X } from "lucide-react";
+import { Check, ClipboardCopy, Send } from "lucide-react";
 import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
 import { adviceForReport, collectiveMessage, reboSummary, relevantDocuments } from "../lib/reportLogic";
@@ -9,11 +9,11 @@ interface ReportCardProps {
   documents: KnowledgeDocument[];
   canResolve?: boolean;
   onConfirm?: (id: string) => void;
-  onDecline?: (id: string) => void;
+  onForwardToRebo?: (id: string) => void;
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, canResolve, onConfirm, onDecline, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onResolve }: ReportCardProps) {
   const relatedDocuments = relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
@@ -49,7 +49,10 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
       {forwardedToRebo && (
         <aside className="related-box">
           <strong>Al doorgegeven aan REBO</strong>
-          <span>Deze melding is al doorgegeven aan REBO. Herken je dit ook? Dan kun je eventueel zelf ook een melding doen met dezelfde samenvatting.</span>
+          <span>
+            {report.rebo_melding_door_naam ? `${report.rebo_melding_door_naam} heeft aangegeven dat deze melding is doorgegeven aan REBO.` : "Een bewoner heeft aangegeven dat deze melding is doorgegeven aan REBO."}
+            {" "}Herken je dit ook? Dan kun je eventueel zelf ook een melding doen met dezelfde samenvatting.
+          </span>
         </aside>
       )}
       {report.status !== "Opgelost" && (
@@ -57,12 +60,14 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
           <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
             <Check aria-hidden="true" size={18} /> Ik heb dit ook
           </button>
-          <button className={report.current_user_response === "declined" ? "button" : "button button--soft"} onClick={() => onDecline?.(report.id)} type="button">
-            <X aria-hidden="true" size={18} /> Ik heb dit niet
-          </button>
           <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
             <Send aria-hidden="true" size={18} /> {forwardedToRebo ? "Zelf ook melden bij REBO" : "Melding bij REBO doen"}
           </a>
+          {!forwardedToRebo && (
+            <button className="button button--soft" onClick={() => onForwardToRebo?.(report.id)} type="button">
+              <Check aria-hidden="true" size={18} /> Doorgegeven aan REBO
+            </button>
+          )}
           <button className="button button--soft" onClick={copySummary} type="button">
             <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
           </button>

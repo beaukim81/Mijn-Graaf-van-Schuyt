@@ -72,16 +72,14 @@ export function ReportsPage() {
     });
   }
 
-  function declineReport(id: string) {
+  function forwardToRebo(id: string) {
     const report = reports.items.find((item) => item.id === id);
     if (!report) return;
-    if (report.current_user_response === "declined") return;
-    const confirmations = report.current_user_response === "confirmed" ? Math.max(0, report.confirmations - 1) : report.confirmations;
     reports.update(id, {
-      confirmations,
-      declined: report.declined + 1,
-      current_user_response: "declined",
-      status: confirmations < 3 && report.status === "Herkend door meerdere bewoners" ? "Nieuw" : report.status,
+      status: "Doorgezet naar REBO",
+      rebo_melding_op: new Date().toISOString(),
+      rebo_melding_door: profile.user_id,
+      rebo_melding_door_naam: profile.naam_of_bijnaam,
       bijgewerkt_op: new Date().toISOString(),
     });
   }
@@ -134,7 +132,7 @@ export function ReportsPage() {
             documents={documents.items}
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
             onConfirm={confirmReport}
-            onDecline={declineReport}
+            onForwardToRebo={forwardToRebo}
             onResolve={(id, resolution) => reports.update(id, {
               status: "Opgelost",
               opgelost_op: new Date().toISOString(),

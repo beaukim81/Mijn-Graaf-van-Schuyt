@@ -468,17 +468,18 @@ button {
 .report-actions {
   background: var(--surface-tint);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 14px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
   grid-template-columns: 1fr;
-  padding: 10px;
+  padding: 8px;
 }
 
 .report-actions .button {
   flex: initial;
-  min-height: 54px;
-  padding: 12px 14px;
+  font-size: 0.92rem;
+  min-height: 46px;
+  padding: 10px 12px;
   width: 100%;
 }
 

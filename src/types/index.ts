@@ -106,6 +106,9 @@ export interface Report {
   opgelost_door?: string;
   opgelost_door_naam?: string;
   oplossing_omschrijving?: string;
+  rebo_melding_op?: string;
+  rebo_melding_door?: string;
+  rebo_melding_door_naam?: string;
 }
 
 export interface KnowledgeFaq {
