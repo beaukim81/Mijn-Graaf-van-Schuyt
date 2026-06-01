@@ -28,6 +28,7 @@ create table public.contacts (
   telefoonnummer text,
   emailadres text,
   website text,
+  whatsapp_url text,
   zichtbaar boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -219,18 +220,17 @@ create policy "Bewoners plaatsen prikbordbericht" on public.bulletin_posts for i
 create policy "Eigenaar of admin wijzigt prikbordbericht" on public.bulletin_posts for update to authenticated using (aangemaakt_door = auth.uid() or public.is_admin()) with check (aangemaakt_door = auth.uid() or public.is_admin());
 create policy "Eigenaar of admin verwijdert prikbordbericht" on public.bulletin_posts for delete to authenticated using (aangemaakt_door = auth.uid() or public.is_admin());
 
-insert into public.contacts (naam, categorie, beschrijving, telefoonnummer, emailadres, website, zichtbaar) values
-('REBO Wonen algemeen', 'Verhuur', 'Algemeen nummer voor vragen aan REBO Wonen.', '088 220 16 00', null, null, true),
-('REBO huurvragen', 'Verhuur', 'Voor vragen over huur en individuele huurzaken.', '088 220 16 10', 'huren@rebogroep.nl', null, true),
-('Mijn REBO portal', 'Verhuur', 'Voor individuele meldingen en zaken die je rechtstreeks bij REBO moet melden.', null, null, 'https://www.thuisbijrebo.nl/mijn-rebo/inloggen', true),
-('REBO schade melden', 'Spoed', 'Voor het melden van schade bij REBO.', '088 434 99 47', null, null, true),
-('Vattenfall Warmte storing', 'Spoed', 'Voor storingen met warmte.', '0800 0513', null, null, true),
-('Vattenfall Warmte klantenservice', 'Leveranciers', 'Klantenservice warmte. WhatsApp kan via 020 892 02 30.', '0900 0808', null, 'https://wa.me/31208920230', true),
-('Vitens klantenservice', 'Leveranciers', 'Voor vragen over water.', '088 884 50 60', null, null, true),
-('Vitens waterstoring', 'Spoed', 'Voor waterstoringen. WhatsApp kan via 06 8273 4859.', '0800 0359', null, 'https://wa.me/31682734859', true),
-('Gemeente Arnhem', 'Gemeente', 'Gemeentelijke zaken rond afval, openbare ruimte en meldingen buiten het gebouw.', '0800 1809', null, 'https://www.arnhem.nl/', true),
-('Gemeente Arnhem WhatsApp', 'Gemeente', 'WhatsApp-contact met de gemeente Arnhem.', null, null, 'https://wa.me/31612521130', true),
-('Wijkagent Arno Nieman', 'Veiligheid', 'Voor contact met de wijkagent via de politie. Bel bij spoed altijd 112.', '0900 8844', null, null, true);
+insert into public.contacts (naam, categorie, beschrijving, telefoonnummer, emailadres, website, whatsapp_url, zichtbaar) values
+('REBO Wonen algemeen', 'Verhuur', 'Algemeen nummer voor vragen aan REBO Wonen.', '088 220 16 00', null, null, null, true),
+('REBO huurvragen', 'Verhuur', 'Voor vragen over huur en individuele huurzaken.', '088 220 16 10', 'huren@rebogroep.nl', null, null, true),
+('Mijn REBO portal', 'Verhuur', 'Voor individuele meldingen en zaken die je rechtstreeks bij REBO moet melden.', null, null, 'https://www.thuisbijrebo.nl/mijn-rebo/inloggen', null, true),
+('REBO schade melden', 'Spoed', 'Voor het melden van schade bij REBO.', '088 434 99 47', null, null, null, true),
+('Vattenfall Warmte storing', 'Spoed', 'Voor storingen met warmte.', '0800 0513', null, null, null, true),
+('Vattenfall Warmte klantenservice', 'Leveranciers', 'Klantenservice warmte. WhatsApp kan via 020 892 02 30.', '0900 0808', null, null, 'https://wa.me/31208920230', true),
+('Vitens klantenservice', 'Leveranciers', 'Voor vragen over water.', '088 884 50 60', null, null, null, true),
+('Vitens waterstoring', 'Spoed', 'Voor waterstoringen. WhatsApp kan via 06 8273 4859.', '0800 0359', null, null, 'https://wa.me/31682734859', true),
+('Gemeente Arnhem', 'Gemeente', 'Gemeentelijke zaken rond afval, openbare ruimte en meldingen buiten het gebouw.', '0800 1809', null, 'https://www.arnhem.nl/', 'https://wa.me/31612521130', true),
+('Wijkagent Arno Nieman', 'Veiligheid', 'Voor contact met de wijkagent via de politie. Bel bij spoed altijd 112.', '0900 8844', null, null, null, true);
 
 insert into public.knowledge_documents (titel, categorie, documenttype, korte_samenvatting, pdf_url, tags, leverancier_of_fabrikant, faq, status) values
 ('Bediening draaikiepramen', 'Draaikiepramen', 'Officiële handleiding', 'Uitleg over het veilig openen, kiepen en sluiten van de draaikiepramen.', '/kennisbank/01_Bediening_Draaikiepramen.pdf', '{"raam","kiepstand","hendel","bediening","onderdeel"}', null, '[{"vraag":"Hoe voorkom ik dat het raam tegelijk open en op kiepstand staat?"}]', 'Gepubliceerd'),

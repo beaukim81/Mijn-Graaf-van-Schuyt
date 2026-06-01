@@ -15,6 +15,7 @@ const blankContact: Contact = {
   telefoonnummer: "",
   emailadres: "",
   website: "",
+  whatsapp_url: "",
   zichtbaar: true,
   aangemaakt_op: "",
   bijgewerkt_op: "",
@@ -66,6 +67,7 @@ export function ContactsPage() {
           <input value={draft.telefoonnummer} onChange={(event) => setDraft({ ...draft, telefoonnummer: event.target.value })} placeholder="Telefoonnummer" />
           <input value={draft.emailadres} onChange={(event) => setDraft({ ...draft, emailadres: event.target.value })} placeholder="E-mailadres" />
           <input value={draft.website} onChange={(event) => setDraft({ ...draft, website: event.target.value })} placeholder="Website" />
+          <input value={draft.whatsapp_url} onChange={(event) => setDraft({ ...draft, whatsapp_url: event.target.value })} placeholder="WhatsApp-link" />
           <button className="button" type="submit">Opslaan</button>
         </form>
       )}

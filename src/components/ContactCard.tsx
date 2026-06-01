@@ -9,8 +9,6 @@ interface ContactCardProps {
 }
 
 export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardProps) {
-  const isWhatsappLink = contact.website?.includes("wa.me/");
-
   return (
     <article className="item-card">
       <div className="item-card__header">
@@ -31,10 +29,14 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
             <Mail aria-hidden="true" size={18} /> Mail
           </a>
         )}
+        {contact.whatsapp_url && (
+          <a className="button button--soft" href={contact.whatsapp_url} target="_blank" rel="noreferrer">
+            <MessageCircle aria-hidden="true" size={18} /> WhatsApp
+          </a>
+        )}
         {contact.website && (
           <a className="button button--soft" href={contact.website} target="_blank" rel="noreferrer">
-            {isWhatsappLink ? <MessageCircle aria-hidden="true" size={18} /> : <ExternalLink aria-hidden="true" size={18} />}
-            {isWhatsappLink ? "WhatsApp" : "Website"}
+            <ExternalLink aria-hidden="true" size={18} /> Website
           </a>
         )}
       </div>

@@ -84,6 +84,7 @@ export interface Contact {
   telefoonnummer?: string;
   emailadres?: string;
   website?: string;
+  whatsapp_url?: string;
   zichtbaar: boolean;
   aangemaakt_op: string;
   bijgewerkt_op: string;
