@@ -61,7 +61,7 @@ export function ReportsPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Meldingen</h2>
-        <p>Leg gebouwproblemen rustig vast. Er zijn geen openbare reacties onder meldingen.</p>
+        <p>Meld wat je ziet of ervaart, zodat gedeelde problemen sneller herkenbaar worden.</p>
       </div>
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createReport(); }}>
         <h3>Melding maken</h3>

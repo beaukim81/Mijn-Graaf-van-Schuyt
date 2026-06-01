@@ -20,6 +20,7 @@ export function KnowledgePage() {
     documenttype: "Bewonerstip" as KnowledgeDocumentType,
     korte_samenvatting: "",
     pdf_url: "",
+    pdf_bestandsnaam: "",
     tags: "",
     leverancier_of_fabrikant: "",
     faq_vraag: "",
@@ -70,6 +71,7 @@ export function KnowledgePage() {
       documenttype: "Bewonerstip",
       korte_samenvatting: "",
       pdf_url: "",
+      pdf_bestandsnaam: "",
       tags: "",
       leverancier_of_fabrikant: "",
       faq_vraag: "",
@@ -80,11 +82,11 @@ export function KnowledgePage() {
     <section className="page-stack">
       <div className="page-heading page-heading--search">
         <h2>Kennisbank</h2>
-        <p>Zoek eerst rustig in handleidingen, onderdeleninformatie en veelgestelde vragen.</p>
+        <p>Vind handleidingen, onderdeleninformatie en praktische tips voor je woning en het gebouw.</p>
         <SearchBar value={query} onChange={setQuery} placeholder="Zoek op onderwerp, trefwoord, leverancier of onderdeel" />
       </div>
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); proposeDocument(); }}>
-        <h3>Document of tip voorstellen</h3>
+        <h3>Handleiding of tip delen</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as KnowledgeCategory })}>
           {knowledgeCategories.map((item) => <option key={item}>{item}</option>)}
@@ -93,11 +95,25 @@ export function KnowledgePage() {
           {documentTypes.map((item) => <option key={item}>{item}</option>)}
         </select>
         <input value={draft.korte_samenvatting} onChange={(event) => setDraft({ ...draft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
-        <input value={draft.pdf_url} onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value })} placeholder="PDF-bestand of Supabase Storage URL" required />
+        <input value={draft.pdf_url} onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "" })} placeholder="PDF-link of Supabase Storage URL" required />
+        <label className="upload-field">
+          <span>Of kies een PDF-bestand</span>
+          <input
+            accept="application/pdf"
+            type="file"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              setDraft({ ...draft, pdf_url: URL.createObjectURL(file), pdf_bestandsnaam: file.name });
+            }}
+          />
+          {draft.pdf_bestandsnaam && <small>Gekozen bestand: {draft.pdf_bestandsnaam}</small>}
+        </label>
+        <p className="muted">Deel een handleiding of praktische tip. Beheer kijkt mee voordat het zichtbaar wordt voor iedereen.</p>
         <input value={draft.tags} onChange={(event) => setDraft({ ...draft, tags: event.target.value })} placeholder="Zoekwoorden, gescheiden door komma's" />
         <input value={draft.leverancier_of_fabrikant} onChange={(event) => setDraft({ ...draft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
         <input value={draft.faq_vraag} onChange={(event) => setDraft({ ...draft, faq_vraag: event.target.value })} placeholder="Eerste veelgestelde vraag optioneel" />
-        <button className="button" type="submit">Voorstellen</button>
+        <button className="button" type="submit">Insturen</button>
       </form>
       <div className="filter-row">
         <CategoryFilter label="Categorie" value={category} options={knowledgeCategories} onChange={setCategory} />

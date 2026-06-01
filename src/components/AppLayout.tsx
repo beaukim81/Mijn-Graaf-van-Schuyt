@@ -1,7 +1,6 @@
 import { BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, UserRound } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { paths } from "../routes/paths";
-import { isSupabaseConfigured } from "../lib/supabase";
 
 const navItems = [
   { to: paths.home, label: "Home", icon: Home },
@@ -28,12 +27,6 @@ export function AppLayout() {
           <UserRound aria-hidden="true" />
         </NavLink>
       </header>
-
-      {!isSupabaseConfigured && (
-        <div className="notice">
-          Demo-modus: voeg Supabase gegevens toe aan <strong>.env.local</strong> om echte data te gebruiken.
-        </div>
-      )}
 
       {!isHome && (
         <button className="back-button" onClick={() => navigate(-1)} type="button">

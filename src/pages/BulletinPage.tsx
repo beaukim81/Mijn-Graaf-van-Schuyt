@@ -36,7 +36,7 @@ export function BulletinPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Prikbord</h2>
-        <p>Praktische berichten zonder reacties of social feed.</p>
+        <p>Deel iets handigs met je buren, zoals een gevonden voorwerp, een tip, iets dat weg mag of een kleine mededeling voor het gebouw.</p>
       </div>
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createPost(); }}>
         <h3>Bericht plaatsen</h3>

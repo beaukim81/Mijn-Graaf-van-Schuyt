@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, Tag } from "lucide-react";
+import { CheckCircle2, Download, FileText, Tag } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
 import { StatusBadge } from "./StatusBadge";
 
@@ -23,15 +23,22 @@ export function KnowledgeDocumentCard({ document, isAdmin, onFlag, onPublish, on
       <p className="muted">{document.documenttype}</p>
       <p>{document.korte_samenvatting}</p>
       {document.leverancier_of_fabrikant && <p className="muted">Leverancier of fabrikant: {document.leverancier_of_fabrikant}</p>}
-      <div className="tag-row" aria-label="Zoekwoorden">
-        {document.tags.map((tag) => (
+      <div className="tag-row tag-row--preview" aria-label="Belangrijkste zoekwoorden">
+        {document.tags.slice(0, 3).map((tag) => (
           <span key={tag}>
             <Tag aria-hidden="true" size={14} /> {tag}
           </span>
         ))}
       </div>
       <details>
-        <summary>Veelgestelde vragen</summary>
+        <summary>Details en veelgestelde vragen</summary>
+        <div className="tag-row" aria-label="Alle zoekwoorden">
+          {document.tags.map((tag) => (
+            <span key={tag}>
+              <Tag aria-hidden="true" size={14} /> {tag}
+            </span>
+          ))}
+        </div>
         <div className="faq-list">
           {document.faq.map((item) => (
             <div key={item.id}>
@@ -42,9 +49,13 @@ export function KnowledgeDocumentCard({ document, isAdmin, onFlag, onPublish, on
         </div>
       </details>
       <p className="muted">Laatst bijgewerkt: {new Date(document.bijgewerkt_op).toLocaleDateString("nl-NL")}</p>
+      <p className="muted">Opent de PDF niet in deze weergave? Gebruik dan downloaden.</p>
       <div className="action-row">
         <a className="button button--soft" href={document.pdf_url} target="_blank" rel="noreferrer">
           <FileText aria-hidden="true" size={18} /> Open PDF
+        </a>
+        <a className="button button--soft" href={document.pdf_url} download>
+          <Download aria-hidden="true" size={18} /> Download PDF
         </a>
         <button className="button button--soft" onClick={() => onFlag?.(document.id)} type="button">
           <CheckCircle2 aria-hidden="true" size={18} /> Klopt dit nog?

@@ -38,6 +38,11 @@ export const helpCategories: HelpCategory[] = [
   "Planten verzorgen",
   "Boodschap meenemen",
   "Oppas / speelafspraak",
+  "Samen eten",
+  "Koffie / thee",
+  "Spelletjesavond",
+  "Filmavond",
+  "Wandelen",
   "Overig",
 ];
 

@@ -13,7 +13,7 @@ const cards = [
   {
     icon: ClipboardList,
     title: "Meldingen",
-    description: "Meld praktische gebouwproblemen zonder openbare discussie.",
+    description: "Geef rustig door wat je merkt in of rond het gebouw.",
     buttonText: "Bekijk meldingen",
     to: paths.reports,
   },
@@ -27,7 +27,7 @@ const cards = [
   {
     icon: HandHeart,
     title: "Hulp & Buren",
-    description: "Kleine hulpvragen zonder groepsdruk of chat.",
+    description: "Vraag iets kleins, bied hulp aan of nodig buren uit.",
     buttonText: "Vraag of bied hulp",
     to: paths.help,
   },
@@ -43,11 +43,12 @@ const cards = [
 export function HomePage() {
   return (
     <section className="page-stack">
+      <figure className="home-hero">
+        <img src="/images/graaf-van-schuyt-hero.png" alt="Appartementencomplex Graaf van Schuyt" />
+      </figure>
       <div className="intro">
         <h2>Rustig overzicht voor bewoners</h2>
-        <p>
-          Een praktische plek naast de bestaande bewonersgroep. Geen likes, geen reacties, geen extra ruis.
-        </p>
+        <p>Vind snel contacten, meldingen, handleidingen, hulpvragen en berichten voor het gebouw.</p>
       </div>
       <div className="home-grid">
         {cards.map((card) => (

@@ -50,7 +50,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
         <button className="button button--soft" onClick={() => onDecline?.(report.id)} type="button">
           <X aria-hidden="true" size={18} /> Ik heb dit niet
         </button>
-        <a className="button button--soft" href="https://www.rebogroep.nl/" target="_blank" rel="noreferrer">
+        <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
           <Send aria-hidden="true" size={18} /> Melding bij REBO doen
         </a>
         <button className="button button--soft" onClick={copySummary} type="button">

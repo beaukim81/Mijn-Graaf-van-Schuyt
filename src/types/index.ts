@@ -49,6 +49,11 @@ export type HelpCategory =
   | "Planten verzorgen"
   | "Boodschap meenemen"
   | "Oppas / speelafspraak"
+  | "Samen eten"
+  | "Koffie / thee"
+  | "Spelletjesavond"
+  | "Filmavond"
+  | "Wandelen"
   | "Overig";
 
 export type HelpStatus = "Open" | "Iemand helpt" | "Afgerond";
@@ -60,6 +65,7 @@ export interface Profile {
   id: string;
   user_id: string;
   naam_of_bijnaam: string;
+  huisnummer?: string;
   verdieping_of_gebouwdeel?: string;
   profielfoto_url?: string;
   mag_benaderd_worden_voor_hulp: boolean;
@@ -126,8 +132,18 @@ export interface HelpOffer {
   help_request_id: string;
   helper_id: string;
   helper_name: string;
+  helper_house_number?: string;
   contact_allowed: boolean;
   contact_info?: string;
+  aangemaakt_op: string;
+}
+
+export interface HelpMessage {
+  id: string;
+  author_id: string;
+  author_name: string;
+  author_house_number?: string;
+  message: string;
   aangemaakt_op: string;
 }
 
@@ -137,9 +153,12 @@ export interface HelpRequest {
   omschrijving: string;
   categorie: HelpCategory;
   aangemaakt_door: string;
+  aanmaker_naam: string;
+  aanmaker_huisnummer?: string;
   status: HelpStatus;
   aangemaakt_op: string;
   offers: HelpOffer[];
+  messages: HelpMessage[];
 }
 
 export interface BulletinPost {
