@@ -95,7 +95,7 @@ export function KnowledgePage() {
           {documentTypes.map((item) => <option key={item}>{item}</option>)}
         </select>
         <input value={draft.korte_samenvatting} onChange={(event) => setDraft({ ...draft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
-        <input value={draft.pdf_url} onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "" })} placeholder="PDF-link of Supabase Storage URL" required />
+        <input value={draft.pdf_url} onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "" })} placeholder="Link naar PDF" required />
         <label className="upload-field">
           <span>Of kies een PDF-bestand</span>
           <input
