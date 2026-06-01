@@ -18,13 +18,14 @@ export type ReportCategory =
   | "Verlichting"
   | "Schoonmaak"
   | "Parkeren"
+  | "Binnentuin"
   | "Veiligheid"
   | "Geluid"
   | "Intercom / toegang"
   | "Garage / berging"
   | "Overig";
 
-export type ReportType = "Alleen mijn woning" | "Mogelijk meerdere woningen" | "Zeker meerdere woningen";
+export type ReportType = "Alleen mijn woning" | "Mogelijk meerdere woningen" | "Appartementencomplex";
 export type ReportStatus = "Nieuw" | "Herkend door meerdere bewoners" | "Doorgezet naar REBO" | "In behandeling" | "Opgelost";
 
 export type KnowledgeCategory =

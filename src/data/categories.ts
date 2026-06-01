@@ -11,6 +11,7 @@ export const reportCategories: ReportCategory[] = [
   "Verlichting",
   "Schoonmaak",
   "Parkeren",
+  "Binnentuin",
   "Veiligheid",
   "Geluid",
   "Intercom / toegang",

@@ -8,7 +8,7 @@ import { useAppData } from "../lib/AppDataContext";
 import type { Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
-const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Zeker meerdere woningen"];
+const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Appartementencomplex"];
 
 export function ReportsPage() {
   const { reports, documents, profile } = useAppData();
@@ -43,9 +43,16 @@ export function ReportsPage() {
 
   function createReport() {
     const timestamp = new Date().toISOString();
+    const locatie_in_gebouw =
+      draft.type_melding === "Appartementencomplex"
+        ? draft.locatie_in_gebouw
+        : draft.type_melding === "Mogelijk meerdere woningen"
+          ? "Meerdere woningen"
+          : "Eigen woning";
     const report: Report = {
       id: crypto.randomUUID(),
       ...draft,
+      locatie_in_gebouw,
       status: "Nieuw",
       aangemaakt_door: profile.user_id,
       aangemaakt_op: timestamp,
@@ -105,10 +112,18 @@ export function ReportsPage() {
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as ReportCategory })}>
           {reportCategories.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <input value={draft.locatie_in_gebouw} onChange={(event) => setDraft({ ...draft, locatie_in_gebouw: event.target.value })} placeholder="Locatie in het gebouw" required />
-        <select value={draft.type_melding} onChange={(event) => setDraft({ ...draft, type_melding: event.target.value as ReportType })}>
+        <select
+          value={draft.type_melding}
+          onChange={(event) => {
+            const type_melding = event.target.value as ReportType;
+            setDraft({ ...draft, type_melding, locatie_in_gebouw: type_melding === "Appartementencomplex" ? draft.locatie_in_gebouw : "" });
+          }}
+        >
           {reportTypes.map((item) => <option key={item}>{item}</option>)}
         </select>
+        {draft.type_melding === "Appartementencomplex" && (
+          <input value={draft.locatie_in_gebouw} onChange={(event) => setDraft({ ...draft, locatie_in_gebouw: event.target.value })} placeholder="Locatie in het appartementencomplex" required />
+        )}
         <div className="related-box">
           <strong>Bekijk eerst deze kennisbankdocumenten</strong>
           <span>Misschien vind je hier al een antwoord voordat je de melding verstuurt.</span>
