@@ -40,7 +40,6 @@ function mapProfile(row: Record<string, unknown>): Profile {
     profielfoto_url: row.profielfoto_url ? String(row.profielfoto_url) : undefined,
     mag_benaderd_worden_voor_hulp: Boolean(row.mag_benaderd_worden_voor_hulp),
     contact_info_zichtbaar_voor_helpers: Boolean(row.contact_info_zichtbaar_voor_helpers),
-    kan_helpen_met: Array.isArray(row.kan_helpen_met) ? row.kan_helpen_met.map(String) : [],
     rol: row.rol === "admin" ? "admin" : "bewoner",
     email: row.email ? String(row.email) : undefined,
     telefoon: row.telefoon ? String(row.telefoon) : undefined,

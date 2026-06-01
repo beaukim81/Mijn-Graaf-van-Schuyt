@@ -96,7 +96,7 @@ export function AuthPage() {
             <KeyRound aria-hidden="true" size={18} /> {busy ? "Even geduld" : mode === "login" ? "Inloggen" : "Account maken"}
           </button>
           {mode === "login" && (
-            <button className="text-button" disabled={busy} onClick={requestPasswordReset} type="button">
+            <button className="button button--soft button--full" disabled={busy} onClick={requestPasswordReset} type="button">
               Wachtwoord vergeten?
             </button>
           )}

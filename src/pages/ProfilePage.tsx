@@ -29,19 +29,7 @@ export function ProfilePage() {
             <dt>Huisnummer</dt>
             <dd>{profile.huisnummer ?? "Nog niet ingevuld"}</dd>
           </div>
-          <div>
-            <dt>Benaderbaar voor hulp</dt>
-            <dd>{profile.mag_benaderd_worden_voor_hulp ? "Ja" : "Nee"}</dd>
-          </div>
-          <div>
-            <dt>Contact zichtbaar voor helpers</dt>
-            <dd>{profile.contact_info_zichtbaar_voor_helpers ? "Ja" : "Nee"}</dd>
-          </div>
         </dl>
-        <div className="related-box">
-          <strong>Kan helpen met</strong>
-          {profile.kan_helpen_met.map((item) => <span key={item}>{item}</span>)}
-        </div>
         {profile.achternaam && <p className="muted">Naam: {profile.naam_of_bijnaam} {profile.achternaam}</p>}
         {configured ? (
           <button className="button button--soft" onClick={() => void signOut()} type="button">

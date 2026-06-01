@@ -71,7 +71,6 @@ export interface Profile {
   profielfoto_url?: string;
   mag_benaderd_worden_voor_hulp: boolean;
   contact_info_zichtbaar_voor_helpers: boolean;
-  kan_helpen_met: string[];
   rol: Role;
   email?: string;
   telefoon?: string;

@@ -11,7 +11,6 @@ export const activeProfile: Profile = {
   verdieping_of_gebouwdeel: "2e verdieping",
   mag_benaderd_worden_voor_hulp: true,
   contact_info_zichtbaar_voor_helpers: false,
-  kan_helpen_met: ["Pakketjes", "Computerhulp", "Planten"],
   rol: "bewoner",
   email: "bewoner@example.nl",
 };

@@ -13,7 +13,6 @@ create table public.profiles (
   profielfoto_url text,
   mag_benaderd_worden_voor_hulp boolean not null default false,
   contact_info_zichtbaar_voor_helpers boolean not null default false,
-  kan_helpen_met text[] not null default '{}',
   rol public.app_role not null default 'bewoner',
   email text,
   telefoon text,
