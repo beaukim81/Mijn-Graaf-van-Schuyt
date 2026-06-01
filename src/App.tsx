@@ -7,6 +7,7 @@ import { useLocalCollection } from "./hooks/useLocalCollection";
 import { AppDataContext, type AppDataContextValue } from "./lib/AppDataContext";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { paths } from "./routes/paths";
+import { AdminPage } from "./pages/AdminPage";
 import { AuthPage } from "./pages/AuthPage";
 import { BulletinPage } from "./pages/BulletinPage";
 import { ContactsPage } from "./pages/ContactsPage";
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
       { path: paths.help, element: <HelpPage /> },
       { path: paths.bulletin, element: <BulletinPage /> },
       { path: paths.profile, element: <ProfilePage /> },
+      { path: paths.admin, element: <AdminPage /> },
     ],
   },
 ]);

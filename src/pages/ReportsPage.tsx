@@ -14,6 +14,7 @@ export function ReportsPage() {
   const { reports, documents, profile } = useAppData();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<ReportCategory | "Alle">("Alle");
+  const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
@@ -53,6 +54,7 @@ export function ReportsPage() {
     };
     reports.add(report);
     setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning" });
+    setShowForm(false);
   }
 
   function confirmReport(id: string) {
@@ -88,8 +90,14 @@ export function ReportsPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Meldingen</h2>
-        <p>Meld wat je ziet of ervaart, zodat gedeelde problemen sneller herkenbaar worden.</p>
+        <p>Bekijk meldingen in het gebouw of geef rustig een nieuw probleem door.</p>
       </div>
+      {!showForm && (
+        <button className="button button--full" onClick={() => setShowForm(true)} type="button">
+          Nieuwe melding
+        </button>
+      )}
+      {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createReport(); }}>
         <h3>Melding maken</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Korte titel" required />
@@ -111,7 +119,9 @@ export function ReportsPage() {
           ))}
         </div>
         <button className="button" type="submit">Melding opslaan</button>
+        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>
+      )}
       <div className="filter-row">
         <SearchBar value={query} onChange={setQuery} placeholder="Zoek in meldingen" />
         <CategoryFilter label="Categorie" value={category} options={reportCategories} onChange={setCategory} />

@@ -14,6 +14,7 @@ export function KnowledgePage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<KnowledgeCategory | "Alle">("Alle");
   const [type, setType] = useState<KnowledgeDocumentType | "Alle">("Alle");
+  const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState({
     titel: "",
     categorie: "Mechanische ventilatie" as KnowledgeCategory,
@@ -76,15 +77,30 @@ export function KnowledgePage() {
       leverancier_of_fabrikant: "",
       faq_vraag: "",
     });
+    setShowForm(false);
   }
 
   return (
     <section className="page-stack">
       <div className="page-heading page-heading--search">
         <h2>Kennisbank</h2>
-        <p>Vind handleidingen, onderdeleninformatie en praktische tips voor je woning en het gebouw.</p>
+        <p>Zoek rustig in handleidingen, onderdeleninformatie en praktische tips.</p>
         <SearchBar value={query} onChange={setQuery} placeholder="Zoek op onderwerp, trefwoord, leverancier of onderdeel" />
       </div>
+      <div className="suggestion-strip" aria-label="Kennisbankcategorieen">
+        <button className={category === "Alle" ? "active" : ""} onClick={() => setCategory("Alle")} type="button">Alles</button>
+        {knowledgeCategories.map((item) => (
+          <button className={category === item ? "active" : ""} key={item} onClick={() => setCategory(item)} type="button">
+            {item}
+          </button>
+        ))}
+      </div>
+      {!showForm && (
+        <button className="button button--full" onClick={() => setShowForm(true)} type="button">
+          Tip of handleiding delen
+        </button>
+      )}
+      {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); proposeDocument(); }}>
         <h3>Handleiding of tip delen</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
@@ -114,12 +130,13 @@ export function KnowledgePage() {
         <input value={draft.leverancier_of_fabrikant} onChange={(event) => setDraft({ ...draft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
         <input value={draft.faq_vraag} onChange={(event) => setDraft({ ...draft, faq_vraag: event.target.value })} placeholder="Eerste veelgestelde vraag optioneel" />
         <button className="button" type="submit">Insturen</button>
+        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>
+      )}
       <div className="filter-row">
-        <CategoryFilter label="Categorie" value={category} options={knowledgeCategories} onChange={setCategory} />
         <CategoryFilter label="Documenttype" value={type} options={documentTypes} onChange={setType} />
       </div>
-      <div className="card-list">
+      <div className="card-list library-list">
         {filteredDocuments.map((document) => (
           <KnowledgeDocumentCard
             key={document.id}

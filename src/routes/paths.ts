@@ -6,4 +6,5 @@ export const paths = {
   help: "/hulp",
   bulletin: "/prikbord",
   profile: "/profiel",
+  admin: "/beheer",
 };

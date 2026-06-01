@@ -11,6 +11,7 @@ const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelle
 export function HelpPage() {
   const { helpRequests, profile } = useAppData();
   const [category, setCategory] = useState<HelpCategory | "Alle">("Alle");
+  const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
@@ -46,6 +47,7 @@ export function HelpPage() {
     };
     helpRequests.add(request);
     setDraft({ titel: "", omschrijving: "", categorie: "Pakketje aannemen" });
+    setShowForm(false);
   }
 
   function offerHelp(id: string) {
@@ -100,7 +102,7 @@ export function HelpPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Hulp & Buren</h2>
-        <p>Vraag hulp, bied hulp aan of organiseer iets met buren.</p>
+        <p>Vraag iets kleins, bied hulp aan of organiseer iets gezelligs met buren.</p>
       </div>
       {openCategoryFilters.length > 0 && (
         <div className="suggestion-strip" aria-label="Snelle filters voor open hulpvragen">
@@ -116,6 +118,12 @@ export function HelpPage() {
           ))}
         </div>
       )}
+      {!showForm && (
+        <button className="button button--full" onClick={() => setShowForm(true)} type="button">
+          Hulpvraag of uitnodiging plaatsen
+        </button>
+      )}
+      {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createRequest(); }}>
         <h3>{socialCategories.includes(draft.categorie) ? "Uitnodiging plaatsen" : "Hulpvraag plaatsen"}</h3>
         <input
@@ -134,7 +142,9 @@ export function HelpPage() {
           {helpCategories.map((item) => <option key={item}>{item}</option>)}
         </select>
         <button className="button" type="submit">Plaatsen</button>
+        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>
+      )}
       <CategoryFilter label="Categorie" value={category} options={helpCategories} onChange={setCategory} />
       <div className="card-list">
         {filteredRequests.map((request) => (

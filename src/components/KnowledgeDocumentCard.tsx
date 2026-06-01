@@ -8,7 +8,7 @@ interface KnowledgeDocumentCardProps {
 
 export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) {
   return (
-    <article className="item-card">
+    <article className="item-card library-card">
       <div className="item-card__header">
         <div>
           <p className="chip">{document.categorie}</p>
@@ -16,7 +16,9 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
         </div>
         <StatusBadge tone={document.status === "Gepubliceerd" ? "good" : "warning"}>{document.status}</StatusBadge>
       </div>
-      <p className="muted">{document.documenttype}</p>
+      <p className="muted library-card__type">
+        <FileText aria-hidden="true" size={16} /> {document.documenttype}
+      </p>
       <p>{document.korte_samenvatting}</p>
       {document.leverancier_of_fabrikant && <p className="muted">Leverancier of fabrikant: {document.leverancier_of_fabrikant}</p>}
       <div className="tag-row tag-row--preview" aria-label="Belangrijkste zoekwoorden">
@@ -45,7 +47,6 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
         </div>
       </details>
       <p className="muted">Laatst bijgewerkt: {new Date(document.bijgewerkt_op).toLocaleDateString("nl-NL")}</p>
-      <p className="muted">Opent de PDF niet in deze weergave? Gebruik dan downloaden.</p>
       <div className="action-row">
         <a className="button button--soft" href={document.pdf_url} target="_blank" rel="noreferrer">
           <FileText aria-hidden="true" size={18} /> Open PDF

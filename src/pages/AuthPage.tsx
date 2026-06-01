@@ -57,8 +57,8 @@ export function AuthPage() {
     <main className="auth-shell">
       <section className="auth-card">
         <div className="auth-card__header">
-          <p className="eyebrow">Appartementencomplex</p>
-          <h1>Mijn Graaf van Schuyt</h1>
+          <p className="eyebrow">Graaf van Schuyt</p>
+          <h1>Inloggen of account maken</h1>
           <p>Log in om meldingen, hulpvragen en berichten veilig aan bewoners te koppelen.</p>
         </div>
 

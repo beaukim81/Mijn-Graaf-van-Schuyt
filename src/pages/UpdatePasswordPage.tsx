@@ -29,7 +29,7 @@ export function UpdatePasswordPage() {
     <main className="auth-shell">
       <section className="auth-card">
         <div className="auth-card__header">
-          <p className="eyebrow">Mijn Graaf van Schuyt</p>
+          <p className="eyebrow">Graaf van Schuyt</p>
           <h1>Nieuw wachtwoord instellen</h1>
           <p>Kies een nieuw wachtwoord van minimaal 8 tekens.</p>
         </div>

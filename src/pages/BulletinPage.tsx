@@ -18,6 +18,7 @@ export function BulletinPage() {
     image_name: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const filteredPosts = useMemo(() => {
     return bulletinPosts.items.filter((post) => category === "Alle" || post.categorie === category);
@@ -28,6 +29,7 @@ export function BulletinPage() {
   function resetDraft() {
     setDraft({ titel: "", omschrijving: "", categorie: "Mededeling", contactpersoon: "", image_url: "", image_name: "" });
     setEditingId(null);
+    setShowForm(false);
   }
 
   function savePost() {
@@ -57,39 +59,44 @@ export function BulletinPage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Prikbord</h2>
-        <p>Deel iets handigs met je buren, zoals een gevonden voorwerp, een tip, iets dat weg mag of een kleine mededeling voor het gebouw.</p>
+        <p>Plaats een kort bericht voor het gebouw, bijvoorbeeld iets dat weg mag, iets dat gevonden is of een praktische mededeling.</p>
       </div>
-      <form className="form-panel" onSubmit={(event) => { event.preventDefault(); savePost(); }}>
-        <h3>{editingId ? "Bericht bewerken" : "Bericht plaatsen"}</h3>
-        <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
-        <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Omschrijving" required />
-        <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as BulletinCategory })}>
-          {bulletinCategories.map((item) => <option key={item}>{item}</option>)}
-        </select>
-        <input value={draft.contactpersoon} onChange={(event) => setDraft({ ...draft, contactpersoon: event.target.value })} placeholder="Contactpersoon optioneel" />
-        {canAddImage && (
-          <label className="upload-field">
-            <span>Foto toevoegen</span>
-            <input
-              accept="image/*"
-              type="file"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                setDraft({ ...draft, image_url: URL.createObjectURL(file), image_name: file.name });
-              }}
-            />
-            {draft.image_url && <img className="post-image post-image--preview" src={draft.image_url} alt="Voorbeeld van gekozen foto" />}
-            {draft.image_name && <small>Gekozen foto: {draft.image_name}</small>}
-          </label>
-        )}
-        <button className="button" type="submit">{editingId ? "Wijzigingen opslaan" : "Plaatsen"}</button>
-        {editingId && (
+      {!showForm && (
+        <button className="button button--full" onClick={() => setShowForm(true)} type="button">
+          Bericht plaatsen
+        </button>
+      )}
+      {showForm && (
+        <form className="form-panel" onSubmit={(event) => { event.preventDefault(); savePost(); }}>
+          <h3>{editingId ? "Bericht bewerken" : "Bericht plaatsen"}</h3>
+          <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
+          <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Typ hier je bericht..." required />
+          <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as BulletinCategory })}>
+            {bulletinCategories.map((item) => <option key={item}>{item}</option>)}
+          </select>
+          <input value={draft.contactpersoon} onChange={(event) => setDraft({ ...draft, contactpersoon: event.target.value })} placeholder="Contactpersoon optioneel" />
+          {canAddImage && (
+            <label className="upload-field">
+              <span>Foto toevoegen</span>
+              <input
+                accept="image/*"
+                type="file"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setDraft({ ...draft, image_url: URL.createObjectURL(file), image_name: file.name });
+                }}
+              />
+              {draft.image_url && <img className="post-image post-image--preview" src={draft.image_url} alt="Voorbeeld van gekozen foto" />}
+              {draft.image_name && <small>Gekozen foto: {draft.image_name}</small>}
+            </label>
+          )}
+          <button className="button" type="submit">{editingId ? "Wijzigingen opslaan" : "Plaatsen"}</button>
           <button className="button button--soft" onClick={resetDraft} type="button">
             Annuleren
           </button>
-        )}
-      </form>
+        </form>
+      )}
       <CategoryFilter label="Categorie" value={category} options={bulletinCategories} onChange={setCategory} />
       <div className="card-list">
         {filteredPosts.map((post) => (
@@ -109,6 +116,7 @@ export function BulletinPage() {
                 image_url: item.image_url ?? "",
                 image_name: item.image_name ?? "",
               });
+              setShowForm(true);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
