@@ -150,9 +150,6 @@ button {
   margin: 0 auto 20px;
   max-width: 860px;
   padding: 14px 14px 14px 18px;
-  position: sticky;
-  top: 12px;
-  z-index: 8;
   backdrop-filter: blur(18px);
 }
 
@@ -466,6 +463,29 @@ button {
 
 .action-row .button {
   flex: 1 1 160px;
+}
+
+.report-actions {
+  background: var(--surface-tint);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  padding: 10px;
+}
+
+.report-actions .button {
+  flex: initial;
+  min-height: 54px;
+  padding: 12px 14px;
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .report-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .text-button {

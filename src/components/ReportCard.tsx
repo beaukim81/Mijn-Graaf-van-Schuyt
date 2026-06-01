@@ -46,7 +46,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
         <p>{adviceForReport(report)}</p>
       </div>
       {report.status !== "Opgelost" && (
-        <div className="action-row">
+        <div className="action-row report-actions">
           <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
             <Check aria-hidden="true" size={18} /> Ik heb dit ook
           </button>
