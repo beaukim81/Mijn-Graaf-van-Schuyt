@@ -32,6 +32,7 @@ export function ReportsPage() {
   }, [reports.items, query, category]);
 
   const draftLooksLikeRentalMaintenance = isLikelyRentalMaintenance(draft);
+  const draftRelevantDocuments = relevantDocuments(draft.categorie, documents.items);
 
   const resolvedReports = useMemo(() => {
     return reports.items.filter((report) => {
@@ -124,15 +125,17 @@ export function ReportsPage() {
         {draft.type_melding === "Appartementencomplex" && (
           <input value={draft.locatie_in_gebouw} onChange={(event) => setDraft({ ...draft, locatie_in_gebouw: event.target.value })} placeholder="Locatie in het appartementencomplex" required />
         )}
-        <div className="related-box">
-          <strong>Bekijk eerst deze kennisbankdocumenten</strong>
-          <span>Misschien vind je hier al een antwoord voordat je de melding verstuurt.</span>
-          {relevantDocuments(draft.categorie, documents.items).map((document) => (
-            <a href={document.pdf_url} key={document.id} target="_blank" rel="noreferrer">
-              {document.titel} · {document.documenttype}
-            </a>
-          ))}
-        </div>
+        {draftRelevantDocuments.length > 0 && (
+          <div className="related-box">
+            <strong>Bekijk eerst deze kennisbankdocumenten</strong>
+            <span>Misschien vind je hier al een antwoord voordat je de melding verstuurt.</span>
+            {draftRelevantDocuments.map((document) => (
+              <a href={document.pdf_url} key={document.id} target="_blank" rel="noreferrer">
+                {document.titel} · {document.documenttype}
+              </a>
+            ))}
+          </div>
+        )}
         {draftLooksLikeRentalMaintenance && (
           <div className="related-box">
             <strong>Dit lijkt mogelijk verhuuronderhoud</strong>
