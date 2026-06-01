@@ -55,7 +55,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         )}
         {currentUserOffer && (
           <button className="button button--soft" onClick={() => onWithdrawOffer?.(request.id)} type="button">
-            Hulpaanbod intrekken
+            Niet meer beschikbaar
           </button>
         )}
         {isOwner && (

@@ -91,7 +91,7 @@ export function HelpPage() {
           author_id: profile.user_id,
           author_name: profile.naam_of_bijnaam,
           author_house_number: profile.huisnummer,
-          message: "Ik trek mijn hulpaanbod in. Het lukt toch niet om te helpen.",
+          message: "Ik ben helaas niet meer beschikbaar.",
           aangemaakt_op: new Date().toISOString(),
         },
       ],
