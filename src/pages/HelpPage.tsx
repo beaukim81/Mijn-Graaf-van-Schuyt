@@ -51,6 +51,8 @@ export function HelpPage() {
   function offerHelp(id: string) {
     const request = helpRequests.items.find((item) => item.id === id);
     if (!request) return;
+    if (request.aangemaakt_door === profile.user_id) return;
+    if (request.offers.some((offer) => offer.helper_id === profile.user_id)) return;
 
     helpRequests.update(id, {
       status: "Iemand helpt",
@@ -116,6 +118,8 @@ export function HelpPage() {
             key={request.id}
             request={request}
             isOwner={request.aangemaakt_door === profile.user_id || profile.rol === "admin"}
+            currentUserId={profile.user_id}
+            isAdmin={profile.rol === "admin"}
             onOffer={offerHelp}
             onComplete={(id) => helpRequests.update(id, { status: "Afgerond" })}
             onSendMessage={(id, message) => {
@@ -133,6 +137,20 @@ export function HelpPage() {
                     aangemaakt_op: new Date().toISOString(),
                   },
                 ],
+              });
+            }}
+            onUpdateMessage={(id, messageId, message) => {
+              const request = helpRequests.items.find((item) => item.id === id);
+              if (!request) return;
+              helpRequests.update(id, {
+                messages: request.messages.map((item) => (item.id === messageId && item.author_id === profile.user_id ? { ...item, message } : item)),
+              });
+            }}
+            onDeleteMessage={(id, messageId) => {
+              const request = helpRequests.items.find((item) => item.id === id);
+              if (!request) return;
+              helpRequests.update(id, {
+                messages: request.messages.filter((item) => item.id !== messageId || (item.author_id !== profile.user_id && profile.rol !== "admin")),
               });
             }}
           />

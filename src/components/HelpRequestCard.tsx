@@ -1,4 +1,4 @@
-import { HandHeart, Home, MessageCircle, Send } from "lucide-react";
+import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { HelpRequest } from "../types";
 import { StatusBadge } from "./StatusBadge";
@@ -8,14 +8,21 @@ const socialCategories = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Fil
 interface HelpRequestCardProps {
   request: HelpRequest;
   isOwner?: boolean;
+  currentUserId: string;
+  isAdmin?: boolean;
   onOffer?: (id: string) => void;
   onComplete?: (id: string) => void;
   onSendMessage?: (id: string, message: string) => void;
+  onUpdateMessage?: (requestId: string, messageId: string, message: string) => void;
+  onDeleteMessage?: (requestId: string, messageId: string) => void;
 }
 
-export function HelpRequestCard({ request, isOwner, onOffer, onComplete, onSendMessage }: HelpRequestCardProps) {
+export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOffer, onComplete, onSendMessage, onUpdateMessage, onDeleteMessage }: HelpRequestCardProps) {
   const [message, setMessage] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedMessage, setEditedMessage] = useState("");
   const isSocial = socialCategories.includes(request.categorie);
+  const canOfferHelp = request.aangemaakt_door !== currentUserId;
 
   function sendMessage() {
     const trimmed = message.trim();
@@ -39,9 +46,11 @@ export function HelpRequestCard({ request, isOwner, onOffer, onComplete, onSendM
       </div>
       <p>{request.omschrijving}</p>
       <div className="action-row">
+        {canOfferHelp && (
         <button className="button button--soft" onClick={() => onOffer?.(request.id)} type="button">
           <HandHeart aria-hidden="true" size={18} /> {isSocial ? "Ik wil meedoen" : "Ik kan helpen"}
         </button>
+        )}
         {isOwner && (
           <button className="button button--soft" onClick={() => onComplete?.(request.id)} type="button">
             Markeer als afgerond
@@ -80,7 +89,57 @@ export function HelpRequestCard({ request, isOwner, onOffer, onComplete, onSendM
                 {item.author_name}
                 {item.author_house_number ? `, ${item.author_house_number}` : ""}
               </span>
-              <p>{item.message}</p>
+              {editingMessageId === item.id ? (
+                <div className="chat-edit">
+                  <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
+                  <div className="admin-row">
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        const trimmed = editedMessage.trim();
+                        if (!trimmed) return;
+                        onUpdateMessage?.(request.id, item.id, trimmed);
+                        setEditingMessageId(null);
+                        setEditedMessage("");
+                      }}
+                      type="button"
+                    >
+                      Opslaan
+                    </button>
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        setEditingMessageId(null);
+                        setEditedMessage("");
+                      }}
+                      type="button"
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p>{item.message}</p>
+              )}
+              {(item.author_id === currentUserId || isAdmin) && editingMessageId !== item.id && (
+                <div className="message-actions">
+                  {item.author_id === currentUserId && (
+                    <button
+                      className="text-button"
+                      onClick={() => {
+                        setEditingMessageId(item.id);
+                        setEditedMessage(item.message);
+                      }}
+                      type="button"
+                    >
+                      <Pencil aria-hidden="true" size={15} /> Bewerken
+                    </button>
+                  )}
+                  <button className="text-button danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
+                    <Trash2 aria-hidden="true" size={15} /> Verwijderen
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}

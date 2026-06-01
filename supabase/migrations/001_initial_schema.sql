@@ -211,6 +211,8 @@ create policy "Betrokkenen plaatsen hulpberichten" on public.help_messages for i
     or exists (select 1 from public.help_offers where help_request_id = public.help_messages.help_request_id and helper_id = auth.uid())
   )
 );
+create policy "Schrijver wijzigt eigen hulpbericht" on public.help_messages for update to authenticated using (author_id = auth.uid()) with check (author_id = auth.uid());
+create policy "Schrijver of admin verwijdert hulpbericht" on public.help_messages for delete to authenticated using (author_id = auth.uid() or public.is_admin());
 
 create policy "Bewoners lezen prikbord" on public.bulletin_posts for select to authenticated using (true);
 create policy "Bewoners plaatsen prikbordbericht" on public.bulletin_posts for insert to authenticated with check (aangemaakt_door = auth.uid());

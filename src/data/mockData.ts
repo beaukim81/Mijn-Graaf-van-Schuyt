@@ -5,7 +5,7 @@ const now = new Date().toISOString();
 export const activeProfile: Profile = {
   id: "profile-demo",
   user_id: "demo-user",
-  naam_of_bijnaam: "Bewoner 24",
+  naam_of_bijnaam: "Kim",
   huisnummer: "24",
   verdieping_of_gebouwdeel: "2e verdieping",
   mag_benaderd_worden_voor_hulp: true,
@@ -300,7 +300,7 @@ export const helpRequests: HelpRequest[] = [
         id: "offer-samen-eten-1",
         help_request_id: "help-samen-eten",
         helper_id: "demo-user",
-        helper_name: "Bewoner 24",
+        helper_name: "Kim",
         helper_house_number: "24",
         contact_allowed: true,
         contact_info: "Huisnummer 24",
@@ -311,7 +311,7 @@ export const helpRequests: HelpRequest[] = [
       {
         id: "message-samen-eten-1",
         author_id: "demo-user",
-        author_name: "Bewoner 24",
+        author_name: "Kim",
         author_house_number: "24",
         message: "Leuk, ik schuif graag aan. Zal ik iets meenemen?",
         aangemaakt_op: now,

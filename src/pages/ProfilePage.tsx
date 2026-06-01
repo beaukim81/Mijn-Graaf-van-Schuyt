@@ -8,7 +8,7 @@ export function ProfilePage() {
     <section className="page-stack">
       <div className="page-heading">
         <h2>Bewonersprofiel</h2>
-        <p>Een vrijwillig profiel voor herkenbaarheid en hulp. Huisnummer is niet verplicht.</p>
+        <p>Je profiel gebruikt straks je e-mailadres, naam en huisnummer. Achternaam mag, maar hoeft niet.</p>
       </div>
       <article className="item-card">
         <div className="item-card__header">
@@ -19,6 +19,10 @@ export function ProfilePage() {
           <StatusBadge tone="soft">{profile.rol}</StatusBadge>
         </div>
         <dl className="meta-list">
+          <div>
+            <dt>Huisnummer</dt>
+            <dd>{profile.huisnummer ?? "Nog niet ingevuld"}</dd>
+          </div>
           <div>
             <dt>Benaderbaar voor hulp</dt>
             <dd>{profile.mag_benaderd_worden_voor_hulp ? "Ja" : "Nee"}</dd>

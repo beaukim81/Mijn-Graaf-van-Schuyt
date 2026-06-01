@@ -124,10 +124,14 @@ button {
   margin: 0;
 }
 
-.home-grid,
 .card-list {
   display: grid;
   gap: 14px;
+}
+
+.home-welcome {
+  display: grid;
+  gap: 16px;
 }
 
 .home-hero {
@@ -145,6 +149,25 @@ button {
   object-fit: cover;
   object-position: center;
   width: 100%;
+}
+
+.home-welcome__text {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.home-welcome__text h2 {
+  font-size: 1.22rem;
+  margin: 0;
+}
+
+.home-welcome__text p {
+  line-height: 1.55;
+  margin: 0;
 }
 
 .home-card,
@@ -598,6 +621,24 @@ summary {
   gap: 8px;
 }
 
+.chat-edit {
+  display: grid;
+  gap: 8px;
+}
+
+.message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.message-actions .text-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+  min-height: 32px;
+}
+
 .empty-state,
 .loading-state {
   color: var(--muted);
@@ -647,8 +688,13 @@ summary {
     padding-top: 28px;
   }
 
-  .home-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .home-welcome {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    align-items: stretch;
+  }
+
+  .home-welcome__text {
+    align-content: center;
   }
 
   .meta-list {
