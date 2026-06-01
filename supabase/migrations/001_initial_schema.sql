@@ -221,7 +221,6 @@ create policy "Eigenaar of admin wijzigt prikbordbericht" on public.bulletin_pos
 create policy "Eigenaar of admin verwijdert prikbordbericht" on public.bulletin_posts for delete to authenticated using (aangemaakt_door = auth.uid() or public.is_admin());
 
 insert into public.contacts (naam, categorie, beschrijving, telefoonnummer, emailadres, website, whatsapp_url, zichtbaar) values
-('REBO Wonen algemeen', 'Verhuur', 'Algemeen nummer voor vragen aan REBO Wonen.', '088 220 16 00', null, null, null, true),
 ('REBO huurvragen', 'Verhuur', 'Voor vragen over huur en individuele huurzaken.', '088 220 16 10', 'huren@rebogroep.nl', null, null, true),
 ('Mijn REBO portal', 'Verhuur', 'Voor individuele meldingen en zaken die je rechtstreeks bij REBO moet melden.', null, null, 'https://www.thuisbijrebo.nl/mijn-rebo/inloggen', null, true),
 ('REBO schade melden', 'Spoed', 'Voor het melden van schade bij REBO.', '088 434 99 47', null, null, null, true),

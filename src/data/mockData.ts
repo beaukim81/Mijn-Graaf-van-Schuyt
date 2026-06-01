@@ -17,16 +17,6 @@ export const activeProfile: Profile = {
 
 export const contacts: Contact[] = [
   {
-    id: "contact-rebo-algemeen",
-    naam: "REBO Wonen algemeen",
-    categorie: "Verhuur",
-    beschrijving: "Algemeen nummer voor vragen aan REBO Wonen.",
-    telefoonnummer: "088 220 16 00",
-    zichtbaar: true,
-    aangemaakt_op: now,
-    bijgewerkt_op: now,
-  },
-  {
     id: "contact-rebo-reparaties",
     naam: "REBO huurvragen",
     categorie: "Verhuur",
