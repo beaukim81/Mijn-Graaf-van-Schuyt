@@ -56,7 +56,7 @@ export function BulletinPage() {
             post={post}
             isOwner={post.aangemaakt_door === profile.user_id}
             isAdmin={profile.rol === "admin"}
-            onComplete={(id) => bulletinPosts.update(id, { status: "Afgerond" })}
+            onComplete={bulletinPosts.remove}
             onDelete={bulletinPosts.remove}
           />
         ))}

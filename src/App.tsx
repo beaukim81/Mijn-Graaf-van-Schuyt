@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
+import { LoadingState } from "./components/LoadingState";
 import * as mock from "./data/mockData";
 import { useLocalCollection } from "./hooks/useLocalCollection";
 import { AppDataContext, type AppDataContextValue } from "./lib/AppDataContext";
+import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { paths } from "./routes/paths";
+import { AuthPage } from "./pages/AuthPage";
 import { BulletinPage } from "./pages/BulletinPage";
 import { ContactsPage } from "./pages/ContactsPage";
 import { HelpPage } from "./pages/HelpPage";
@@ -12,15 +15,35 @@ import { HomePage } from "./pages/HomePage";
 import { KnowledgePage } from "./pages/KnowledgePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
 
 function AppDataProvider({ children }: { children: ReactNode }) {
+  const { configured, loading, passwordRecovery, user, profile } = useAuth();
+  const contacts = useLocalCollection(mock.contacts);
+  const reports = useLocalCollection(mock.reports);
+  const documents = useLocalCollection(mock.knowledgeDocuments);
+  const helpRequests = useLocalCollection(mock.helpRequests);
+  const bulletinPosts = useLocalCollection(mock.bulletinPosts);
+
+  if (configured && loading) {
+    return <LoadingState />;
+  }
+
+  if (configured && !user) {
+    return <AuthPage />;
+  }
+
+  if (configured && passwordRecovery) {
+    return <UpdatePasswordPage />;
+  }
+
   const value: AppDataContextValue = {
-    profile: mock.activeProfile,
-    contacts: useLocalCollection(mock.contacts),
-    reports: useLocalCollection(mock.reports),
-    documents: useLocalCollection(mock.knowledgeDocuments),
-    helpRequests: useLocalCollection(mock.helpRequests),
-    bulletinPosts: useLocalCollection(mock.bulletinPosts),
+    profile: profile ?? mock.activeProfile,
+    contacts,
+    reports,
+    documents,
+    helpRequests,
+    bulletinPosts,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
@@ -44,8 +67,10 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <AppDataProvider>
-      <RouterProvider router={router} />
-    </AppDataProvider>
+    <AuthProvider>
+      <AppDataProvider>
+        <RouterProvider router={router} />
+      </AppDataProvider>
+    </AuthProvider>
   );
 }

@@ -53,7 +53,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         )}
         {isOwner && (
           <button className="button button--soft" onClick={() => onComplete?.(request.id)} type="button">
-            Markeer als afgerond
+            Afronden en verwijderen
           </button>
         )}
       </div>
@@ -67,11 +67,9 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                 {offer.helper_name}
                 {offer.helper_house_number ? `, huisnummer ${offer.helper_house_number}` : ""}
               </span>
-              <small>
-                {offer.contact_allowed && offer.contact_info
-                  ? offer.contact_info
-                  : "Geen extra contactgegevens gedeeld. Langslopen of afstemmen via bericht hieronder kan wel."}
-              </small>
+              {offer.contact_allowed && offer.contact_info && offer.contact_info !== `Huisnummer ${offer.helper_house_number}` ? (
+                <small>{offer.contact_info}</small>
+              ) : null}
             </div>
           ))}
         </div>
@@ -87,7 +85,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
             <div className="chat-message" key={item.id}>
               <span>
                 {item.author_name}
-                {item.author_house_number ? `, ${item.author_house_number}` : ""}
+                {item.author_house_number ? `, huisnummer ${item.author_house_number}` : ""}
               </span>
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
@@ -147,7 +145,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           <input
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder={isSocial ? "Kort bericht, bijvoorbeeld: ik neem iets te drinken mee" : "Kort bericht, bijvoorbeeld: bezorger mag bij 12 aanbellen"}
+            placeholder="Typ hier je bericht..."
           />
           <button className="button button--soft" onClick={sendMessage} type="button">
             <Send aria-hidden="true" size={18} /> Verstuur

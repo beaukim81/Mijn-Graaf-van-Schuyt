@@ -1,0 +1,173 @@
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { isSupabaseConfigured, supabase } from "./supabase";
+import type { Profile } from "../types";
+
+interface AuthContextValue {
+  configured: boolean;
+  loading: boolean;
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  passwordRecovery: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (input: SignUpInput) => Promise<string>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+}
+
+interface SignUpInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName?: string;
+  houseNumber: string;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+function mapProfile(row: Record<string, unknown>): Profile {
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    naam_of_bijnaam: String(row.naam_of_bijnaam ?? ""),
+    achternaam: row.achternaam ? String(row.achternaam) : undefined,
+    huisnummer: row.huisnummer ? String(row.huisnummer) : undefined,
+    verdieping_of_gebouwdeel: row.verdieping_of_gebouwdeel ? String(row.verdieping_of_gebouwdeel) : undefined,
+    profielfoto_url: row.profielfoto_url ? String(row.profielfoto_url) : undefined,
+    mag_benaderd_worden_voor_hulp: Boolean(row.mag_benaderd_worden_voor_hulp),
+    contact_info_zichtbaar_voor_helpers: Boolean(row.contact_info_zichtbaar_voor_helpers),
+    kan_helpen_met: Array.isArray(row.kan_helpen_met) ? row.kan_helpen_met.map(String) : [],
+    rol: row.rol === "admin" ? "admin" : "bewoner",
+    email: row.email ? String(row.email) : undefined,
+    telefoon: row.telefoon ? String(row.telefoon) : undefined,
+  };
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+
+  const loadProfile = useCallback(async (currentUser: User) => {
+    if (!supabase) return;
+    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
+    if (error) throw error;
+    if (data) {
+      setProfile(mapProfile(data));
+      return;
+    }
+
+    const metadata = currentUser.user_metadata;
+    const { data: createdProfile, error: createError } = await supabase
+      .from("profiles")
+      .insert({
+        user_id: currentUser.id,
+        naam_of_bijnaam: metadata.naam_of_bijnaam ?? currentUser.email?.split("@")[0] ?? "Bewoner",
+        achternaam: metadata.achternaam ?? null,
+        huisnummer: metadata.huisnummer ?? null,
+        email: currentUser.email,
+      })
+      .select("*")
+      .single();
+    if (createError) throw createError;
+    setProfile(mapProfile(createdProfile));
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (session?.user) await loadProfile(session.user);
+  }, [loadProfile, session]);
+
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    let mounted = true;
+
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
+      setSession(data.session);
+      if (data.session?.user) await loadProfile(data.session.user);
+      if (mounted) setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+      setSession(nextSession);
+      if (nextSession?.user) {
+        loadProfile(nextSession.user).catch(() => setProfile(null));
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      configured: isSupabaseConfigured,
+      loading,
+      user: session?.user ?? null,
+      session,
+      profile,
+      passwordRecovery,
+      signIn: async (email, password) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      },
+      signUp: async ({ email, password, firstName, lastName, houseNumber }) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+            data: {
+              naam_of_bijnaam: firstName,
+              achternaam: lastName ?? "",
+              huisnummer: houseNumber,
+            },
+          },
+        });
+        if (error) throw error;
+        return data.session ? "Je account is aangemaakt." : "Controleer je e-mail om je account te bevestigen.";
+      },
+      resetPassword: async (email) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+        if (error) throw error;
+      },
+      updatePassword: async (password) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        setPasswordRecovery(false);
+      },
+      signOut: async () => {
+        if (!supabase) return;
+        await supabase.auth.signOut();
+      },
+      refreshProfile,
+    }),
+    [loading, passwordRecovery, profile, refreshProfile, session],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const value = useContext(AuthContext);
+  if (!value) throw new Error("useAuth must be used inside AuthProvider");
+  return value;
+}

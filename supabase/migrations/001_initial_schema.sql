@@ -7,6 +7,7 @@ create table public.profiles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique references auth.users(id) on delete cascade,
   naam_of_bijnaam text not null,
+  achternaam text,
   huisnummer text,
   verdieping_of_gebouwdeel text,
   profielfoto_url text,
@@ -147,10 +148,31 @@ begin
 end;
 $$;
 
+create or replace function public.create_profile_for_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (user_id, naam_of_bijnaam, achternaam, huisnummer, email)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data ->> 'naam_of_bijnaam', split_part(new.email, '@', 1), 'Bewoner'),
+    nullif(new.raw_user_meta_data ->> 'achternaam', ''),
+    nullif(new.raw_user_meta_data ->> 'huisnummer', ''),
+    new.email
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
 create trigger profiles_touch before update on public.profiles for each row execute function public.touch_updated_at();
 create trigger contacts_touch before update on public.contacts for each row execute function public.touch_updated_at();
 create trigger reports_touch before update on public.reports for each row execute function public.touch_updated_at();
 create trigger knowledge_documents_touch before update on public.knowledge_documents for each row execute function public.touch_updated_at();
+create trigger auth_user_profile_created after insert on auth.users for each row execute function public.create_profile_for_new_user();
 
 alter table public.profiles enable row level security;
 alter table public.contacts enable row level security;

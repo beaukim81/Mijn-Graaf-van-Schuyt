@@ -65,6 +65,7 @@ export interface Profile {
   id: string;
   user_id: string;
   naam_of_bijnaam: string;
+  achternaam?: string;
   huisnummer?: string;
   verdieping_of_gebouwdeel?: string;
   profielfoto_url?: string;

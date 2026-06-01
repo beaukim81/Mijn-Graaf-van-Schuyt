@@ -6,6 +6,7 @@ export const activeProfile: Profile = {
   id: "profile-demo",
   user_id: "demo-user",
   naam_of_bijnaam: "Kim",
+  achternaam: "",
   huisnummer: "24",
   verdieping_of_gebouwdeel: "2e verdieping",
   mag_benaderd_worden_voor_hulp: true,

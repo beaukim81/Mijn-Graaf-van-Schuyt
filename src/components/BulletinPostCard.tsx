@@ -24,7 +24,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, onComplete, onDelete 
       {(isOwner || isAdmin) && (
         <div className="admin-row">
           <button className="text-button" onClick={() => onComplete?.(post.id)} type="button">
-            Afronden
+            Afronden en verwijderen
           </button>
           <button className="text-button danger" onClick={() => onDelete?.(post.id)} type="button">
             Verwijderen

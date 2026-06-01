@@ -26,6 +26,28 @@ npm run dev
 
 Zonder Supabase-gegevens draait de app in demo-modus met lokale dummydata.
 
+## Accounts
+
+Zodra Supabase is gekoppeld, gebruikt de app e-mail en wachtwoord als basis.
+
+Bewoners maken een account met:
+
+- e-mailadres
+- wachtwoord
+- voornaam
+- huisnummer
+- achternaam optioneel
+
+Iedereen krijgt standaard de rol `bewoner`. Maak jezelf beheerder nadat je account is aangemaakt:
+
+```sql
+update public.profiles
+set rol = 'admin'
+where email = 'jouw@emailadres.nl';
+```
+
+Supabase Auth e-mailtemplates voor bevestigen en wachtwoord resetten staan in `supabase/email-templates/README.md`.
+
 ## Supabase
 
 De Supabase-client staat in `src/lib/supabase.ts`.
@@ -51,6 +73,7 @@ De migratie bevat:
 - `bulletin_posts`
 - Row Level Security policies
 - startdata voor contacten en kennisbank
+- automatische profielaanmaak bij nieuwe accounts
 
 PDF-bestanden voor kennisbankdocumenten kunnen in Supabase Storage worden geplaatst. Sla de publieke of ondertekende bestandslink op in `pdf_url`.
 

@@ -121,7 +121,7 @@ export function HelpPage() {
             currentUserId={profile.user_id}
             isAdmin={profile.rol === "admin"}
             onOffer={offerHelp}
-            onComplete={(id) => helpRequests.update(id, { status: "Afgerond" })}
+            onComplete={helpRequests.remove}
             onSendMessage={(id, message) => {
               const request = helpRequests.items.find((item) => item.id === id);
               if (!request) return;
