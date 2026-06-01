@@ -124,10 +124,6 @@ export function KnowledgePage() {
           <KnowledgeDocumentCard
             key={document.id}
             document={document}
-            isAdmin={profile.rol === "admin"}
-            onFlag={(id) => documents.update(id, { status: "Te controleren", bijgewerkt_op: new Date().toISOString() })}
-            onPublish={(id) => documents.update(id, { status: "Gepubliceerd", bijgewerkt_op: new Date().toISOString() })}
-            onDelete={documents.remove}
           />
         ))}
       </div>

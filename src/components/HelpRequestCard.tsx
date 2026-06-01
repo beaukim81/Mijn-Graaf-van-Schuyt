@@ -11,18 +11,20 @@ interface HelpRequestCardProps {
   currentUserId: string;
   isAdmin?: boolean;
   onOffer?: (id: string) => void;
+  onWithdrawOffer?: (id: string) => void;
   onComplete?: (id: string) => void;
   onSendMessage?: (id: string, message: string) => void;
   onUpdateMessage?: (requestId: string, messageId: string, message: string) => void;
   onDeleteMessage?: (requestId: string, messageId: string) => void;
 }
 
-export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOffer, onComplete, onSendMessage, onUpdateMessage, onDeleteMessage }: HelpRequestCardProps) {
+export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOffer, onWithdrawOffer, onComplete, onSendMessage, onUpdateMessage, onDeleteMessage }: HelpRequestCardProps) {
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
   const isSocial = socialCategories.includes(request.categorie);
-  const canOfferHelp = request.aangemaakt_door !== currentUserId;
+  const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
+  const canOfferHelp = request.aangemaakt_door !== currentUserId && !currentUserOffer;
 
   function sendMessage() {
     const trimmed = message.trim();
@@ -50,6 +52,11 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         <button className="button button--soft" onClick={() => onOffer?.(request.id)} type="button">
           <HandHeart aria-hidden="true" size={18} /> {isSocial ? "Ik wil meedoen" : "Ik kan helpen"}
         </button>
+        )}
+        {currentUserOffer && (
+          <button className="button button--soft" onClick={() => onWithdrawOffer?.(request.id)} type="button">
+            Hulpaanbod intrekken
+          </button>
         )}
         {isOwner && (
           <button className="button button--soft" onClick={() => onComplete?.(request.id)} type="button">

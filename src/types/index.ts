@@ -69,8 +69,6 @@ export interface Profile {
   huisnummer?: string;
   verdieping_of_gebouwdeel?: string;
   profielfoto_url?: string;
-  mag_benaderd_worden_voor_hulp: boolean;
-  contact_info_zichtbaar_voor_helpers: boolean;
   rol: Role;
   email?: string;
   telefoon?: string;
@@ -103,7 +101,11 @@ export interface Report {
   bijgewerkt_op: string;
   confirmations: number;
   declined: number;
-  current_user_has_confirmed?: boolean;
+  current_user_response?: "confirmed" | "declined";
+  opgelost_op?: string;
+  opgelost_door?: string;
+  opgelost_door_naam?: string;
+  oplossing_omschrijving?: string;
 }
 
 export interface KnowledgeFaq {
@@ -168,6 +170,8 @@ export interface BulletinPost {
   omschrijving: string;
   categorie: BulletinCategory;
   contactpersoon?: string;
+  image_url?: string;
+  image_name?: string;
   aangemaakt_door: string;
   status: BulletinStatus;
   aangemaakt_op: string;

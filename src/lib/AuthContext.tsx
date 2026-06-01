@@ -38,8 +38,6 @@ function mapProfile(row: Record<string, unknown>): Profile {
     huisnummer: row.huisnummer ? String(row.huisnummer) : undefined,
     verdieping_of_gebouwdeel: row.verdieping_of_gebouwdeel ? String(row.verdieping_of_gebouwdeel) : undefined,
     profielfoto_url: row.profielfoto_url ? String(row.profielfoto_url) : undefined,
-    mag_benaderd_worden_voor_hulp: Boolean(row.mag_benaderd_worden_voor_hulp),
-    contact_info_zichtbaar_voor_helpers: Boolean(row.contact_info_zichtbaar_voor_helpers),
     rol: row.rol === "admin" ? "admin" : "bewoner",
     email: row.email ? String(row.email) : undefined,
     telefoon: row.telefoon ? String(row.telefoon) : undefined,

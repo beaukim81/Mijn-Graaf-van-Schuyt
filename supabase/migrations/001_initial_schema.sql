@@ -11,8 +11,6 @@ create table public.profiles (
   huisnummer text,
   verdieping_of_gebouwdeel text,
   profielfoto_url text,
-  mag_benaderd_worden_voor_hulp boolean not null default false,
-  contact_info_zichtbaar_voor_helpers boolean not null default false,
   rol public.app_role not null default 'bewoner',
   email text,
   telefoon text,
@@ -42,6 +40,10 @@ create table public.reports (
   locatie_in_gebouw text not null,
   type_melding text not null,
   status text not null default 'Nieuw',
+  opgelost_op timestamptz,
+  opgelost_door uuid references auth.users(id) on delete set null,
+  opgelost_door_naam text,
+  oplossing_omschrijving text,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -120,6 +122,8 @@ create table public.bulletin_posts (
   omschrijving text not null,
   categorie text not null,
   contactpersoon text,
+  image_url text,
+  image_name text,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
   status text not null default 'Actief',
   created_at timestamptz not null default now()

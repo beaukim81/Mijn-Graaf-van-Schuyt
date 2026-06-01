@@ -1,4 +1,5 @@
 import { Check, ClipboardCopy, Send, X } from "lucide-react";
+import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
 import { adviceForReport, collectiveMessage, reboSummary, relevantDocuments } from "../lib/reportLogic";
 import { StatusBadge } from "./StatusBadge";
@@ -9,11 +10,12 @@ interface ReportCardProps {
   canResolve?: boolean;
   onConfirm?: (id: string) => void;
   onDecline?: (id: string) => void;
-  onResolve?: (id: string) => void;
+  onResolve?: (id: string, resolution: string) => void;
 }
 
 export function ReportCard({ report, documents, canResolve, onConfirm, onDecline, onResolve }: ReportCardProps) {
   const relatedDocuments = relevantDocuments(report.categorie, documents);
+  const [resolution, setResolution] = useState("");
 
   async function copySummary() {
     await navigator.clipboard.writeText(reboSummary(report));
@@ -43,24 +45,46 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onDecline
         <strong>{collectiveMessage(report.confirmations)}</strong>
         <p>{adviceForReport(report)}</p>
       </div>
-      <div className="action-row">
-        <button className="button button--soft" onClick={() => onConfirm?.(report.id)} type="button">
-          <Check aria-hidden="true" size={18} /> Ik heb dit ook
-        </button>
-        <button className="button button--soft" onClick={() => onDecline?.(report.id)} type="button">
-          <X aria-hidden="true" size={18} /> Ik heb dit niet
-        </button>
-        <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
-          <Send aria-hidden="true" size={18} /> Melding bij REBO doen
-        </a>
-        <button className="button button--soft" onClick={copySummary} type="button">
-          <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
-        </button>
-      </div>
+      {report.status !== "Opgelost" && (
+        <div className="action-row">
+          <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
+            <Check aria-hidden="true" size={18} /> Ik heb dit ook
+          </button>
+          <button className={report.current_user_response === "declined" ? "button" : "button button--soft"} onClick={() => onDecline?.(report.id)} type="button">
+            <X aria-hidden="true" size={18} /> Ik heb dit niet
+          </button>
+          <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
+            <Send aria-hidden="true" size={18} /> Melding bij REBO doen
+          </a>
+          <button className="button button--soft" onClick={copySummary} type="button">
+            <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
+          </button>
+        </div>
+      )}
       {canResolve && (
-        <button className="text-button" onClick={() => onResolve?.(report.id)} type="button">
-          Markeer als opgelost
-        </button>
+        <div className="resolution-box">
+          <label className="field">
+            <span>Hoe is dit opgelost?</span>
+            <textarea value={resolution} onChange={(event) => setResolution(event.target.value)} placeholder="Bijvoorbeeld: zelf opgelost, REBO heeft dit opgepakt of een monteur is geweest." />
+          </label>
+          <button
+            className="button button--soft"
+            onClick={() => {
+              onResolve?.(report.id, resolution.trim());
+              setResolution("");
+            }}
+            type="button"
+          >
+            Markeer als opgelost
+          </button>
+        </div>
+      )}
+      {report.status === "Opgelost" && report.oplossing_omschrijving && (
+        <aside className="related-box">
+          <strong>Oplossing</strong>
+          <span>{report.oplossing_omschrijving}</span>
+          {report.opgelost_door_naam && <span>Toegevoegd door {report.opgelost_door_naam}</span>}
+        </aside>
       )}
       {relatedDocuments.length > 0 && (
         <aside className="related-box">

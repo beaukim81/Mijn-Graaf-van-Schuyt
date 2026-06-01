@@ -6,10 +6,10 @@ interface BulletinPostCardProps {
   isOwner?: boolean;
   isAdmin?: boolean;
   onComplete?: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onEdit?: (post: BulletinPost) => void;
 }
 
-export function BulletinPostCard({ post, isOwner, isAdmin, onComplete, onDelete }: BulletinPostCardProps) {
+export function BulletinPostCard({ post, isOwner, isAdmin, onComplete, onEdit }: BulletinPostCardProps) {
   return (
     <article className="item-card">
       <div className="item-card__header">
@@ -19,6 +19,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, onComplete, onDelete 
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </div>
+      {post.image_url && <img className="post-image" src={post.image_url} alt={post.titel} />}
       <p>{post.omschrijving}</p>
       {post.contactpersoon && <p className="muted">Contactpersoon: {post.contactpersoon}</p>}
       {(isOwner || isAdmin) && (
@@ -26,8 +27,8 @@ export function BulletinPostCard({ post, isOwner, isAdmin, onComplete, onDelete 
           <button className="text-button" onClick={() => onComplete?.(post.id)} type="button">
             Afronden en verwijderen
           </button>
-          <button className="text-button danger" onClick={() => onDelete?.(post.id)} type="button">
-            Verwijderen
+          <button className="text-button" onClick={() => onEdit?.(post)} type="button">
+            Bewerken
           </button>
         </div>
       )}

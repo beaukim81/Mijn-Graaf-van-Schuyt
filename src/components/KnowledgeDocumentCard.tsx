@@ -1,16 +1,12 @@
-import { CheckCircle2, Download, FileText, Tag } from "lucide-react";
+import { Download, FileText, Tag } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
 import { StatusBadge } from "./StatusBadge";
 
 interface KnowledgeDocumentCardProps {
   document: KnowledgeDocument;
-  isAdmin?: boolean;
-  onFlag?: (id: string) => void;
-  onPublish?: (id: string) => void;
-  onDelete?: (id: string) => void;
 }
 
-export function KnowledgeDocumentCard({ document, isAdmin, onFlag, onPublish, onDelete }: KnowledgeDocumentCardProps) {
+export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) {
   return (
     <article className="item-card">
       <div className="item-card__header">
@@ -57,20 +53,7 @@ export function KnowledgeDocumentCard({ document, isAdmin, onFlag, onPublish, on
         <a className="button button--soft" href={document.pdf_url} download>
           <Download aria-hidden="true" size={18} /> Download PDF
         </a>
-        <button className="button button--soft" onClick={() => onFlag?.(document.id)} type="button">
-          <CheckCircle2 aria-hidden="true" size={18} /> Klopt dit nog?
-        </button>
       </div>
-      {isAdmin && (
-        <div className="admin-row">
-          <button className="text-button" onClick={() => onPublish?.(document.id)} type="button">
-            Publiceren
-          </button>
-          <button className="text-button danger" onClick={() => onDelete?.(document.id)} type="button">
-            Verwijderen
-          </button>
-        </div>
-      )}
     </article>
   );
 }

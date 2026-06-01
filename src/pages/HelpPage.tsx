@@ -64,8 +64,32 @@ export function HelpPage() {
           helper_id: profile.user_id,
           helper_name: profile.naam_of_bijnaam,
           helper_house_number: profile.huisnummer,
-          contact_allowed: profile.contact_info_zichtbaar_voor_helpers,
-          contact_info: profile.huisnummer ? `Huisnummer ${profile.huisnummer}` : profile.email,
+          contact_allowed: false,
+          contact_info: "",
+          aangemaakt_op: new Date().toISOString(),
+        },
+      ],
+    });
+  }
+
+  function withdrawOffer(id: string) {
+    const request = helpRequests.items.find((item) => item.id === id);
+    if (!request) return;
+    const ownOffer = request.offers.find((offer) => offer.helper_id === profile.user_id);
+    if (!ownOffer) return;
+    const remainingOffers = request.offers.filter((offer) => offer.helper_id !== profile.user_id);
+
+    helpRequests.update(id, {
+      status: remainingOffers.length > 0 ? "Iemand helpt" : "Open",
+      offers: remainingOffers,
+      messages: [
+        ...request.messages,
+        {
+          id: crypto.randomUUID(),
+          author_id: profile.user_id,
+          author_name: profile.naam_of_bijnaam,
+          author_house_number: profile.huisnummer,
+          message: "Ik trek mijn hulpaanbod in. Het lukt toch niet om te helpen.",
           aangemaakt_op: new Date().toISOString(),
         },
       ],
@@ -121,6 +145,7 @@ export function HelpPage() {
             currentUserId={profile.user_id}
             isAdmin={profile.rol === "admin"}
             onOffer={offerHelp}
+            onWithdrawOffer={withdrawOffer}
             onComplete={helpRequests.remove}
             onSendMessage={(id, message) => {
               const request = helpRequests.items.find((item) => item.id === id);

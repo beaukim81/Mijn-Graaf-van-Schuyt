@@ -26,7 +26,15 @@ export function ReportsPage() {
     return reports.items.filter((report) => {
       const matchesQuery = `${report.titel} ${report.omschrijving} ${report.locatie_in_gebouw}`.toLowerCase().includes(query.toLowerCase());
       const matchesCategory = category === "Alle" || report.categorie === category;
-      return matchesQuery && matchesCategory;
+      return report.status !== "Opgelost" && matchesQuery && matchesCategory;
+    });
+  }, [reports.items, query, category]);
+
+  const resolvedReports = useMemo(() => {
+    return reports.items.filter((report) => {
+      const matchesQuery = `${report.titel} ${report.omschrijving} ${report.locatie_in_gebouw}`.toLowerCase().includes(query.toLowerCase());
+      const matchesCategory = category === "Alle" || report.categorie === category;
+      return report.status === "Opgelost" && matchesQuery && matchesCategory;
     });
   }, [reports.items, query, category]);
 
@@ -41,6 +49,7 @@ export function ReportsPage() {
       bijgewerkt_op: timestamp,
       confirmations: 1,
       declined: 0,
+      current_user_response: "confirmed",
     };
     reports.add(report);
     setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning" });
@@ -49,10 +58,28 @@ export function ReportsPage() {
   function confirmReport(id: string) {
     const report = reports.items.find((item) => item.id === id);
     if (!report) return;
+    if (report.current_user_response === "confirmed") return;
     const confirmations = report.confirmations + 1;
+    const declined = report.current_user_response === "declined" ? Math.max(0, report.declined - 1) : report.declined;
     reports.update(id, {
       confirmations,
+      declined,
+      current_user_response: "confirmed",
       status: confirmations >= 3 && report.status === "Nieuw" ? "Herkend door meerdere bewoners" : report.status,
+      bijgewerkt_op: new Date().toISOString(),
+    });
+  }
+
+  function declineReport(id: string) {
+    const report = reports.items.find((item) => item.id === id);
+    if (!report) return;
+    if (report.current_user_response === "declined") return;
+    const confirmations = report.current_user_response === "confirmed" ? Math.max(0, report.confirmations - 1) : report.confirmations;
+    reports.update(id, {
+      confirmations,
+      declined: report.declined + 1,
+      current_user_response: "declined",
+      status: confirmations < 3 && report.status === "Herkend door meerdere bewoners" ? "Nieuw" : report.status,
       bijgewerkt_op: new Date().toISOString(),
     });
   }
@@ -97,15 +124,32 @@ export function ReportsPage() {
             documents={documents.items}
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
             onConfirm={confirmReport}
-            onDecline={(id) => {
-              const report = reports.items.find((item) => item.id === id);
-              if (report) reports.update(id, { declined: report.declined + 1 });
-            }}
-            onResolve={(id) => reports.update(id, { status: "Opgelost", bijgewerkt_op: new Date().toISOString() })}
+            onDecline={declineReport}
+            onResolve={(id, resolution) => reports.update(id, {
+              status: "Opgelost",
+              opgelost_op: new Date().toISOString(),
+              opgelost_door: profile.user_id,
+              opgelost_door_naam: profile.naam_of_bijnaam,
+              oplossing_omschrijving: resolution || "Opgelost. Er is geen extra toelichting toegevoegd.",
+              bijgewerkt_op: new Date().toISOString(),
+            })}
           />
         ))}
       </div>
       {filteredReports.length === 0 && <EmptyState title="Geen meldingen gevonden" description="Er is op dit moment niets dat past bij je filter." />}
+      {resolvedReports.length > 0 && (
+        <section className="page-stack">
+          <div className="page-heading">
+            <h2>Opgeloste meldingen</h2>
+            <p>Deze meldingen zijn afgerond, maar blijven terug te vinden met de oplossing erbij.</p>
+          </div>
+          <div className="card-list">
+            {resolvedReports.map((report) => (
+              <ReportCard key={report.id} report={report} documents={documents.items} />
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   );
 }

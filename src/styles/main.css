@@ -288,6 +288,19 @@ button {
   color: var(--muted);
 }
 
+.post-image {
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.post-image--preview {
+  max-height: 240px;
+}
+
 .home-card {
   display: grid;
   gap: 14px;
@@ -588,7 +601,8 @@ textarea {
 }
 
 .guidance,
-.related-box {
+.related-box,
+.resolution-box {
   background: #f4efe5;
   border: 1px solid #e5dccd;
   border-radius: 8px;

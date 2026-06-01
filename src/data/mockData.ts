@@ -9,8 +9,6 @@ export const activeProfile: Profile = {
   achternaam: "",
   huisnummer: "24",
   verdieping_of_gebouwdeel: "2e verdieping",
-  mag_benaderd_worden_voor_hulp: true,
-  contact_info_zichtbaar_voor_helpers: false,
   rol: "bewoner",
   email: "bewoner@example.nl",
 };
@@ -268,6 +266,7 @@ export const reports: Report[] = [
     bijgewerkt_op: now,
     confirmations: 4,
     declined: 0,
+    current_user_response: "confirmed",
   },
   {
     id: "report-ventilatie",
@@ -282,6 +281,7 @@ export const reports: Report[] = [
     bijgewerkt_op: now,
     confirmations: 1,
     declined: 0,
+    current_user_response: "confirmed",
   },
 ];
 
@@ -361,6 +361,8 @@ export const bulletinPosts: BulletinPost[] = [
     omschrijving: "Een kleine stapel kinderboeken in goede staat. Graag voor zaterdag ophalen.",
     categorie: "Gratis af te halen",
     contactpersoon: "Bewoner 2e verdieping",
+    image_url: "",
+    image_name: "",
     aangemaakt_door: "demo-user",
     status: "Actief",
     aangemaakt_op: now,
