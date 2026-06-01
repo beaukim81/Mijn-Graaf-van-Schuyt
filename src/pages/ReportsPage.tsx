@@ -6,7 +6,7 @@ import { SearchBar } from "../components/SearchBar";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import type { Report, ReportCategory, ReportType } from "../types";
-import { relevantDocuments } from "../lib/reportLogic";
+import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
 const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Zeker meerdere woningen"];
 
@@ -30,6 +30,8 @@ export function ReportsPage() {
       return report.status !== "Opgelost" && matchesQuery && matchesCategory;
     });
   }, [reports.items, query, category]);
+
+  const draftLooksLikeRentalMaintenance = isLikelyRentalMaintenance(draft);
 
   const resolvedReports = useMemo(() => {
     return reports.items.filter((report) => {
@@ -116,6 +118,15 @@ export function ReportsPage() {
             </a>
           ))}
         </div>
+        {draftLooksLikeRentalMaintenance && (
+          <div className="related-box">
+            <strong>Dit lijkt mogelijk verhuuronderhoud</strong>
+            <span>Bekijk eerst het REBO-document om te zien of dit rechtstreeks bij REBO hoort.</span>
+            <a href={rentalMaintenancePdfUrl} target="_blank" rel="noreferrer">
+              REBO-document onderhoud aan huurwoningen openen
+            </a>
+          </div>
+        )}
         <button className="button" type="submit">Melding opslaan</button>
         <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>

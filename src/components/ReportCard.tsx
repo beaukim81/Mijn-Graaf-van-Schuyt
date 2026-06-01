@@ -1,7 +1,7 @@
 import { Check, ClipboardCopy, Send } from "lucide-react";
 import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
-import { adviceForReport, collectiveMessage, reboSummary, relevantDocuments } from "../lib/reportLogic";
+import { adviceForReport, collectiveMessage, isLikelyRentalMaintenance, reboSummary, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 import { StatusBadge } from "./StatusBadge";
 
 interface ReportCardProps {
@@ -17,6 +17,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
   const relatedDocuments = relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
+  const showRentalMaintenanceLink = isLikelyRentalMaintenance(report);
 
   async function copySummary() {
     await navigator.clipboard.writeText(reboSummary(report));
@@ -45,6 +46,11 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
       <div className="guidance">
         <strong>{collectiveMessage(report.confirmations)}</strong>
         <p>{adviceForReport(report)}</p>
+        {showRentalMaintenanceLink && (
+          <a href={rentalMaintenancePdfUrl} target="_blank" rel="noreferrer">
+            Bekijk het REBO-document over onderhoud aan huurwoningen
+          </a>
+        )}
       </div>
       {forwardedToRebo && (
         <aside className="related-box">

@@ -1,4 +1,9 @@
 import type { KnowledgeDocument, Report } from "../types";
+import { reboRentalMaintenancePdfUrl } from "../data/reboRentalMaintenanceDocument";
+
+export const rentalMaintenancePdfUrl = reboRentalMaintenancePdfUrl;
+
+export type RentalMaintenanceInput = Pick<Report, "categorie" | "titel" | "omschrijving" | "locatie_in_gebouw" | "type_melding">;
 
 export function collectiveMessage(count: number) {
   if (count >= 10) return "Groot gedeeld probleem binnen het gebouw.";
@@ -17,6 +22,43 @@ export function adviceForReport(report: Report) {
   }
 
   return "Er is een probleem gemeld. Herken je dit ook?";
+}
+
+export function isLikelyRentalMaintenance(input: RentalMaintenanceInput) {
+  const categoryMatches = [
+    "Afzuigkap / afzuiging",
+    "Verwarming / temperatuur",
+    "Water / lekkage",
+    "Verlichting",
+    "Intercom / toegang",
+    "Garage / berging",
+  ].includes(input.categorie);
+
+  const text = `${input.titel} ${input.omschrijving} ${input.locatie_in_gebouw}`.toLowerCase();
+  const keywordMatches = [
+    "lekkage",
+    "water",
+    "kraan",
+    "afvoer",
+    "riool",
+    "verwarming",
+    "temperatuur",
+    "thermostaat",
+    "intercom",
+    "deur",
+    "slot",
+    "raam",
+    "kozijn",
+    "keuken",
+    "douche",
+    "rookmelder",
+    "verlichting",
+    "storing",
+    "kapot",
+    "defect",
+  ].some((keyword) => text.includes(keyword));
+
+  return input.type_melding === "Alleen mijn woning" && (categoryMatches || keywordMatches);
 }
 
 export function reboSummary(report: Report) {
