@@ -61,8 +61,8 @@ export function HomePage() {
         <div className="home-welcome__text">
           <p className="eyebrow">Bewonersapp</p>
           <h2>Welkom</h2>
-          <p>Een praktische plek voor contactgegevens, meldingen, handleidingen, hulpvragen en korte berichten in het gebouw.</p>
-          <p>Gebruik de navigatie onderin om direct naar het onderdeel te gaan dat je nodig hebt.</p>
+          <p>Alles wat handig is voor bewoners van Graaf van Schuyt: contacten, meldingen, handleidingen, hulpvragen en korte berichten.</p>
+          <p>Onderaan vind je de vaste onderdelen van de app.</p>
         </div>
       </section>
 

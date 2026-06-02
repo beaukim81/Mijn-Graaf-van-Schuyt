@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataCollection } from "../lib/AppDataContext";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
@@ -35,6 +35,8 @@ function reportError(error: unknown) {
 
 export function useSupabaseCollection<T extends WithId>(initialItems: T[], options: SupabaseCollectionOptions<T>): DataCollection<T> {
   const [items, setItems] = useState<T[]>(() => readStoredItems(options.storageKey, initialItems));
+  const pendingUpsertIds = useRef(new Set<string>());
+  const pendingDeleteIds = useRef(new Set<string>());
 
   useEffect(() => {
     persistItems(options.storageKey, items);
@@ -47,7 +49,20 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
     options
       .fetchItems()
       .then((fetchedItems) => {
-        if (!cancelled) setItems(fetchedItems);
+        if (!cancelled) {
+          setItems((currentItems) => {
+            const currentById = new Map(currentItems.map((item) => [item.id, item]));
+            const fetchedIds = new Set(fetchedItems.map((item) => item.id));
+            const fetchedWithPendingChanges = fetchedItems
+              .filter((item) => !pendingDeleteIds.current.has(item.id))
+              .map((item) => (pendingUpsertIds.current.has(item.id) ? currentById.get(item.id) ?? item : item));
+            const localPendingItems = currentItems.filter(
+              (item) => pendingUpsertIds.current.has(item.id) && !pendingDeleteIds.current.has(item.id) && !fetchedIds.has(item.id),
+            );
+
+            return [...localPendingItems, ...fetchedWithPendingChanges];
+          });
+        }
       })
       .catch(reportError);
 
@@ -58,9 +73,14 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
 
   const add = useCallback(
     (item: T) => {
+      pendingUpsertIds.current.add(item.id);
+      pendingDeleteIds.current.delete(item.id);
       setItems((current) => [item, ...current]);
       if (options.enabled && isSupabaseConfigured && supabase) {
-        options.insertItem(item).catch(reportError);
+        options
+          .insertItem(item)
+          .then(() => pendingUpsertIds.current.delete(item.id))
+          .catch(reportError);
       }
     },
     [options],
@@ -68,29 +88,34 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
 
   const update = useCallback(
     (id: string, changes: Partial<T>) => {
-      let previousItem: T | undefined;
-      let nextItem: T | undefined;
-      setItems((current) =>
-        current.map((item) => {
-          if (item.id !== id) return item;
-          previousItem = item;
-          nextItem = { ...item, ...changes };
-          return nextItem;
-        }),
-      );
-      if (options.enabled && isSupabaseConfigured && supabase && nextItem) {
-        options.updateItem(id, changes, nextItem, previousItem).catch(reportError);
+      const previousItem = items.find((item) => item.id === id);
+      const nextItem = previousItem ? { ...previousItem, ...changes } : undefined;
+      if (!nextItem) return;
+
+      pendingUpsertIds.current.add(id);
+      pendingDeleteIds.current.delete(id);
+      setItems((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item)));
+      if (options.enabled && isSupabaseConfigured && supabase) {
+        options
+          .updateItem(id, changes, nextItem, previousItem)
+          .then(() => pendingUpsertIds.current.delete(id))
+          .catch(reportError);
       }
     },
-    [options],
+    [items, options],
   );
 
   const remove = useCallback(
     (id: string) => {
       const item = items.find((current) => current.id === id);
+      pendingUpsertIds.current.delete(id);
+      pendingDeleteIds.current.add(id);
       setItems((current) => current.filter((current) => current.id !== id));
       if (options.enabled && isSupabaseConfigured && supabase) {
-        options.deleteItem(id, item).catch(reportError);
+        options
+          .deleteItem(id, item)
+          .then(() => pendingDeleteIds.current.delete(id))
+          .catch(reportError);
       }
     },
     [items, options],

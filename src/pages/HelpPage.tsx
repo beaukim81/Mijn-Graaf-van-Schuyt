@@ -47,6 +47,7 @@ export function HelpPage() {
       messages: [],
     };
     helpRequests.add(request);
+    setCategory(draft.categorie);
     setDraft({ titel: "", omschrijving: "", categorie: "Pakketje aannemen" });
     setShowForm(false);
   }

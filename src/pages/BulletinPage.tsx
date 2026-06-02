@@ -71,6 +71,7 @@ export function BulletinPage() {
       };
       bulletinPosts.add(post);
     }
+    setCategory(draft.categorie);
     resetDraft();
   }
 

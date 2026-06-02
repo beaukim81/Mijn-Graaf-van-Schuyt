@@ -66,6 +66,9 @@ export function KnowledgePage() {
       bijgewerkt_op: timestamp,
     };
     documents.add(document);
+    setCategory(draft.categorie);
+    setType(draft.documenttype);
+    setQuery("");
     setDraft({
       titel: "",
       categorie: "Mechanische ventilatie",

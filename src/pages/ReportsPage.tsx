@@ -64,6 +64,8 @@ export function ReportsPage() {
       current_user_response: "confirmed",
     };
     reports.add(report);
+    setCategory(draft.categorie);
+    setQuery("");
     setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning" });
     setShowForm(false);
   }
