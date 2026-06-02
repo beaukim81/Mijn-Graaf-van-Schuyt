@@ -1,12 +1,56 @@
+import { useEffect, useMemo } from "react";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAppData } from "../lib/AppDataContext";
+import type { BuildingAnnouncement } from "../types";
 
 function announcementDate(value: string) {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
+function dateValue(announcement: BuildingAnnouncement) {
+  return announcement.event_date ?? announcement.updated_at;
+}
+
+function dateSortValue(announcement: BuildingAnnouncement) {
+  return announcement.event_date ? localDateStart(announcement.event_date).getTime() : new Date(announcement.updated_at).getTime();
+}
+
+function localDateStart(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return new Date(value);
+  return new Date(year, month - 1, day);
+}
+
+function isExpired(announcement: BuildingAnnouncement) {
+  if (!announcement.event_date) return false;
+
+  const removeAfter = localDateStart(announcement.event_date);
+  removeAfter.setDate(removeAfter.getDate() + 1);
+  removeAfter.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return today >= removeAfter;
+}
+
 export function HomePage() {
   const { buildingAnnouncements } = useAppData();
+  const expiredAnnouncementIds = useMemo(
+    () => buildingAnnouncements.items.filter(isExpired).map((announcement) => announcement.id),
+    [buildingAnnouncements.items],
+  );
+  const visibleAnnouncements = useMemo(
+    () =>
+      [...buildingAnnouncements.items]
+        .filter((announcement) => !isExpired(announcement))
+        .sort((first, second) => dateSortValue(first) - dateSortValue(second)),
+    [buildingAnnouncements.items],
+  );
+
+  useEffect(() => {
+    expiredAnnouncementIds.forEach((id) => buildingAnnouncements.remove(id));
+  }, [buildingAnnouncements, expiredAnnouncementIds]);
 
   return (
     <section className="page-stack">
@@ -28,9 +72,9 @@ export function HomePage() {
           <h2>Praktische meldingen</h2>
         </div>
         <div className="home-update-list">
-          {buildingAnnouncements.items.map((announcement) => (
+          {visibleAnnouncements.map((announcement) => (
             <article className={`home-update home-update--${announcement.importance}`} key={announcement.id}>
-              <time>{announcementDate(announcement.event_date ?? announcement.updated_at)}</time>
+              <time>{announcementDate(dateValue(announcement))}</time>
               <div>
                 <div className="home-update__header">
                   <h3>{announcement.titel}</h3>
