@@ -13,6 +13,7 @@ export interface DataCollection<T extends { id: string }> {
 
 export interface AppDataContextValue {
   profile: Profile;
+  profiles: DataCollection<Profile>;
   contacts: DataCollection<Contact>;
   reports: DataCollection<Report>;
   documents: DataCollection<KnowledgeDocument>;

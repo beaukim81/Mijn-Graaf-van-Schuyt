@@ -15,6 +15,7 @@ import type {
   KnowledgeDocument,
   KnowledgeDocumentStatus,
   KnowledgeDocumentType,
+  Role,
   ReportCategory,
   ReportStatus,
 } from "../types";
@@ -71,7 +72,7 @@ const blankAnnouncement = {
 };
 
 export function AdminPage() {
-  const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, reports } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, profiles, reports } = useAppData();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
@@ -87,6 +88,7 @@ export function AdminPage() {
     () => buildingAnnouncements.items.filter((item) => item.importance !== "normaal").length,
     [buildingAnnouncements.items],
   );
+  const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
 
   if (profile.rol !== "admin") {
@@ -230,6 +232,7 @@ export function AdminPage() {
         <AdminMetric label="Open meldingen" value={openReports} />
         <AdminMetric label="Actieve prikbordberichten" value={activePosts} />
         <AdminMetric label="Belangrijke mededelingen" value={importantAnnouncements} />
+        <AdminMetric label="Bewoners" value={residentsCount} />
       </div>
 
       <div className="admin-tabs" role="tablist" aria-label="Beheeronderdelen">
@@ -429,18 +432,33 @@ export function AdminPage() {
       )}
 
       {activeTab === "bewoners" && (
-        <section className="admin-section">
-          <article className="item-card admin-list-card">
-            <div className="item-card__header">
-              <div>
-                <p className="chip">Ingelogde beheerder</p>
-                <h3>{residentLabel(profile.naam_of_bijnaam, profile.huisnummer)}</h3>
-              </div>
-              <StatusBadge tone="good">{profile.rol}</StatusBadge>
+        <section className="admin-section card-list compact-list">
+          {profiles.syncError && (
+            <div className="notice notice--warning">
+              <p>{profiles.syncError}</p>
+              <button className="text-button" onClick={profiles.clearSyncError} type="button">Melding sluiten</button>
             </div>
-            <p className="muted">{profile.email ?? "E-mailadres nog niet beschikbaar in dit profiel."}</p>
-            <p>Een volledige bewoners- en rollenlijst kan hier worden aangesloten zodra alle bewoners via Supabase inloggen.</p>
-          </article>
+          )}
+          {profiles.items.map((resident) => (
+            <article className="item-card admin-list-card" key={resident.id}>
+              <div className="item-card__header">
+                <div>
+                  <p className="chip">{resident.huisnummer ? `Huisnummer ${resident.huisnummer}` : "Bewoner"}</p>
+                  <h3>{residentLabel(resident.naam_of_bijnaam, resident.huisnummer)}</h3>
+                </div>
+                <StatusBadge tone={resident.rol === "admin" ? "good" : "soft"}>{resident.rol}</StatusBadge>
+              </div>
+              <p className="muted">{resident.email ?? "Geen e-mailadres in profiel opgeslagen."}</p>
+              <label className="field">
+                <span>Rol</span>
+                <select value={resident.rol} onChange={(event) => profiles.update(resident.id, { rol: event.target.value as Role })}>
+                  <option value="bewoner">bewoner</option>
+                  <option value="admin">admin</option>
+                </select>
+              </label>
+            </article>
+          ))}
+          {profiles.items.length === 0 && <EmptyState title="Nog geen bewonersprofielen" description="Zodra bewoners hun account bevestigen of inloggen, verschijnt hun profiel hier." />}
         </section>
       )}
     </section>

@@ -116,7 +116,6 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
       Promise.resolve()
         .then(async () => {
           await options.insertItem(item);
-          await options.updateItem(item.id, item as Partial<T>, item);
         })
         .then(() => {
           pendingUpsertIds.current.delete(item.id);

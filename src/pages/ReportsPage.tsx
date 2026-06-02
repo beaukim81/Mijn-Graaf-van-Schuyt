@@ -91,8 +91,6 @@ export function ReportsPage() {
       confirmations,
       declined,
       current_user_response: "confirmed",
-      status: confirmations >= 3 && report.status === "Nieuw" ? "Herkend door meerdere bewoners" : report.status,
-      bijgewerkt_op: new Date().toISOString(),
     });
   }
 

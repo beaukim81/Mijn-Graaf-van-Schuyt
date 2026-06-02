@@ -60,7 +60,6 @@ export function HelpPage() {
     if (request.offers.some((offer) => offer.helper_id === profile.user_id)) return;
 
     helpRequests.update(id, {
-      status: "Iemand helpt",
       offers: [
         ...request.offers,
         {
@@ -91,7 +90,6 @@ export function HelpPage() {
     const remainingOffers = request.offers.filter((offer) => offer.helper_id !== profile.user_id);
 
     helpRequests.update(id, {
-      status: remainingOffers.length > 0 ? "Iemand helpt" : "Open",
       offers: remainingOffers,
       messages: [
         ...request.messages,

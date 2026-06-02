@@ -24,8 +24,10 @@ import {
   mapHelpRequest,
   mapKnowledgeDocument,
   mapNotificationPreference,
+  mapProfile,
   mapReport,
   notificationPreferenceToRow,
+  profileToRow,
   reportToRow,
 } from "./lib/dataMappers";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
@@ -40,7 +42,7 @@ import { KnowledgePage } from "./pages/KnowledgePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
-import type { BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Report } from "./types";
+import type { BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
 
 function requireSupabase() {
   if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -60,10 +62,11 @@ function omitColumns<T extends Record<string, unknown>>(row: T, columns: string[
 
 async function syncHelpOffers(helpRequestId: string, previousOffers: HelpOffer[] = [], nextOffers: HelpOffer[] = []) {
   const client = requireSupabase();
+  const currentUserId = (await client.auth.getUser()).data.user?.id;
   const previousIds = new Set(previousOffers.map((offer) => offer.id));
   const nextIds = new Set(nextOffers.map((offer) => offer.id));
-  const added = nextOffers.filter((offer) => !previousIds.has(offer.id));
-  const removed = previousOffers.filter((offer) => !nextIds.has(offer.id));
+  const added = nextOffers.filter((offer) => !previousIds.has(offer.id) && offer.helper_id === currentUserId);
+  const removed = previousOffers.filter((offer) => !nextIds.has(offer.id) && offer.helper_id === currentUserId);
 
   if (added.length > 0) {
     const { error } = await client.from("help_offers").upsert(added.map(helpOfferToRow));
@@ -73,19 +76,22 @@ async function syncHelpOffers(helpRequestId: string, previousOffers: HelpOffer[]
     const { error } = await client.from("help_offers").delete().in("id", removed.map((offer) => offer.id));
     if (error) throw error;
   }
-  if (nextOffers.length === 0) {
-    const { error } = await client.from("help_offers").delete().eq("help_request_id", helpRequestId);
+  if (currentUserId && nextOffers.length === 0 && previousOffers.some((offer) => offer.helper_id === currentUserId)) {
+    const { error } = await client.from("help_offers").delete().eq("help_request_id", helpRequestId).eq("helper_id", currentUserId);
     if (error) throw error;
   }
 }
 
 async function syncHelpMessages(helpRequestId: string, previousMessages: HelpMessage[] = [], nextMessages: HelpMessage[] = []) {
   const client = requireSupabase();
+  const currentUserId = (await client.auth.getUser()).data.user?.id;
   const previousById = new Map(previousMessages.map((message) => [message.id, message]));
   const nextIds = new Set(nextMessages.map((message) => message.id));
-  const added = nextMessages.filter((message) => !previousById.has(message.id));
-  const changed = nextMessages.filter((message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message);
-  const removed = previousMessages.filter((message) => !nextIds.has(message.id));
+  const added = nextMessages.filter((message) => !previousById.has(message.id) && message.author_id === currentUserId);
+  const changed = nextMessages.filter(
+    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && message.author_id === currentUserId,
+  );
+  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && message.author_id === currentUserId);
 
   if (added.length > 0) {
     const { error } = await client.from("help_messages").upsert(added.map((message) => helpMessageToRow(message, helpRequestId)));
@@ -103,11 +109,14 @@ async function syncHelpMessages(helpRequestId: string, previousMessages: HelpMes
 
 async function syncBulletinMessages(bulletinPostId: string, previousMessages: BulletinMessage[] = [], nextMessages: BulletinMessage[] = []) {
   const client = requireSupabase();
+  const currentUserId = (await client.auth.getUser()).data.user?.id;
   const previousById = new Map(previousMessages.map((message) => [message.id, message]));
   const nextIds = new Set(nextMessages.map((message) => message.id));
-  const added = nextMessages.filter((message) => !previousById.has(message.id));
-  const changed = nextMessages.filter((message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message);
-  const removed = previousMessages.filter((message) => !nextIds.has(message.id));
+  const added = nextMessages.filter((message) => !previousById.has(message.id) && message.author_id === currentUserId);
+  const changed = nextMessages.filter(
+    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && message.author_id === currentUserId,
+  );
+  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && message.author_id === currentUserId);
 
   if (added.length > 0) {
     const { error } = await client.from("bulletin_messages").upsert(added.map((message) => bulletinMessageToRow(message, bulletinPostId)));
@@ -126,6 +135,35 @@ async function syncBulletinMessages(bulletinPostId: string, previousMessages: Bu
 function AppDataProvider({ children }: { children: ReactNode }) {
   const { configured, loading, passwordRecovery, user, profile } = useAuth();
   const useDatabase = configured && Boolean(user) && Boolean(profile) && isSupabaseConfigured;
+
+  const profilesOptions = useMemo(() => ({
+    storageKey: "mijn-graaf-van-schuyt:profiles",
+    enabled: useDatabase,
+    fetchItems: async () => {
+      const { data, error } = await requireSupabase().from("profiles").select("*").order("huisnummer", { ascending: true }).order("naam_of_bijnaam");
+      if (error) throw error;
+      return (data ?? []).map(mapProfile);
+    },
+    insertItem: async (item: Profile) => {
+      const { error } = await requireSupabase().from("profiles").upsert(profileToRow(item), { onConflict: "user_id" });
+      if (error) throw error;
+    },
+    updateItem: async (_id: string, changes: Partial<Profile>, nextItem: Profile) => {
+      const editableChanges: Partial<Profile> = {};
+      if (changes.rol) editableChanges.rol = changes.rol;
+      if (changes.naam_of_bijnaam) editableChanges.naam_of_bijnaam = changes.naam_of_bijnaam;
+      if ("huisnummer" in changes) editableChanges.huisnummer = nextItem.huisnummer;
+      if ("email" in changes) editableChanges.email = nextItem.email;
+      const row = profileToRow({ ...nextItem, ...editableChanges });
+      const { error } = await requireSupabase().from("profiles").update(row).eq("id", nextItem.id);
+      if (error) throw error;
+    },
+    deleteItem: async (id: string) => {
+      const { error } = await requireSupabase().from("profiles").delete().eq("id", id);
+      if (error) throw error;
+    },
+  }), [useDatabase]);
+  const profiles = useSupabaseCollection(profile ? [profile] : [mock.activeProfile], profilesOptions);
 
   const contactsOptions = useMemo(() => ({
     storageKey: "mijn-graaf-van-schuyt:contacts",
@@ -195,9 +233,8 @@ function AppDataProvider({ children }: { children: ReactNode }) {
         await client.from("report_confirmations").upsert({ report_id: item.id, user_id: item.aangemaakt_door, herkent_probleem: true }, { onConflict: "report_id,user_id" });
       }
     },
-    updateItem: async (_id: string, changes: Partial<Report>, nextItem: Report) => {
+    updateItem: async (_id: string, changes: Partial<Report>, nextItem: Report, previousItem?: Report) => {
       const client = requireSupabase();
-      const row = reportToRow(nextItem);
       const optionalColumns = [
         "aangemaakt_door_naam",
         "aangemaakt_door_huisnummer",
@@ -210,12 +247,20 @@ function AppDataProvider({ children }: { children: ReactNode }) {
         "rebo_melding_door",
         "rebo_melding_door_naam",
       ];
-      const { error } = await client.from("reports").update(row).eq("id", nextItem.id);
-      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
-        const { error: retryError } = await client.from("reports").update(omitColumns(row, optionalColumns)).eq("id", nextItem.id);
-        if (retryError) throw retryError;
-      } else if (error) {
-        throw error;
+      const derivedKeys = new Set(["confirmations", "declined", "current_user_response"]);
+      const hasReportChanges = Object.keys(changes).some((key) => !derivedKeys.has(key));
+      if (hasReportChanges) {
+        const previousRow: Record<string, unknown> = previousItem ? reportToRow(previousItem) : {};
+        const nextRow = reportToRow(nextItem);
+        const changedRow = Object.fromEntries(Object.entries(nextRow).filter(([key, value]) => value !== previousRow[key]));
+        const row = { ...changedRow, id: nextItem.id };
+        const { error } = await client.from("reports").update(row).eq("id", nextItem.id);
+        if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+          const { error: retryError } = await client.from("reports").update(omitColumns(row, optionalColumns)).eq("id", nextItem.id);
+          if (retryError) throw retryError;
+        } else if (error) {
+          throw error;
+        }
       }
       if (changes.current_user_response && user?.id) {
         const { error: confirmationError } = await client
@@ -280,8 +325,11 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
     },
     updateItem: async (id: string, changes: Partial<HelpRequest>, nextItem: HelpRequest, previousItem?: HelpRequest) => {
-      const { error } = await requireSupabase().from("help_requests").update(helpRequestToRow(nextItem)).eq("id", id);
-      if (error) throw error;
+      const baseKeys = Object.keys(changes).filter((key) => key !== "offers" && key !== "messages");
+      if (baseKeys.length > 0) {
+        const { error } = await requireSupabase().from("help_requests").update(helpRequestToRow(nextItem)).eq("id", id);
+        if (error) throw error;
+      }
       if (changes.offers) await syncHelpOffers(id, previousItem?.offers, nextItem.offers);
       if (changes.messages) await syncHelpMessages(id, previousItem?.messages, nextItem.messages);
     },
@@ -319,14 +367,17 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       }
     },
     updateItem: async (id: string, changes: Partial<BulletinPost>, nextItem: BulletinPost, previousItem?: BulletinPost) => {
-      const row = bulletinPostToRow(nextItem);
-      const optionalColumns = ["contactpersoon", "image_url", "image_urls", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
-      const { error } = await requireSupabase().from("bulletin_posts").update(row).eq("id", id);
-      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
-        const { error: retryError } = await requireSupabase().from("bulletin_posts").update(omitColumns(row, optionalColumns)).eq("id", id);
-        if (retryError) throw retryError;
-      } else if (error) {
-        throw error;
+      const baseKeys = Object.keys(changes).filter((key) => key !== "messages");
+      if (baseKeys.length > 0) {
+        const row = bulletinPostToRow(nextItem);
+        const optionalColumns = ["contactpersoon", "image_url", "image_urls", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
+        const { error } = await requireSupabase().from("bulletin_posts").update(row).eq("id", id);
+        if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+          const { error: retryError } = await requireSupabase().from("bulletin_posts").update(omitColumns(row, optionalColumns)).eq("id", id);
+          if (retryError) throw retryError;
+        } else if (error) {
+          throw error;
+        }
       }
       if (changes.messages) await syncBulletinMessages(id, previousItem?.messages, nextItem.messages);
     },
@@ -401,6 +452,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value: AppDataContextValue = {
     profile: profile ?? mock.activeProfile,
+    profiles,
     contacts,
     reports,
     documents,

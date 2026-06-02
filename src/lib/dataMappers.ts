@@ -17,6 +17,7 @@ import type {
   KnowledgeDocumentStatus,
   KnowledgeDocumentType,
   NotificationPreference,
+  Profile,
   Report,
   ReportCategory,
   ReportStatus,
@@ -40,6 +41,36 @@ function optionalField(key: string, value: unknown) {
 function textArray(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value.map(String).filter(Boolean);
+}
+
+export function mapProfile(row: Row): Profile {
+  return {
+    id: text(row.id),
+    user_id: text(row.user_id),
+    naam_of_bijnaam: text(row.naam_of_bijnaam),
+    achternaam: optionalText(row.achternaam),
+    huisnummer: optionalText(row.huisnummer),
+    verdieping_of_gebouwdeel: optionalText(row.verdieping_of_gebouwdeel),
+    profielfoto_url: optionalText(row.profielfoto_url),
+    rol: row.rol === "admin" ? "admin" : "bewoner",
+    email: optionalText(row.email),
+    telefoon: optionalText(row.telefoon),
+  };
+}
+
+export function profileToRow(profile: Profile) {
+  return {
+    id: profile.id,
+    user_id: profile.user_id,
+    naam_of_bijnaam: profile.naam_of_bijnaam,
+    achternaam: profile.achternaam ?? null,
+    huisnummer: profile.huisnummer ?? null,
+    verdieping_of_gebouwdeel: profile.verdieping_of_gebouwdeel ?? null,
+    profielfoto_url: profile.profielfoto_url ?? null,
+    rol: profile.rol,
+    email: profile.email ?? null,
+    telefoon: profile.telefoon ?? null,
+  };
 }
 
 export function mapContact(row: Row): Contact {

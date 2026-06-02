@@ -24,9 +24,7 @@ export async function uploadBulletinImage(file: File, userId: string) {
     upsert: false,
   });
 
-  if (error) {
-    throw new Error(`Foto uploaden is niet gelukt: ${error.message}`);
-  }
+  if (error) return fileToDataUrl(file);
 
   const { data } = supabase.storage.from(bulletinImageBucket).getPublicUrl(path);
   return data.publicUrl;

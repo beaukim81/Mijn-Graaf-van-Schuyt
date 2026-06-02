@@ -26,6 +26,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
   const isSocial = socialCategories.includes(request.categorie);
   const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
   const canOfferHelp = request.aangemaakt_door !== currentUserId && !currentUserOffer;
+  const displayStatus = request.status === "Open" && request.offers.length > 0 ? "Iemand helpt" : request.status;
 
   function sendMessage() {
     const trimmed = message.trim();
@@ -42,7 +43,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           <h2>{request.titel}</h2>
           <p className="muted">Geplaatst door {residentLabel(request.aanmaker_naam, request.aanmaker_huisnummer)}</p>
         </div>
-        <StatusBadge tone={request.status === "Afgerond" ? "good" : "soft"}>{request.status}</StatusBadge>
+        <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
       </div>
       <p>{request.omschrijving}</p>
       <div className="action-row">
