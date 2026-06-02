@@ -4,12 +4,23 @@ import { CategoryFilter } from "../components/CategoryFilter";
 import { EmptyState } from "../components/EmptyState";
 import { bulletinCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { uploadBulletinImage } from "../lib/fileUploads";
 import type { BulletinCategory, BulletinPost } from "../types";
+
+interface BulletinDraft {
+  titel: string;
+  omschrijving: string;
+  categorie: BulletinCategory;
+  contactpersoon: string;
+  image_url: string;
+  image_name: string;
+  image_file?: File;
+}
 
 export function BulletinPage() {
   const { bulletinPosts, profile } = useAppData();
   const [category, setCategory] = useState<BulletinCategory | "Alle">("Alle");
-  const [draft, setDraft] = useState({
+  const [draft, setDraft] = useState<BulletinDraft>({
     titel: "",
     omschrijving: "",
     categorie: "Mededeling" as BulletinCategory,
@@ -32,20 +43,27 @@ export function BulletinPage() {
     setShowForm(false);
   }
 
-  function savePost() {
+  async function savePost() {
+    const imageUrl = draft.image_file ? await uploadBulletinImage(draft.image_file, profile.user_id) : draft.image_url;
+
     if (editingId) {
       bulletinPosts.update(editingId, {
         titel: draft.titel,
         omschrijving: draft.omschrijving,
         categorie: draft.categorie,
         contactpersoon: draft.contactpersoon,
-        image_url: draft.image_url,
+        image_url: canAddImage ? imageUrl : "",
         image_name: draft.image_name,
       });
     } else {
       const post: BulletinPost = {
         id: crypto.randomUUID(),
-        ...draft,
+        titel: draft.titel,
+        omschrijving: draft.omschrijving,
+        categorie: draft.categorie,
+        contactpersoon: draft.contactpersoon,
+        image_name: draft.image_name,
+        image_url: canAddImage ? imageUrl : "",
         aangemaakt_door: profile.user_id,
         status: "Actief",
         aangemaakt_op: new Date().toISOString(),
@@ -68,7 +86,7 @@ export function BulletinPage() {
         </button>
       )}
       {showForm && (
-        <form className="form-panel" onSubmit={(event) => { event.preventDefault(); savePost(); }}>
+        <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void savePost(); }}>
           <h3>{editingId ? "Bericht bewerken" : "Bericht plaatsen"}</h3>
           <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
           <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Typ hier je bericht..." required />
@@ -85,7 +103,7 @@ export function BulletinPage() {
                 onChange={(event) => {
                   const file = event.target.files?.[0];
                   if (!file) return;
-                  setDraft({ ...draft, image_url: URL.createObjectURL(file), image_name: file.name });
+                  setDraft({ ...draft, image_url: URL.createObjectURL(file), image_name: file.name, image_file: file });
                 }}
               />
               {draft.image_url && <img className="post-image post-image--preview" src={draft.image_url} alt="Voorbeeld van gekozen foto" />}
@@ -117,6 +135,7 @@ export function BulletinPage() {
                 contactpersoon: item.contactpersoon ?? "",
                 image_url: item.image_url ?? "",
                 image_name: item.image_name ?? "",
+                image_file: undefined,
               });
               setShowForm(true);
               window.scrollTo({ top: 0, behavior: "smooth" });
