@@ -99,6 +99,8 @@ export interface Report {
   type_melding: ReportType;
   status: ReportStatus;
   aangemaakt_door: string;
+  aangemaakt_door_naam?: string;
+  aangemaakt_door_huisnummer?: string;
   aangemaakt_op: string;
   bijgewerkt_op: string;
   confirmations: number;
@@ -187,6 +189,8 @@ export interface BulletinPost {
   image_url?: string;
   image_name?: string;
   aangemaakt_door: string;
+  aangemaakt_door_naam?: string;
+  aangemaakt_door_huisnummer?: string;
   status: BulletinStatus;
   aangemaakt_op: string;
   messages: BulletinMessage[];

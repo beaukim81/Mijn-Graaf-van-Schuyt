@@ -33,6 +33,10 @@ function optionalText(value: unknown) {
   return value == null || value === "" ? undefined : String(value);
 }
 
+function optionalField(key: string, value: unknown) {
+  return value == null || value === "" ? {} : { [key]: value };
+}
+
 export function mapContact(row: Row): Contact {
   return {
     id: text(row.id),
@@ -73,6 +77,8 @@ export function mapReport(row: Row, confirmations = 0, declined = 0, currentUser
     type_melding: text(row.type_melding) as ReportType,
     status: text(row.status, "Nieuw") as ReportStatus,
     aangemaakt_door: text(row.aangemaakt_door),
+    aangemaakt_door_naam: optionalText(row.aangemaakt_door_naam),
+    aangemaakt_door_huisnummer: optionalText(row.aangemaakt_door_huisnummer),
     aangemaakt_op: text(row.created_at ?? row.aangemaakt_op),
     bijgewerkt_op: text(row.updated_at ?? row.bijgewerkt_op ?? row.created_at),
     confirmations,
@@ -97,13 +103,15 @@ export function reportToRow(report: Report) {
     locatie_in_gebouw: report.locatie_in_gebouw,
     type_melding: report.type_melding,
     status: report.status,
-    opgelost_op: report.opgelost_op ?? null,
-    opgelost_door: report.opgelost_door ?? null,
-    opgelost_door_naam: report.opgelost_door_naam ?? null,
-    oplossing_omschrijving: report.oplossing_omschrijving ?? null,
-    rebo_melding_op: report.rebo_melding_op ?? null,
-    rebo_melding_door: report.rebo_melding_door ?? null,
-    rebo_melding_door_naam: report.rebo_melding_door_naam ?? null,
+    ...optionalField("aangemaakt_door_naam", report.aangemaakt_door_naam),
+    ...optionalField("aangemaakt_door_huisnummer", report.aangemaakt_door_huisnummer),
+    ...optionalField("opgelost_op", report.opgelost_op),
+    ...optionalField("opgelost_door", report.opgelost_door),
+    ...optionalField("opgelost_door_naam", report.opgelost_door_naam),
+    ...optionalField("oplossing_omschrijving", report.oplossing_omschrijving),
+    ...optionalField("rebo_melding_op", report.rebo_melding_op),
+    ...optionalField("rebo_melding_door", report.rebo_melding_door),
+    ...optionalField("rebo_melding_door_naam", report.rebo_melding_door_naam),
     aangemaakt_door: report.aangemaakt_door,
   };
 }
@@ -238,6 +246,8 @@ export function mapBulletinPost(row: Row, messages: BulletinMessage[]): Bulletin
     image_url: optionalText(row.image_url),
     image_name: optionalText(row.image_name),
     aangemaakt_door: text(row.aangemaakt_door),
+    aangemaakt_door_naam: optionalText(row.aangemaakt_door_naam),
+    aangemaakt_door_huisnummer: optionalText(row.aangemaakt_door_huisnummer),
     status: text(row.status, "Actief") as BulletinStatus,
     aangemaakt_op: text(row.created_at ?? row.aangemaakt_op),
     messages,
@@ -251,8 +261,10 @@ export function bulletinPostToRow(post: BulletinPost) {
     omschrijving: post.omschrijving,
     categorie: post.categorie,
     contactpersoon: post.contactpersoon ?? null,
-    image_url: post.image_url ?? null,
+    ...optionalField("image_url", post.image_url),
     aangemaakt_door: post.aangemaakt_door,
+    ...optionalField("aangemaakt_door_naam", post.aangemaakt_door_naam),
+    ...optionalField("aangemaakt_door_huisnummer", post.aangemaakt_door_huisnummer),
     status: post.status,
   };
 }

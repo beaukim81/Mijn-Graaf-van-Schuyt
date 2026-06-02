@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
+import { residentLabel } from "../lib/residentDisplay";
 import { paths } from "../routes/paths";
 
 const navItems = [
@@ -128,7 +129,7 @@ export function AppLayout() {
           id: `help-${request.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${request.titel}`,
-          description: `${message.author_name}${message.author_house_number ? `, huisnummer ${message.author_house_number}` : ""}: ${message.message}`,
+          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.help}#hulp-${request.id}`,
         }));
     });
@@ -141,7 +142,7 @@ export function AppLayout() {
           id: `bulletin-${post.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${post.titel}`,
-          description: `${message.author_name}${message.author_house_number ? `, huisnummer ${message.author_house_number}` : ""}: ${message.message}`,
+          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.bulletin}#prikbord-${post.id}`,
         }));
     });

@@ -1,6 +1,7 @@
 import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { HelpRequest } from "../types";
+import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
 const socialCategories = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
@@ -39,10 +40,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         <div>
           <p className="chip">{request.categorie}</p>
           <h2>{request.titel}</h2>
-          <p className="muted">
-            Geplaatst door {request.aanmaker_naam}
-            {request.aanmaker_huisnummer ? `, huisnummer ${request.aanmaker_huisnummer}` : ""}
-          </p>
+          <p className="muted">Geplaatst door {residentLabel(request.aanmaker_naam, request.aanmaker_huisnummer)}</p>
         </div>
         <StatusBadge tone={request.status === "Afgerond" ? "good" : "soft"}>{request.status}</StatusBadge>
       </div>
@@ -71,8 +69,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
             <div className="neighbor-offer" key={offer.id}>
               <Home aria-hidden="true" size={18} />
               <span>
-                {offer.helper_name}
-                {offer.helper_house_number ? `, huisnummer ${offer.helper_house_number}` : ""}
+                {residentLabel(offer.helper_name, offer.helper_house_number)}
               </span>
               {offer.contact_allowed && offer.contact_info && offer.contact_info !== `Huisnummer ${offer.helper_house_number}` ? (
                 <small>{offer.contact_info}</small>
@@ -91,8 +88,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           request.messages.map((item) => (
             <div className="chat-message" key={item.id}>
               <span>
-                {item.author_name}
-                {item.author_house_number ? `, huisnummer ${item.author_house_number}` : ""}
+                {residentLabel(item.author_name, item.author_house_number)}
               </span>
               {editingMessageId === item.id ? (
                 <div className="chat-edit">

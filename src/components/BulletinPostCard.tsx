@@ -1,6 +1,7 @@
 import { MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { BulletinPost } from "../types";
+import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
 interface BulletinPostCardProps {
@@ -34,6 +35,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
         <div>
           <p className="chip">{post.categorie}</p>
           <h2>{post.titel}</h2>
+          <p className="muted">Geplaatst door {residentLabel(post.aangemaakt_door_naam, post.aangemaakt_door_huisnummer)}</p>
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </div>
@@ -60,8 +62,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
           messages.map((item) => (
             <div className="chat-message" key={item.id}>
               <span>
-                {item.author_name}
-                {item.author_house_number ? `, huisnummer ${item.author_house_number}` : ""}
+                {residentLabel(item.author_name, item.author_house_number)}
               </span>
               {editingMessageId === item.id ? (
                 <div className="chat-edit">

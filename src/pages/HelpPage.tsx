@@ -5,6 +5,7 @@ import { HelpRequestCard } from "../components/HelpRequestCard";
 import { helpCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { notifyUser } from "../lib/pushNotifications";
+import { residentLabel } from "../lib/residentDisplay";
 import type { HelpCategory, HelpRequest } from "../types";
 
 const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
@@ -76,7 +77,7 @@ export function HelpPage() {
     });
     void notifyUser(request.aangemaakt_door, {
       title: "Nieuwe reactie op je hulpvraag",
-      body: `${profile.naam_of_bijnaam}${profile.huisnummer ? `, huisnummer ${profile.huisnummer}` : ""} wil ${socialCategories.includes(request.categorie) ? "meedoen" : "helpen"}.`,
+      body: `${residentLabel(profile.naam_of_bijnaam, profile.huisnummer)} wil ${socialCategories.includes(request.categorie) ? "meedoen" : "helpen"}.`,
       url: `/hulp#hulp-${request.id}`,
       category: "help",
     });

@@ -47,6 +47,17 @@ function requireSupabase() {
   return supabase;
 }
 
+function isMissingSchemaColumnError(error: unknown, columns: string[]) {
+  const message = error && typeof error === "object" && "message" in error ? String(error.message) : "";
+  return columns.some((column) => message.includes(`'${column}'`) || message.includes(`"${column}"`)) && message.includes("schema cache");
+}
+
+function omitColumns<T extends Record<string, unknown>>(row: T, columns: string[]) {
+  const next = { ...row };
+  columns.forEach((column) => delete next[column]);
+  return next;
+}
+
 async function syncHelpOffers(helpRequestId: string, previousOffers: HelpOffer[] = [], nextOffers: HelpOffer[] = []) {
   const client = requireSupabase();
   const previousIds = new Set(previousOffers.map((offer) => offer.id));
@@ -160,16 +171,50 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     },
     insertItem: async (item: Report) => {
       const client = requireSupabase();
-      const { error } = await client.from("reports").upsert(reportToRow(item));
-      if (error) throw error;
+      const row = reportToRow(item);
+      const optionalColumns = [
+        "aangemaakt_door_naam",
+        "aangemaakt_door_huisnummer",
+        "opgelost_op",
+        "opgelost_door",
+        "opgelost_door_naam",
+        "oplossing_omschrijving",
+        "rebo_melding_op",
+        "rebo_melding_door",
+        "rebo_melding_door_naam",
+      ];
+      const { error } = await client.from("reports").upsert(row);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await client.from("reports").upsert(omitColumns(row, optionalColumns));
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
       if (item.current_user_response === "confirmed") {
         await client.from("report_confirmations").upsert({ report_id: item.id, user_id: item.aangemaakt_door, herkent_probleem: true }, { onConflict: "report_id,user_id" });
       }
     },
     updateItem: async (_id: string, changes: Partial<Report>, nextItem: Report) => {
       const client = requireSupabase();
-      const { error } = await client.from("reports").update(reportToRow(nextItem)).eq("id", nextItem.id);
-      if (error) throw error;
+      const row = reportToRow(nextItem);
+      const optionalColumns = [
+        "aangemaakt_door_naam",
+        "aangemaakt_door_huisnummer",
+        "opgelost_op",
+        "opgelost_door",
+        "opgelost_door_naam",
+        "oplossing_omschrijving",
+        "rebo_melding_op",
+        "rebo_melding_door",
+        "rebo_melding_door_naam",
+      ];
+      const { error } = await client.from("reports").update(row).eq("id", nextItem.id);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await client.from("reports").update(omitColumns(row, optionalColumns)).eq("id", nextItem.id);
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
       if (changes.current_user_response && user?.id) {
         const { error: confirmationError } = await client
           .from("report_confirmations")
@@ -261,12 +306,26 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       );
     },
     insertItem: async (item: BulletinPost) => {
-      const { error } = await requireSupabase().from("bulletin_posts").upsert(bulletinPostToRow(item));
-      if (error) throw error;
+      const row = bulletinPostToRow(item);
+      const optionalColumns = ["contactpersoon", "image_url", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
+      const { error } = await requireSupabase().from("bulletin_posts").upsert(row);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await requireSupabase().from("bulletin_posts").upsert(omitColumns(row, optionalColumns));
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
     },
     updateItem: async (id: string, changes: Partial<BulletinPost>, nextItem: BulletinPost, previousItem?: BulletinPost) => {
-      const { error } = await requireSupabase().from("bulletin_posts").update(bulletinPostToRow(nextItem)).eq("id", id);
-      if (error) throw error;
+      const row = bulletinPostToRow(nextItem);
+      const optionalColumns = ["contactpersoon", "image_url", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
+      const { error } = await requireSupabase().from("bulletin_posts").update(row).eq("id", id);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await requireSupabase().from("bulletin_posts").update(omitColumns(row, optionalColumns)).eq("id", id);
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
       if (changes.messages) await syncBulletinMessages(id, previousItem?.messages, nextItem.messages);
     },
     deleteItem: async (id: string) => {

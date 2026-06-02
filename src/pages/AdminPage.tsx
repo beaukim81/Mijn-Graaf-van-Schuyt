@@ -4,6 +4,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
+import { residentLabel } from "../lib/residentDisplay";
 import type {
   AnnouncementImportance,
   BuildingAnnouncement,
@@ -433,7 +434,7 @@ export function AdminPage() {
             <div className="item-card__header">
               <div>
                 <p className="chip">Ingelogde beheerder</p>
-                <h3>{profile.naam_of_bijnaam}{profile.huisnummer ? `, huisnummer ${profile.huisnummer}` : ""}</h3>
+                <h3>{residentLabel(profile.naam_of_bijnaam, profile.huisnummer)}</h3>
               </div>
               <StatusBadge tone="good">{profile.rol}</StatusBadge>
             </div>

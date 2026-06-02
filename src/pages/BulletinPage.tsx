@@ -65,6 +65,8 @@ export function BulletinPage() {
         image_name: draft.image_name,
         image_url: canAddImage ? imageUrl : "",
         aangemaakt_door: profile.user_id,
+        aangemaakt_door_naam: profile.naam_of_bijnaam,
+        aangemaakt_door_huisnummer: profile.huisnummer,
         status: "Actief",
         aangemaakt_op: new Date().toISOString(),
         messages: [],

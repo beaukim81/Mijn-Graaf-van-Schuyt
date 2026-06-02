@@ -6,6 +6,7 @@ import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { residentLabel } from "../lib/residentDisplay";
 import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
@@ -57,6 +58,8 @@ export function ReportsPage() {
       locatie_in_gebouw,
       status: "Nieuw",
       aangemaakt_door: profile.user_id,
+      aangemaakt_door_naam: profile.naam_of_bijnaam,
+      aangemaakt_door_huisnummer: profile.huisnummer,
       aangemaakt_op: timestamp,
       bijgewerkt_op: timestamp,
       confirmations: 1,
@@ -92,7 +95,7 @@ export function ReportsPage() {
       status: "Doorgezet naar REBO",
       rebo_melding_op: new Date().toISOString(),
       rebo_melding_door: profile.user_id,
-      rebo_melding_door_naam: profile.naam_of_bijnaam,
+      rebo_melding_door_naam: residentLabel(profile.naam_of_bijnaam, profile.huisnummer),
       bijgewerkt_op: new Date().toISOString(),
     });
   }
@@ -175,7 +178,7 @@ export function ReportsPage() {
               status: "Opgelost",
               opgelost_op: new Date().toISOString(),
               opgelost_door: profile.user_id,
-              opgelost_door_naam: profile.naam_of_bijnaam,
+              opgelost_door_naam: residentLabel(profile.naam_of_bijnaam, profile.huisnummer),
               oplossing_omschrijving: resolution || "Opgelost. Er is geen extra toelichting toegevoegd.",
               bijgewerkt_op: new Date().toISOString(),
             })}
@@ -201,7 +204,7 @@ export function ReportsPage() {
 }
 
 function ResolvedReportItem({ report, documents }: { report: Report; documents: KnowledgeDocument[] }) {
-  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${report.opgelost_door_naam}` : "Opgelost";
+  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${residentLabel(report.opgelost_door_naam)}` : "Opgelost";
   const solution = report.oplossing_omschrijving || "Er is geen extra toelichting toegevoegd.";
 
   return (

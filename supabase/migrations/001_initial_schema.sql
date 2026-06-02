@@ -45,6 +45,8 @@ create table public.reports (
   opgelost_door_naam text,
   oplossing_omschrijving text,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
+  aangemaakt_door_naam text,
+  aangemaakt_door_huisnummer text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -125,6 +127,8 @@ create table public.bulletin_posts (
   image_url text,
   image_name text,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
+  aangemaakt_door_naam text,
+  aangemaakt_door_huisnummer text,
   status text not null default 'Actief',
   created_at timestamptz not null default now()
 );
