@@ -81,6 +81,12 @@ export function BulletinPage() {
         <h2>Prikbord</h2>
         <p>Plaats een kort bericht voor het gebouw, bijvoorbeeld iets dat weg mag, iets dat gevonden is of een praktische mededeling.</p>
       </div>
+      {bulletinPosts.syncError && (
+        <div className="notice notice--warning">
+          <p>{bulletinPosts.syncError}</p>
+          <button className="text-button" onClick={bulletinPosts.clearSyncError} type="button">Melding sluiten</button>
+        </div>
+      )}
       {!showForm && (
         <button className="button button--full" onClick={() => setShowForm(true)} type="button">
           Bericht plaatsen

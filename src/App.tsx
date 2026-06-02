@@ -114,7 +114,7 @@ async function syncBulletinMessages(bulletinPostId: string, previousMessages: Bu
 
 function AppDataProvider({ children }: { children: ReactNode }) {
   const { configured, loading, passwordRecovery, user, profile } = useAuth();
-  const useDatabase = configured && Boolean(user) && isSupabaseConfigured;
+  const useDatabase = configured && Boolean(user) && Boolean(profile) && isSupabaseConfigured;
 
   const contactsOptions = useMemo(() => ({
     storageKey: "mijn-graaf-van-schuyt:contacts",
@@ -332,6 +332,10 @@ function AppDataProvider({ children }: { children: ReactNode }) {
 
   if (configured && passwordRecovery) {
     return <UpdatePasswordPage />;
+  }
+
+  if (configured && user && !profile) {
+    return <LoadingState />;
   }
 
   const value: AppDataContextValue = {

@@ -103,6 +103,12 @@ export function ReportsPage() {
         <h2>Meldingen</h2>
         <p>Bekijk meldingen in het gebouw of geef rustig een nieuw probleem door.</p>
       </div>
+      {reports.syncError && (
+        <div className="notice notice--warning">
+          <p>{reports.syncError}</p>
+          <button className="text-button" onClick={reports.clearSyncError} type="button">Melding sluiten</button>
+        </div>
+      )}
       {!showForm && (
         <button className="button button--full" onClick={() => setShowForm(true)} type="button">
           Nieuwe melding

@@ -250,6 +250,18 @@ button {
   padding: 12px 14px;
 }
 
+.notice--warning {
+  background: #fff8e8;
+  border-color: #efd59d;
+  color: #5f4416;
+  display: grid;
+  gap: 8px;
+}
+
+.notice--warning p {
+  margin: 0;
+}
+
 .app-main {
   padding-bottom: 10px;
 }

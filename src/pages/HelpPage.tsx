@@ -112,6 +112,12 @@ export function HelpPage() {
         <h2>Hulp & Buren</h2>
         <p>Vraag iets kleins, bied hulp aan of organiseer iets gezelligs met buren.</p>
       </div>
+      {helpRequests.syncError && (
+        <div className="notice notice--warning">
+          <p>{helpRequests.syncError}</p>
+          <button className="text-button" onClick={helpRequests.clearSyncError} type="button">Melding sluiten</button>
+        </div>
+      )}
       {openCategoryFilters.length > 0 && (
         <div className="suggestion-strip" aria-label="Snelle filters voor open hulpvragen">
           <button className={category === "Alle" ? "active" : ""} onClick={() => setCategory("Alle")} type="button">

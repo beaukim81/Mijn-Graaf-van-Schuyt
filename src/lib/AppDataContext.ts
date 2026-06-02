@@ -3,6 +3,8 @@ import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, Knowledg
 
 export interface DataCollection<T extends { id: string }> {
   items: T[];
+  syncError?: string;
+  clearSyncError: () => void;
   add: (item: T) => void;
   update: (id: string, changes: Partial<T>) => void;
   remove: (id: string) => void;
