@@ -86,9 +86,9 @@ export function ProfilePage() {
         <p className="muted">Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat.</p>
         <div className="settings-list">
           <PreferenceToggle label="Persoonlijke meldingen" checked={preference.personal_notifications} onChange={(checked) => updatePreference({ personal_notifications: checked })} />
-          <PreferenceToggle label="Algemene gebouwmeldingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
+          <PreferenceToggle label="Algemene mededelingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
           <PreferenceToggle label="Hulpvragen" checked={preference.help_notifications} onChange={(checked) => updatePreference({ help_notifications: checked })} />
-          <PreferenceToggle label="Gebouwmeldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
+          <PreferenceToggle label="Mijn meldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
           <PreferenceToggle label="Kennisbank" checked={preference.knowledge_notifications} onChange={(checked) => updatePreference({ knowledge_notifications: checked })} />
           <PreferenceToggle label="Prikbord" checked={preference.bulletin_notifications} onChange={(checked) => updatePreference({ bulletin_notifications: checked })} />
         </div>

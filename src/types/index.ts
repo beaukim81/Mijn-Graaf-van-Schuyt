@@ -198,6 +198,7 @@ export interface BuildingAnnouncement {
   inhoud: string;
   importance: AnnouncementImportance;
   notify_all: boolean;
+  event_date?: string;
   created_at: string;
   updated_at: string;
   created_by: string;

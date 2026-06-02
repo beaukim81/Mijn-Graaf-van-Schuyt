@@ -1,4 +1,4 @@
-import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
+﻿import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
@@ -136,14 +136,19 @@ export function AppLayout() {
         <div className="header-actions">
           <div className="accessibility-menu">
             <button
-              className={textSize === "normal" ? "reading-mode-button" : "reading-mode-button active"}
+              aria-label="Leesmodus"
+              className={textSize === "normal" ? "icon-button reading-mode-button" : "icon-button reading-mode-button active"}
               onClick={() => {
                 setShowNotifications(false);
                 setShowAccessibility((current) => !current);
               }}
+              title="Leesmodus"
               type="button"
             >
-              <span aria-hidden="true">👓</span> Leesmodus
+              <span aria-hidden="true" className="reading-mode-glyph">
+                <small>A</small>
+                <strong>A</strong>
+              </span>
             </button>
             {showAccessibility && (
               <div className="accessibility-panel">
@@ -151,7 +156,13 @@ export function AppLayout() {
                 <p className="muted">Maak tekst en knoppen groter voor comfortabeler lezen.</p>
                 <label className="field">
                   <span>Tekstgrootte</span>
-                  <select value={textSize} onChange={(event) => setTextSize(event.target.value as TextSize)}>
+                  <select
+                    value={textSize}
+                    onChange={(event) => {
+                      setTextSize(event.target.value as TextSize);
+                      setShowAccessibility(false);
+                    }}
+                  >
                     {textSizeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -238,3 +249,4 @@ export function AppLayout() {
     </div>
   );
 }
+

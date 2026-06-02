@@ -579,22 +579,31 @@ button {
 }
 
 .reading-mode-button {
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  color: var(--primary-dark);
-  display: inline-flex;
-  font-weight: 800;
-  gap: 7px;
-  min-height: var(--icon-button-size);
-  padding: 0 14px;
+  font-weight: 850;
+  padding: 0;
 }
 
 .reading-mode-button.active {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+}
+
+.reading-mode-glyph {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 1px;
+  line-height: 1;
+}
+
+.reading-mode-glyph small {
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.reading-mode-glyph strong {
+  font-size: 1.18rem;
+  font-weight: 900;
 }
 
 .accessibility-panel {
@@ -1318,17 +1327,8 @@ summary {
     justify-content: flex-end;
   }
 
-  .accessibility-menu {
-    flex: 1 1 100%;
-    order: 2;
-  }
-
   .notification-menu {
     position: static;
-  }
-
-  .reading-mode-button {
-    width: 100%;
   }
 
   .accessibility-panel,

@@ -30,7 +30,7 @@ export function HomePage() {
         <div className="home-update-list">
           {buildingAnnouncements.items.map((announcement) => (
             <article className={`home-update home-update--${announcement.importance}`} key={announcement.id}>
-              <time>{announcementDate(announcement.updated_at)}</time>
+              <time>{announcementDate(announcement.event_date ?? announcement.updated_at)}</time>
               <div>
                 <div className="home-update__header">
                   <h3>{announcement.titel}</h3>

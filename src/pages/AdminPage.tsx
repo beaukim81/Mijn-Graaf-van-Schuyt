@@ -66,6 +66,7 @@ const blankAnnouncement = {
   inhoud: "",
   importance: "normaal" as AnnouncementImportance,
   notify_all: false,
+  event_date: "",
 };
 
 export function AdminPage() {
@@ -159,6 +160,7 @@ export function AdminPage() {
       inhoud: announcement.inhoud,
       importance: announcement.importance,
       notify_all: announcement.notify_all,
+      event_date: announcement.event_date ? announcement.event_date.slice(0, 10) : "",
     });
     setActiveTab("algemeen");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -173,6 +175,7 @@ export function AdminPage() {
       inhoud: announcementDraft.inhoud,
       importance: announcementDraft.importance,
       notify_all: announcementDraft.notify_all,
+      event_date: announcementDraft.event_date || undefined,
       created_at: isUpdate ? (buildingAnnouncements.items.find((item) => item.id === announcementDraft.id)?.created_at ?? timestamp) : timestamp,
       updated_at: timestamp,
       created_by: profile.user_id,
@@ -241,6 +244,10 @@ export function AdminPage() {
             <h3>{announcementDraft.id ? "Algemene melding aanpassen" : "Algemene melding plaatsen"}</h3>
             <input value={announcementDraft.titel} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, titel: event.target.value })} placeholder="Titel" required />
             <textarea value={announcementDraft.inhoud} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, inhoud: event.target.value })} placeholder="Praktische uitleg of tip" required />
+            <label className="field">
+              <span>Datum</span>
+              <input value={announcementDraft.event_date} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, event_date: event.target.value })} type="date" />
+            </label>
             <select value={announcementDraft.importance} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, importance: event.target.value as AnnouncementImportance })}>
               {announcementImportance.map((item) => <option key={item}>{item}</option>)}
             </select>
@@ -266,6 +273,7 @@ export function AdminPage() {
                   </StatusBadge>
                 </div>
                 <p>{announcement.inhoud}</p>
+                {announcement.event_date && <p className="muted">Datum: {new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</p>}
                 <div className="admin-row">
                   <button className="text-button" onClick={() => editAnnouncement(announcement)} type="button">Aanpassen</button>
                   <button className="text-button danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button">Verwijderen</button>
