@@ -168,6 +168,15 @@ export interface HelpRequest {
   messages: HelpMessage[];
 }
 
+export interface BulletinMessage {
+  id: string;
+  author_id: string;
+  author_name: string;
+  author_house_number?: string;
+  message: string;
+  aangemaakt_op: string;
+}
+
 export interface BulletinPost {
   id: string;
   titel: string;
@@ -179,4 +188,5 @@ export interface BulletinPost {
   aangemaakt_door: string;
   status: BulletinStatus;
   aangemaakt_op: string;
+  messages: BulletinMessage[];
 }

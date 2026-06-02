@@ -1,9 +1,25 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type WithId = { id: string };
 
-export function useLocalCollection<T extends WithId>(initialItems: T[]) {
-  const [items, setItems] = useState<T[]>(initialItems);
+function readStoredItems<T>(storageKey: string | undefined, fallback: T[]) {
+  if (!storageKey || typeof window === "undefined") return fallback;
+
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    return stored ? (JSON.parse(stored) as T[]) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function useLocalCollection<T extends WithId>(initialItems: T[], storageKey?: string) {
+  const [items, setItems] = useState<T[]>(() => readStoredItems(storageKey, initialItems));
+
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    window.localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
 
   return useMemo(
     () => ({

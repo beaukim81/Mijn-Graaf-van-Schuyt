@@ -20,11 +20,11 @@ import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
 
 function AppDataProvider({ children }: { children: ReactNode }) {
   const { configured, loading, passwordRecovery, user, profile } = useAuth();
-  const contacts = useLocalCollection(mock.contacts);
-  const reports = useLocalCollection(mock.reports);
-  const documents = useLocalCollection(mock.knowledgeDocuments);
-  const helpRequests = useLocalCollection(mock.helpRequests);
-  const bulletinPosts = useLocalCollection(mock.bulletinPosts);
+  const contacts = useLocalCollection(mock.contacts, "mijn-graaf-van-schuyt:contacts");
+  const reports = useLocalCollection(mock.reports, "mijn-graaf-van-schuyt:reports");
+  const documents = useLocalCollection(mock.knowledgeDocuments, "mijn-graaf-van-schuyt:knowledge-documents");
+  const helpRequests = useLocalCollection(mock.helpRequests, "mijn-graaf-van-schuyt:help-requests");
+  const bulletinPosts = useLocalCollection(mock.bulletinPosts, "mijn-graaf-van-schuyt:bulletin-posts");
 
   if (configured && loading) {
     return <LoadingState />;

@@ -366,5 +366,15 @@ export const bulletinPosts: BulletinPost[] = [
     aangemaakt_door: "demo-user",
     status: "Actief",
     aangemaakt_op: now,
+    messages: [
+      {
+        id: "message-bulletin-boeken-1",
+        author_id: "neighbor-18",
+        author_name: "Sanne",
+        author_house_number: "18",
+        message: "Ik heb interesse in de boeken. Kan ik vanavond even langskomen?",
+        aangemaakt_op: now,
+      },
+    ],
   },
 ];

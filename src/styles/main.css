@@ -19,6 +19,40 @@
   --danger: #9a3412;
   --shadow: 0 16px 42px rgba(26, 45, 42, 0.08);
   --shadow-soft: 0 8px 24px rgba(26, 45, 42, 0.055);
+  --app-font-size: 16px;
+  --body-line-height: 1.55;
+  --button-min-height: 46px;
+  --field-min-height: 50px;
+  --icon-button-size: 48px;
+  --control-padding-y: 13px;
+  --control-padding-x: 18px;
+  --content-gap: 20px;
+}
+
+:root[data-text-size="large"] {
+  --app-font-size: 20px;
+  --body-line-height: 1.7;
+  --button-min-height: 58px;
+  --field-min-height: 62px;
+  --icon-button-size: 58px;
+  --control-padding-y: 16px;
+  --control-padding-x: 20px;
+  --content-gap: 24px;
+}
+
+:root[data-text-size="xlarge"] {
+  --app-font-size: 22px;
+  --body-line-height: 1.78;
+  --button-min-height: 64px;
+  --field-min-height: 68px;
+  --icon-button-size: 64px;
+  --control-padding-y: 18px;
+  --control-padding-x: 22px;
+  --content-gap: 28px;
+}
+
+html {
+  font-size: var(--app-font-size);
 }
 
 * {
@@ -32,6 +66,7 @@ body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0, rgba(243, 246, 245, 0) 340px),
     var(--bg);
+  line-height: var(--body-line-height);
 }
 
 a {
@@ -168,6 +203,7 @@ button {
 .header-actions {
   display: flex;
   gap: 8px;
+  position: relative;
 }
 
 .eyebrow,
@@ -208,7 +244,7 @@ button {
 
 .page-stack {
   display: grid;
-  gap: 20px;
+  gap: var(--content-gap);
 }
 
 .intro,
@@ -477,7 +513,7 @@ button {
   display: inline-flex;
   font-weight: 750;
   gap: 8px;
-  min-height: 46px;
+  min-height: var(--button-min-height);
   justify-content: center;
   text-decoration: none;
 }
@@ -485,7 +521,7 @@ button {
 .button {
   background: var(--primary);
   color: #fff;
-  padding: 13px 18px;
+  padding: var(--control-padding-y) var(--control-padding-x);
   box-shadow: 0 10px 24px rgba(36, 93, 83, 0.18);
 }
 
@@ -512,9 +548,116 @@ button {
   background: var(--surface);
   border: 1px solid var(--line);
   color: var(--primary-dark);
-  flex: 0 0 48px;
-  height: 48px;
-  width: 48px;
+  flex: 0 0 var(--icon-button-size);
+  height: var(--icon-button-size);
+  width: var(--icon-button-size);
+}
+
+.notification-menu {
+  position: relative;
+}
+
+.accessibility-menu {
+  position: relative;
+}
+
+.reading-mode-button {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--primary-dark);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 7px;
+  min-height: var(--icon-button-size);
+  padding: 0 14px;
+}
+
+.reading-mode-button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.accessibility-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(31, 45, 43, 0.16);
+  display: grid;
+  gap: 10px;
+  min-width: min(320px, calc(100vw - 32px));
+  padding: 14px;
+  position: absolute;
+  right: 0;
+  top: calc(var(--icon-button-size) + 10px);
+  z-index: 20;
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-dot,
+.nav-dot {
+  background: #d94c3d;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  display: block;
+  height: 11px;
+  position: absolute;
+  width: 11px;
+}
+
+.notification-dot {
+  right: 9px;
+  top: 9px;
+}
+
+.notification-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(31, 45, 43, 0.16);
+  display: grid;
+  gap: 10px;
+  min-width: min(320px, calc(100vw - 32px));
+  padding: 14px;
+  position: absolute;
+  right: 0;
+  top: calc(var(--icon-button-size) + 10px);
+  z-index: 20;
+}
+
+.notification-item {
+  align-items: start;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+  padding-top: 10px;
+}
+
+.notification-link {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  min-height: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.notification-link span {
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+.notification-link small {
+  color: var(--muted);
+  line-height: 1.35;
 }
 
 .action-row,
@@ -590,8 +733,8 @@ select {
   border: 1px solid var(--line);
   border-radius: 14px;
   color: var(--text);
-  min-height: 50px;
-  padding: 13px 14px;
+  min-height: var(--field-min-height);
+  padding: var(--control-padding-y) 14px;
   width: 100%;
 }
 
@@ -615,14 +758,14 @@ textarea {
   border-radius: 16px;
   display: flex;
   gap: 8px;
-  min-height: 52px;
+  min-height: calc(var(--field-min-height) + 2px);
   padding: 0 14px;
   flex: 2 1 240px;
 }
 
 .search-bar input {
   border: 0;
-  min-height: 44px;
+  min-height: var(--button-min-height);
   padding-left: 0;
 }
 
@@ -1001,6 +1144,16 @@ summary {
   text-decoration: none;
 }
 
+.bottom-nav__icon {
+  display: inline-flex;
+  position: relative;
+}
+
+.nav-dot {
+  right: -3px;
+  top: -3px;
+}
+
 .bottom-nav__item.active {
   color: var(--primary-dark);
   font-weight: 800;
@@ -1105,6 +1258,19 @@ summary {
 }
 
 @media (max-width: 520px) {
+  .app-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .reading-mode-button {
+    flex: 1 1 auto;
+  }
+
   .admin-overview {
     grid-template-columns: 1fr;
   }

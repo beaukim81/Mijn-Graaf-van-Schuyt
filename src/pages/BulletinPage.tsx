@@ -49,6 +49,7 @@ export function BulletinPage() {
         aangemaakt_door: profile.user_id,
         status: "Actief",
         aangemaakt_op: new Date().toISOString(),
+        messages: [],
       };
       bulletinPosts.add(post);
     }
@@ -105,6 +106,7 @@ export function BulletinPage() {
             post={post}
             isOwner={post.aangemaakt_door === profile.user_id}
             isAdmin={profile.rol === "admin"}
+            currentUserId={profile.user_id}
             onComplete={bulletinPosts.remove}
             onEdit={(item) => {
               setEditingId(item.id);
@@ -118,6 +120,37 @@ export function BulletinPage() {
               });
               setShowForm(true);
               window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onSendMessage={(id, message) => {
+              const post = bulletinPosts.items.find((item) => item.id === id);
+              if (!post) return;
+              bulletinPosts.update(id, {
+                messages: [
+                  ...(post.messages ?? []),
+                  {
+                    id: crypto.randomUUID(),
+                    author_id: profile.user_id,
+                    author_name: profile.naam_of_bijnaam,
+                    author_house_number: profile.huisnummer,
+                    message,
+                    aangemaakt_op: new Date().toISOString(),
+                  },
+                ],
+              });
+            }}
+            onUpdateMessage={(id, messageId, message) => {
+              const post = bulletinPosts.items.find((item) => item.id === id);
+              if (!post) return;
+              bulletinPosts.update(id, {
+                messages: (post.messages ?? []).map((item) => (item.id === messageId && item.author_id === profile.user_id ? { ...item, message } : item)),
+              });
+            }}
+            onDeleteMessage={(id, messageId) => {
+              const post = bulletinPosts.items.find((item) => item.id === id);
+              if (!post) return;
+              bulletinPosts.update(id, {
+                messages: (post.messages ?? []).filter((item) => item.id !== messageId || (item.author_id !== profile.user_id && profile.rol !== "admin")),
+              });
             }}
           />
         ))}

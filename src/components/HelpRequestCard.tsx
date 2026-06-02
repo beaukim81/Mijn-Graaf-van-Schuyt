@@ -34,7 +34,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
   }
 
   return (
-    <article className="item-card">
+    <article className="item-card" id={`hulp-${request.id}`}>
       <div className="item-card__header">
         <div>
           <p className="chip">{request.categorie}</p>
