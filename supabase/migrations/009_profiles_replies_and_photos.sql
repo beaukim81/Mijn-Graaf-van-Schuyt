@@ -107,9 +107,13 @@ to authenticated
 using (author_id = auth.uid() or public.is_admin());
 
 drop policy if exists "Betrokkenen lezen prikbordberichten" on public.bulletin_messages;
+drop policy if exists "Betrokkenen lezen prikbordreacties" on public.bulletin_messages;
 drop policy if exists "Bewoners plaatsen prikbordberichtreactie" on public.bulletin_messages;
+drop policy if exists "Bewoners plaatsen prikbordreacties" on public.bulletin_messages;
 drop policy if exists "Schrijver wijzigt eigen prikbordberichtreactie" on public.bulletin_messages;
+drop policy if exists "Schrijver wijzigt eigen prikbordreactie" on public.bulletin_messages;
 drop policy if exists "Schrijver of admin verwijdert prikbordberichtreactie" on public.bulletin_messages;
+drop policy if exists "Schrijver of admin verwijdert prikbordreactie" on public.bulletin_messages;
 
 create policy "Bewoners lezen prikbordberichten"
 on public.bulletin_messages for select
