@@ -39,7 +39,7 @@ function readDismissed(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bulletinPosts, helpRequests, profile } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, helpRequests, profile } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -87,6 +87,16 @@ export function AppLayout() {
   );
 
   const personalNotifications = useMemo(() => {
+    const buildingNotifications = buildingAnnouncements.items
+      .filter((announcement) => announcement.importance !== "normaal")
+      .map((announcement) => ({
+        id: `building-${announcement.id}-${announcement.updated_at}`,
+        date: Date.parse(announcement.updated_at) || Date.parse(announcement.event_date ?? "") || 0,
+        title: `Algemene mededeling: ${announcement.titel}`,
+        description: announcement.inhoud,
+        to: paths.home,
+      }));
+
     const helpNotifications = helpRequests.items.flatMap((request) => {
       if (request.aangemaakt_door !== profile.user_id) return [];
       return request.messages
@@ -113,10 +123,10 @@ export function AppLayout() {
         }));
     });
 
-    return [...helpNotifications, ...bulletinNotifications]
+    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [bulletinPosts.items, dismissedNotifications, helpRequests.items, profile.user_id]);
+  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, helpRequests.items, profile.user_id]);
 
   function dismissNotification(id: string) {
     setDismissedNotifications((current) => {

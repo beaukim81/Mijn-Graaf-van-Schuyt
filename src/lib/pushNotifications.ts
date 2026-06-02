@@ -85,8 +85,17 @@ export async function enablePushNotifications(profile: Profile, preference: Noti
   await saveNotificationPreference(preference);
 
   if (isSupabaseConfigured && supabase) {
-    await supabase.from("push_subscriptions").upsert(storedSubscription, { onConflict: "endpoint" });
+    const { error } = await supabase.from("push_subscriptions").upsert(storedSubscription, { onConflict: "endpoint" });
+    if (error) throw error;
   }
+
+  await registration.showNotification("Pushmeldingen staan aan", {
+    body: "Je ontvangt nu belangrijke mededelingen en persoonlijke meldingen.",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: "push-enabled",
+    data: { url: "/profiel" },
+  });
 
   return subscription;
 }
@@ -107,7 +116,7 @@ export async function notifyBuildingAnnouncement(announcement: BuildingAnnouncem
   if (!announcement.notify_all || announcement.importance === "normaal") return;
 
   const urgent = announcement.importance === "urgent";
-  await supabase.functions.invoke("send-push-notification", {
+  const { data, error } = await supabase.functions.invoke("send-push-notification", {
     body: {
       kind: "building_announcement",
       audience: "all",
@@ -123,12 +132,14 @@ export async function notifyBuildingAnnouncement(announcement: BuildingAnnouncem
       importance: announcement.importance,
     },
   });
+  if (error) throw error;
+  return data as { sent?: number; skipped?: string } | undefined;
 }
 
 export async function notifyUser(userId: string, payload: { title: string; body: string; url: string; category: "personal" | "help" | "report" | "knowledge" | "bulletin" }) {
   if (!supabase || !isSupabaseConfigured) return;
 
-  await supabase.functions.invoke("send-push-notification", {
+  const { data, error } = await supabase.functions.invoke("send-push-notification", {
     body: {
       audience: "user",
       user_id: userId,
@@ -139,4 +150,6 @@ export async function notifyUser(userId: string, payload: { title: string; body:
       importance: "normaal",
     },
   });
+  if (error) throw error;
+  return data as { sent?: number; skipped?: string } | undefined;
 }

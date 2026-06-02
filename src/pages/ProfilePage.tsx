@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useAppData } from "../lib/AppDataContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../lib/AuthContext";
-import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
+import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
 
 export function ProfilePage() {
@@ -38,6 +38,21 @@ export function ProfilePage() {
   async function disablePush() {
     await disablePushNotifications(profile);
     setPushMessage("Pushmeldingen zijn uitgezet op dit apparaat.");
+  }
+
+  async function sendTestPush() {
+    try {
+      setPushMessage("");
+      const result = await notifyUser(profile.user_id, {
+        title: "Testmelding Graaf van Schuyt",
+        body: "Deze testmelding werkt via Supabase en je telefoon.",
+        url: "/profiel",
+        category: "personal",
+      });
+      setPushMessage((result?.sent ?? 0) > 0 ? "Testmelding is verstuurd." : "Testmelding kon niet worden bezorgd. Zet pushmeldingen eerst aan op dit apparaat.");
+    } catch (error) {
+      setPushMessage(error instanceof Error ? error.message : "Testmelding versturen is niet gelukt.");
+    }
   }
 
   return (
@@ -98,6 +113,9 @@ export function ProfilePage() {
           </button>
           <button className="button button--soft" onClick={disablePush} type="button">
             Uitzetten op dit apparaat
+          </button>
+          <button className="button button--soft" onClick={sendTestPush} type="button">
+            Testmelding sturen
           </button>
         </div>
         {pushMessage && <p className="muted">{pushMessage}</p>}
