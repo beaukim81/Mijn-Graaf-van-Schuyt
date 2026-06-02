@@ -71,7 +71,7 @@ const blankAnnouncement = {
 
 export function AdminPage() {
   const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, reports } = useAppData();
-  const [activeTab, setActiveTab] = useState<AdminTab>("kennisbank");
+  const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);

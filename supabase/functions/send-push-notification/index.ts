@@ -5,6 +5,7 @@ import webpush from "npm:web-push@3.6.7";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Content-Type": "application/json",
 };
 
 type PushRequest = {
@@ -25,8 +26,6 @@ const vapidSubject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:beheer@graafvansch
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-
 function preferenceColumn(category?: PushRequest["category"]) {
   if (category === "building") return "building_notifications";
   if (category === "help") return "help_notifications";
@@ -38,10 +37,19 @@ function preferenceColumn(category?: PushRequest["category"]) {
 
 serve(async (request) => {
   if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
   }
 
   try {
+    if (!supabaseUrl || !serviceRoleKey) {
+      return new Response(JSON.stringify({ error: "Supabase secrets ontbreken voor de pushfunctie." }), { status: 500, headers: corsHeaders });
+    }
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      return new Response(JSON.stringify({ error: "VAPID keys ontbreken in Supabase Edge Function secrets." }), { status: 500, headers: corsHeaders });
+    }
+
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+
     const payload = (await request.json()) as PushRequest;
     const authHeader = request.headers.get("Authorization") ?? "";
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
@@ -49,7 +57,7 @@ serve(async (request) => {
     });
     const { data: userData, error: userError } = await userClient.auth.getUser();
     if (userError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Niet ingelogd." }), { status: 401, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: "Niet ingelogd." }), { status: 401, headers: corsHeaders });
     }
 
     if (payload.audience === "all") {
@@ -132,12 +140,12 @@ serve(async (request) => {
     }
 
     return new Response(JSON.stringify({ sent: results.filter((result) => result.status === "fulfilled").length }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Onbekende fout." }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: corsHeaders,
     });
   }
 });

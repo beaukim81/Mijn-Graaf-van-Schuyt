@@ -12,6 +12,16 @@ export const defaultNotificationPreferences: Omit<NotificationPreference, "id" |
 
 const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
+async function invokePushFunction(body: Record<string, unknown>) {
+  if (!supabase || !isSupabaseConfigured) return undefined;
+
+  const { data, error } = await supabase.functions.invoke("send-push-notification", { body });
+  if (error) {
+    throw new Error(error.message || "Pushmelding versturen is niet gelukt.");
+  }
+  return data as { sent?: number; skipped?: string; error?: string } | undefined;
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -116,40 +126,32 @@ export async function notifyBuildingAnnouncement(announcement: BuildingAnnouncem
   if (!announcement.notify_all || announcement.importance === "normaal") return;
 
   const urgent = announcement.importance === "urgent";
-  const { data, error } = await supabase.functions.invoke("send-push-notification", {
-    body: {
-      kind: "building_announcement",
-      audience: "all",
-      announcement_id: announcement.id,
-      title: isUpdate ? "Melding bijgewerkt" : urgent ? "Urgente melding Graaf van Schuyt" : "Nieuwe melding Graaf van Schuyt",
-      body: isUpdate
-        ? `Een belangrijke mededeling is bijgewerkt: ${announcement.titel}`
-        : urgent
-          ? `${announcement.titel}\nBekijk de app voor meer informatie.`
-          : `Er is een belangrijke mededeling geplaatst: ${announcement.titel}`,
-      url: "/",
-      category: "building",
-      importance: announcement.importance,
-    },
+  return invokePushFunction({
+    kind: "building_announcement",
+    audience: "all",
+    announcement_id: announcement.id,
+    title: isUpdate ? "Melding bijgewerkt" : urgent ? "Urgente melding Graaf van Schuyt" : "Nieuwe melding Graaf van Schuyt",
+    body: isUpdate
+      ? `Een belangrijke mededeling is bijgewerkt: ${announcement.titel}`
+      : urgent
+        ? `${announcement.titel}\nBekijk de app voor meer informatie.`
+        : `Er is een belangrijke mededeling geplaatst: ${announcement.titel}`,
+    url: "/",
+    category: "building",
+    importance: announcement.importance,
   });
-  if (error) throw error;
-  return data as { sent?: number; skipped?: string } | undefined;
 }
 
 export async function notifyUser(userId: string, payload: { title: string; body: string; url: string; category: "personal" | "help" | "report" | "knowledge" | "bulletin" }) {
   if (!supabase || !isSupabaseConfigured) return;
 
-  const { data, error } = await supabase.functions.invoke("send-push-notification", {
-    body: {
-      audience: "user",
-      user_id: userId,
-      title: payload.title,
-      body: payload.body,
-      url: payload.url,
-      category: payload.category,
-      importance: "normaal",
-    },
+  return invokePushFunction({
+    audience: "user",
+    user_id: userId,
+    title: payload.title,
+    body: payload.body,
+    url: payload.url,
+    category: payload.category,
+    importance: "normaal",
   });
-  if (error) throw error;
-  return data as { sent?: number; skipped?: string } | undefined;
 }
