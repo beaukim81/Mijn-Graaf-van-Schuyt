@@ -37,6 +37,11 @@ function optionalField(key: string, value: unknown) {
   return value == null || value === "" ? {} : { [key]: value };
 }
 
+function textArray(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.map(String).filter(Boolean);
+}
+
 export function mapContact(row: Row): Contact {
   return {
     id: text(row.id),
@@ -84,6 +89,7 @@ export function mapReport(row: Row, confirmations = 0, declined = 0, currentUser
     confirmations,
     declined,
     current_user_response: currentUserResponse,
+    image_urls: textArray(row.image_urls),
     opgelost_op: optionalText(row.opgelost_op),
     opgelost_door: optionalText(row.opgelost_door),
     opgelost_door_naam: optionalText(row.opgelost_door_naam),
@@ -105,6 +111,7 @@ export function reportToRow(report: Report) {
     status: report.status,
     ...optionalField("aangemaakt_door_naam", report.aangemaakt_door_naam),
     ...optionalField("aangemaakt_door_huisnummer", report.aangemaakt_door_huisnummer),
+    ...(report.image_urls && report.image_urls.length > 0 ? { image_urls: report.image_urls } : {}),
     ...optionalField("opgelost_op", report.opgelost_op),
     ...optionalField("opgelost_door", report.opgelost_door),
     ...optionalField("opgelost_door_naam", report.opgelost_door_naam),
@@ -244,6 +251,7 @@ export function mapBulletinPost(row: Row, messages: BulletinMessage[]): Bulletin
     categorie: text(row.categorie) as BulletinCategory,
     contactpersoon: optionalText(row.contactpersoon),
     image_url: optionalText(row.image_url),
+    image_urls: textArray(row.image_urls),
     image_name: optionalText(row.image_name),
     aangemaakt_door: text(row.aangemaakt_door),
     aangemaakt_door_naam: optionalText(row.aangemaakt_door_naam),
@@ -262,6 +270,7 @@ export function bulletinPostToRow(post: BulletinPost) {
     categorie: post.categorie,
     contactpersoon: post.contactpersoon ?? null,
     ...optionalField("image_url", post.image_url),
+    ...(post.image_urls && post.image_urls.length > 0 ? { image_urls: post.image_urls } : {}),
     aangemaakt_door: post.aangemaakt_door,
     ...optionalField("aangemaakt_door_naam", post.aangemaakt_door_naam),
     ...optionalField("aangemaakt_door_huisnummer", post.aangemaakt_door_huisnummer),

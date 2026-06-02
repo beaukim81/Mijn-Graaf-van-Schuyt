@@ -26,6 +26,7 @@ add column if not exists oplossing_omschrijving text,
 add column if not exists rebo_melding_op timestamptz,
 add column if not exists rebo_melding_door uuid references auth.users(id) on delete set null,
 add column if not exists rebo_melding_door_naam text,
+add column if not exists image_urls jsonb not null default '[]'::jsonb,
 add column if not exists updated_at timestamptz not null default now();
 
 alter table public.knowledge_documents
@@ -50,6 +51,7 @@ alter table public.bulletin_posts
 add column if not exists contactpersoon text,
 add column if not exists image_url text,
 add column if not exists image_name text,
+add column if not exists image_urls jsonb not null default '[]'::jsonb,
 add column if not exists aangemaakt_door_naam text,
 add column if not exists aangemaakt_door_huisnummer text,
 add column if not exists status text not null default 'Actief';

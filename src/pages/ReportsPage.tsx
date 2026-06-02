@@ -4,13 +4,16 @@ import { EmptyState } from "../components/EmptyState";
 import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
+import { PhotoGrid } from "../components/PhotoGrid";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { uploadBulletinImages } from "../lib/fileUploads";
 import { residentLabel } from "../lib/residentDisplay";
 import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
 const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Appartementencomplex"];
+const maxImages = 10;
 
 export function ReportsPage() {
   const { reports, documents, profile } = useAppData();
@@ -23,6 +26,8 @@ export function ReportsPage() {
     categorie: "Mechanische ventilatie" as ReportCategory,
     locatie_in_gebouw: "",
     type_melding: "Alleen mijn woning" as ReportType,
+    image_urls: [] as string[],
+    image_files: [] as File[],
   });
 
   const filteredReports = useMemo(() => {
@@ -44,8 +49,10 @@ export function ReportsPage() {
     });
   }, [reports.items, query, category]);
 
-  function createReport() {
+  async function createReport() {
     const timestamp = new Date().toISOString();
+    const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
+    const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
     const locatie_in_gebouw =
       draft.type_melding === "Appartementencomplex"
         ? draft.locatie_in_gebouw
@@ -65,11 +72,12 @@ export function ReportsPage() {
       confirmations: 1,
       declined: 0,
       current_user_response: "confirmed",
+      image_urls: imageUrls,
     };
     reports.add(report);
     setCategory(draft.categorie);
     setQuery("");
-    setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning" });
+    setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
     setShowForm(false);
   }
 
@@ -118,7 +126,7 @@ export function ReportsPage() {
         </button>
       )}
       {showForm && (
-      <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createReport(); }}>
+      <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void createReport(); }}>
         <h3>Melding maken</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Korte titel" required />
         <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Wat merk je?" required />
@@ -137,6 +145,28 @@ export function ReportsPage() {
         {draft.type_melding === "Appartementencomplex" && (
           <input value={draft.locatie_in_gebouw} onChange={(event) => setDraft({ ...draft, locatie_in_gebouw: event.target.value })} placeholder="Locatie in het appartementencomplex" required />
         )}
+        <div className="upload-field">
+          <label className="field">
+            <span>Foto's toevoegen</span>
+          <input
+            accept="image/*"
+            multiple
+            type="file"
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? []).slice(0, Math.max(0, maxImages - draft.image_urls.length));
+              if (files.length === 0) return;
+              const previewUrls = files.map((file) => URL.createObjectURL(file));
+              setDraft({
+                ...draft,
+                image_urls: [...draft.image_urls, ...previewUrls].slice(0, maxImages),
+                image_files: [...draft.image_files, ...files].slice(0, maxImages),
+              });
+            }}
+          />
+          </label>
+          <PhotoGrid images={draft.image_urls} alt="Voorbeeld van gekozen foto's" />
+          <small>Maximaal {maxImages} foto's. Voeg alleen foto's toe die helpen om het probleem duidelijk te maken.</small>
+        </div>
         {draftRelevantDocuments.length > 0 && (
           <div className="related-box">
             <strong>Bekijk eerst deze kennisbankdocumenten</strong>

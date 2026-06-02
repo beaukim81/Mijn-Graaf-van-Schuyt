@@ -1,6 +1,7 @@
 import { Check, ClipboardCopy, Send } from "lucide-react";
 import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
+import { PhotoGrid } from "./PhotoGrid";
 import { adviceForReport, collectiveMessage, isLikelyRentalMaintenance, reboSummary, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
@@ -34,6 +35,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
       </div>
+      <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
       <p>{report.omschrijving}</p>
       <dl className="meta-list">
         <div>

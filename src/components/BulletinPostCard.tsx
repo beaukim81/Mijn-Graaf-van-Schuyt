@@ -1,6 +1,7 @@
 import { MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { BulletinPost } from "../types";
+import { PhotoGrid } from "./PhotoGrid";
 import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
@@ -39,7 +40,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </div>
-      {post.image_url && <img className="post-image" src={post.image_url} alt={post.titel} />}
+      <PhotoGrid images={post.image_urls?.length ? post.image_urls : post.image_url ? [post.image_url] : []} alt={post.titel} />
       <p>{post.omschrijving}</p>
       {post.contactpersoon && <p className="muted">Contactpersoon: {post.contactpersoon}</p>}
       {(isOwner || isAdmin) && (

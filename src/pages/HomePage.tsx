@@ -68,8 +68,7 @@ export function HomePage() {
 
       <section className="home-updates" aria-label="Belangrijke meldingen">
         <div className="section-heading">
-          <p className="eyebrow">Binnenkort belangrijk</p>
-          <h2>Praktische meldingen</h2>
+          <h2>Algemene meldingen</h2>
         </div>
         <div className="home-update-list">
           {visibleAnnouncements.map((announcement) => (

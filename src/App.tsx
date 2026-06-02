@@ -175,6 +175,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       const optionalColumns = [
         "aangemaakt_door_naam",
         "aangemaakt_door_huisnummer",
+        "image_urls",
         "opgelost_op",
         "opgelost_door",
         "opgelost_door_naam",
@@ -200,6 +201,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       const optionalColumns = [
         "aangemaakt_door_naam",
         "aangemaakt_door_huisnummer",
+        "image_urls",
         "opgelost_op",
         "opgelost_door",
         "opgelost_door_naam",
@@ -307,7 +309,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     },
     insertItem: async (item: BulletinPost) => {
       const row = bulletinPostToRow(item);
-      const optionalColumns = ["contactpersoon", "image_url", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
+      const optionalColumns = ["contactpersoon", "image_url", "image_urls", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
       const { error } = await requireSupabase().from("bulletin_posts").upsert(row);
       if (error && isMissingSchemaColumnError(error, optionalColumns)) {
         const { error: retryError } = await requireSupabase().from("bulletin_posts").upsert(omitColumns(row, optionalColumns));
@@ -318,7 +320,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     },
     updateItem: async (id: string, changes: Partial<BulletinPost>, nextItem: BulletinPost, previousItem?: BulletinPost) => {
       const row = bulletinPostToRow(nextItem);
-      const optionalColumns = ["contactpersoon", "image_url", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
+      const optionalColumns = ["contactpersoon", "image_url", "image_urls", "aangemaakt_door_naam", "aangemaakt_door_huisnummer"];
       const { error } = await requireSupabase().from("bulletin_posts").update(row).eq("id", id);
       if (error && isMissingSchemaColumnError(error, optionalColumns)) {
         const { error: retryError } = await requireSupabase().from("bulletin_posts").update(omitColumns(row, optionalColumns)).eq("id", id);

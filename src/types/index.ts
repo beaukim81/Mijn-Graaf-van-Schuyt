@@ -106,6 +106,7 @@ export interface Report {
   confirmations: number;
   declined: number;
   current_user_response?: "confirmed" | "declined";
+  image_urls?: string[];
   opgelost_op?: string;
   opgelost_door?: string;
   opgelost_door_naam?: string;
@@ -187,6 +188,7 @@ export interface BulletinPost {
   categorie: BulletinCategory;
   contactpersoon?: string;
   image_url?: string;
+  image_urls?: string[];
   image_name?: string;
   aangemaakt_door: string;
   aangemaakt_door_naam?: string;
