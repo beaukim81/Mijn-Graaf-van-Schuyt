@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import type { useLocalCollection } from "../hooks/useLocalCollection";
-import type { BulletinPost, Contact, HelpRequest, KnowledgeDocument, Profile, Report } from "../types";
+import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 export interface AppDataContextValue {
   profile: Profile;
@@ -9,6 +9,8 @@ export interface AppDataContextValue {
   documents: ReturnType<typeof useLocalCollection<KnowledgeDocument>>;
   helpRequests: ReturnType<typeof useLocalCollection<HelpRequest>>;
   bulletinPosts: ReturnType<typeof useLocalCollection<BulletinPost>>;
+  buildingAnnouncements: ReturnType<typeof useLocalCollection<BuildingAnnouncement>>;
+  notificationPreferences: ReturnType<typeof useLocalCollection<NotificationPreference>>;
 }
 
 export const AppDataContext = createContext<AppDataContextValue | null>(null);

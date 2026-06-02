@@ -61,6 +61,7 @@ export type HelpStatus = "Open" | "Iemand helpt" | "Afgerond";
 
 export type BulletinCategory = "Gratis af te halen" | "Gezocht" | "Gevonden voorwerp" | "Mededeling" | "Activiteit" | "Tip" | "Overig";
 export type BulletinStatus = "Actief" | "Afgerond" | "Verlopen";
+export type AnnouncementImportance = "normaal" | "belangrijk" | "urgent";
 
 export interface Profile {
   id: string;
@@ -189,4 +190,27 @@ export interface BulletinPost {
   status: BulletinStatus;
   aangemaakt_op: string;
   messages: BulletinMessage[];
+}
+
+export interface BuildingAnnouncement {
+  id: string;
+  titel: string;
+  inhoud: string;
+  importance: AnnouncementImportance;
+  notify_all: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+export interface NotificationPreference {
+  id: string;
+  user_id: string;
+  personal_notifications: boolean;
+  building_notifications: boolean;
+  help_notifications: boolean;
+  report_notifications: boolean;
+  knowledge_notifications: boolean;
+  bulletin_notifications: boolean;
+  updated_at: string;
 }

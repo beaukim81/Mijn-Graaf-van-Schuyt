@@ -382,6 +382,22 @@ button {
   margin: 0;
 }
 
+.home-update--belangrijk {
+  border-color: rgba(63, 111, 143, 0.28);
+}
+
+.home-update--urgent {
+  border-color: rgba(154, 52, 18, 0.34);
+  background: #fff8f3;
+}
+
+.home-update__header {
+  align-items: start;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .home-summary {
   display: grid;
   gap: 8px;
@@ -718,6 +734,35 @@ button {
   display: grid;
   gap: 13px;
   padding: 20px;
+}
+
+.settings-list {
+  display: grid;
+  gap: 8px;
+}
+
+.toggle-row {
+  align-items: center;
+  background: var(--surface-tint);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: var(--field-min-height);
+  padding: 12px 14px;
+}
+
+.toggle-row span {
+  color: var(--primary-dark);
+  font-weight: 750;
+}
+
+.toggle-row input {
+  accent-color: var(--primary);
+  flex: 0 0 22px;
+  min-height: 22px;
+  width: 22px;
 }
 
 .field {
@@ -1199,7 +1244,7 @@ summary {
 .admin-overview {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .admin-overview article {

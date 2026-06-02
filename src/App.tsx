@@ -25,6 +25,8 @@ function AppDataProvider({ children }: { children: ReactNode }) {
   const documents = useLocalCollection(mock.knowledgeDocuments, "mijn-graaf-van-schuyt:knowledge-documents");
   const helpRequests = useLocalCollection(mock.helpRequests, "mijn-graaf-van-schuyt:help-requests");
   const bulletinPosts = useLocalCollection(mock.bulletinPosts, "mijn-graaf-van-schuyt:bulletin-posts");
+  const buildingAnnouncements = useLocalCollection(mock.buildingAnnouncements, "mijn-graaf-van-schuyt:building-announcements");
+  const notificationPreferences = useLocalCollection(mock.notificationPreferences, "mijn-graaf-van-schuyt:notification-preferences");
 
   if (configured && loading) {
     return <LoadingState />;
@@ -45,6 +47,8 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     documents,
     helpRequests,
     bulletinPosts,
+    buildingAnnouncements,
+    notificationPreferences,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

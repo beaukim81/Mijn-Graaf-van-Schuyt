@@ -30,3 +30,49 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
+
+self.addEventListener("push", (event) => {
+  const fallback = {
+    title: "Mijn Graaf van Schuyt",
+    body: "Er is een nieuwe melding in de bewonersapp.",
+    url: "/",
+  };
+
+  let data = fallback;
+  try {
+    data = event.data ? event.data.json() : fallback;
+  } catch {
+    data = fallback;
+  }
+  const title = data.title || fallback.title;
+  const options = {
+    body: data.body || fallback.body,
+    data: {
+      url: data.url || fallback.url,
+    },
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: data.tag || "mijn-graaf-van-schuyt",
+    renotify: Boolean(data.renotify),
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || "/", self.location.origin).href;
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        const existingClient = clients.find((client) => client.url.startsWith(self.location.origin));
+        if (existingClient) {
+          existingClient.focus();
+          return existingClient.navigate(targetUrl);
+        }
+        return self.clients.openWindow(targetUrl);
+      }),
+  );
+});

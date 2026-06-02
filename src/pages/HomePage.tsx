@@ -1,22 +1,13 @@
-const importantUpdates = [
-  {
-    date: "12 juni",
-    title: "Glazenwasser komt langs",
-    tip: "Doe ramen en deuren op tijd dicht en haal spullen van de vensterbank waar nodig.",
-  },
-  {
-    date: "16 juni",
-    title: "Schoonmaak parkeergarage",
-    tip: "Zet de auto bij voorkeur de avond ervoor al buiten de garage.",
-  },
-  {
-    date: "22 juni",
-    title: "Fietsencontrole fietsenhok",
-    tip: "Controleer of je fiets herkenbaar is en haal oude of ongebruikte fietsen op tijd weg.",
-  },
-];
+import { StatusBadge } from "../components/StatusBadge";
+import { useAppData } from "../lib/AppDataContext";
+
+function announcementDate(value: string) {
+  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(value));
+}
 
 export function HomePage() {
+  const { buildingAnnouncements } = useAppData();
+
   return (
     <section className="page-stack">
       <section className="home-welcome" aria-label="Welkom">
@@ -37,12 +28,17 @@ export function HomePage() {
           <h2>Praktische meldingen</h2>
         </div>
         <div className="home-update-list">
-          {importantUpdates.map((update) => (
-            <article className="home-update" key={update.title}>
-              <time>{update.date}</time>
+          {buildingAnnouncements.items.map((announcement) => (
+            <article className={`home-update home-update--${announcement.importance}`} key={announcement.id}>
+              <time>{announcementDate(announcement.updated_at)}</time>
               <div>
-                <h3>{update.title}</h3>
-                <p>{update.tip}</p>
+                <div className="home-update__header">
+                  <h3>{announcement.titel}</h3>
+                  {announcement.importance !== "normaal" && (
+                    <StatusBadge tone={announcement.importance === "urgent" ? "warning" : "soft"}>{announcement.importance}</StatusBadge>
+                  )}
+                </div>
+                <p>{announcement.inhoud}</p>
               </div>
             </article>
           ))}

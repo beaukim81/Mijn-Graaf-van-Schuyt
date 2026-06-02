@@ -1,4 +1,4 @@
-import type { BulletinPost, Contact, HelpRequest, KnowledgeDocument, Profile, Report } from "../types";
+import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 const now = new Date().toISOString();
 
@@ -376,5 +376,52 @@ export const bulletinPosts: BulletinPost[] = [
         aangemaakt_op: now,
       },
     ],
+  },
+];
+
+export const buildingAnnouncements: BuildingAnnouncement[] = [
+  {
+    id: "announcement-window-cleaner",
+    titel: "Glazenwasser komt langs",
+    inhoud: "Doe ramen en deuren op tijd dicht en haal spullen van de vensterbank waar nodig.",
+    importance: "belangrijk",
+    notify_all: true,
+    created_at: now,
+    updated_at: now,
+    created_by: "demo-user",
+  },
+  {
+    id: "announcement-garage-cleaning",
+    titel: "Schoonmaak parkeergarage",
+    inhoud: "Zet de auto bij voorkeur de avond ervoor al buiten de garage.",
+    importance: "normaal",
+    notify_all: false,
+    created_at: now,
+    updated_at: now,
+    created_by: "demo-user",
+  },
+  {
+    id: "announcement-bike-check",
+    titel: "Fietsencontrole fietsenhok",
+    inhoud: "Controleer of je fiets herkenbaar is en haal oude of ongebruikte fietsen op tijd weg.",
+    importance: "normaal",
+    notify_all: false,
+    created_at: now,
+    updated_at: now,
+    created_by: "demo-user",
+  },
+];
+
+export const notificationPreferences: NotificationPreference[] = [
+  {
+    id: "demo-user",
+    user_id: "demo-user",
+    personal_notifications: true,
+    building_notifications: true,
+    help_notifications: true,
+    report_notifications: true,
+    knowledge_notifications: true,
+    bulletin_notifications: false,
+    updated_at: now,
   },
 ];

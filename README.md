@@ -16,6 +16,7 @@ npm install
 ```bash
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
+VITE_VAPID_PUBLIC_KEY=
 ```
 
 4. Start de app:
@@ -58,7 +59,10 @@ Voer het schema uit via:
 supabase db push
 ```
 
-of plak `supabase/migrations/001_initial_schema.sql` in de SQL editor van Supabase.
+of plak de migraties in volgorde in de SQL editor van Supabase:
+
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/migrations/002_push_notifications.sql`
 
 De migratie bevat:
 
@@ -71,11 +75,40 @@ De migratie bevat:
 - `help_requests`
 - `help_offers`
 - `bulletin_posts`
+- `push_subscriptions`
+- `notification_preferences`
+- `building_announcements`
+- `bulletin_messages`
 - Row Level Security policies
 - startdata voor contacten en kennisbank
 - automatische profielaanmaak bij nieuwe accounts
 
 PDF-bestanden voor kennisbankdocumenten kunnen in Supabase Storage worden geplaatst. Sla de publieke of ondertekende bestandslink op in `pdf_url`.
+
+## Web push notificaties
+
+De app gebruikt de Web Push API met VAPID keys en de bestaande service worker. Er is geen OneSignal of andere externe notificatiedienst nodig.
+
+Frontend/Vercel:
+
+- `VITE_VAPID_PUBLIC_KEY`
+
+Supabase Edge Function secrets:
+
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT`, bijvoorbeeld `mailto:jouw@emailadres.nl`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_ANON_KEY`
+
+Deploy de functie:
+
+```bash
+supabase functions deploy send-push-notification
+```
+
+Pushmeldingen worden alleen verstuurd bij persoonlijke betrokkenheid of wanneer een beheerder een algemene melding op `belangrijk` of `urgent` zet en `notify_all` inschakelt.
 
 ## Vercel
 
@@ -87,6 +120,7 @@ Maak in Vercel een nieuw project aan vanuit GitHub en gebruik deze instellingen:
 - Environment variables:
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+  - `VITE_VAPID_PUBLIC_KEY`
 
 Commit geen `.env.local` of secrets naar GitHub.
 
@@ -104,4 +138,4 @@ Kennisbankdocumenten, tags, FAQ-vragen en lokale PDF-links staan in `src/data/mo
 
 ## MVP-grenzen
 
-Deze versie bevat bewust geen groepschat, openbare reacties, likes, pushnotificaties, social feed of volledig ticketsysteem. De toon blijft praktisch, rustig en de-escalerend.
+Deze versie bevat bewust geen groepschat, openbare reacties, likes, social feed of volledig ticketsysteem. Pushnotificaties zijn beperkt tot relevante persoonlijke meldingen en belangrijke algemene gebouwmeldingen. De toon blijft praktisch, rustig en de-escalerend.
