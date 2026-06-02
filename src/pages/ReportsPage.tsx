@@ -3,9 +3,10 @@ import { CategoryFilter } from "../components/CategoryFilter";
 import { EmptyState } from "../components/EmptyState";
 import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
+import { StatusBadge } from "../components/StatusBadge";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
-import type { Report, ReportCategory, ReportType } from "../types";
+import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
 const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Appartementencomplex"];
@@ -180,13 +181,35 @@ export function ReportsPage() {
             <h2>Opgeloste meldingen</h2>
             <p>Deze meldingen zijn afgerond, maar blijven terug te vinden met de oplossing erbij.</p>
           </div>
-          <div className="card-list">
+          <div className="resolved-report-list">
             {resolvedReports.map((report) => (
-              <ReportCard key={report.id} report={report} documents={documents.items} />
+              <ResolvedReportItem key={report.id} report={report} documents={documents.items} />
             ))}
           </div>
         </section>
       )}
     </section>
+  );
+}
+
+function ResolvedReportItem({ report, documents }: { report: Report; documents: KnowledgeDocument[] }) {
+  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${report.opgelost_door_naam}` : "Opgelost";
+  const solution = report.oplossing_omschrijving || "Er is geen extra toelichting toegevoegd.";
+
+  return (
+    <details className="resolved-report">
+      <summary>
+        <span className="resolved-report__main">
+          <span className="chip">{report.categorie}</span>
+          <strong>{report.titel}</strong>
+          <small>{solution}</small>
+        </span>
+        <span className="resolved-report__meta">
+          <StatusBadge tone="good">Opgelost</StatusBadge>
+          <small>{solvedBy}</small>
+        </span>
+      </summary>
+      <ReportCard report={report} documents={documents} />
+    </details>
   );
 }

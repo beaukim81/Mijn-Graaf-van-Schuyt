@@ -281,6 +281,70 @@ button {
   margin: 0;
 }
 
+.section-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.section-heading h2 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.home-updates {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.home-update-list {
+  display: grid;
+  gap: 10px;
+}
+
+.home-update {
+  align-items: start;
+  background: var(--surface-tint);
+  border: 1px solid rgba(36, 93, 83, 0.08);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 76px 1fr;
+  padding: 13px;
+}
+
+.home-update time {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: var(--primary-dark);
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 48px;
+  padding: 8px;
+  text-align: center;
+}
+
+.home-update h3 {
+  font-size: 1rem;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+.home-update p {
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
 .home-summary {
   display: grid;
   gap: 8px;
@@ -763,6 +827,75 @@ details {
 summary {
   cursor: pointer;
   font-weight: 750;
+}
+
+.resolved-report-list {
+  display: grid;
+  gap: 10px;
+}
+
+.resolved-report {
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  padding: 0;
+}
+
+.resolved-report summary {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  list-style: none;
+  padding: 14px;
+}
+
+.resolved-report summary::-webkit-details-marker {
+  display: none;
+}
+
+.resolved-report summary::after {
+  color: var(--primary-dark);
+  content: "Lees meer";
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.resolved-report[open] summary::after {
+  content: "Sluiten";
+}
+
+.resolved-report__main,
+.resolved-report__meta {
+  display: grid;
+  gap: 5px;
+}
+
+.resolved-report__main strong {
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.resolved-report__main small,
+.resolved-report__meta small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.resolved-report > .item-card {
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0 0 14px 14px;
+  box-shadow: none;
+}
+
+@media (min-width: 560px) {
+  .resolved-report summary {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .resolved-report__meta {
+    justify-items: end;
+  }
 }
 
 .neighbor-box,
