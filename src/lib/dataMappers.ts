@@ -252,7 +252,6 @@ export function bulletinPostToRow(post: BulletinPost) {
     categorie: post.categorie,
     contactpersoon: post.contactpersoon ?? null,
     image_url: post.image_url ?? null,
-    image_name: post.image_name ?? null,
     aangemaakt_door: post.aangemaakt_door,
     status: post.status,
   };
