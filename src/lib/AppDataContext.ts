@@ -1,16 +1,23 @@
 import { createContext, useContext } from "react";
-import type { useLocalCollection } from "../hooks/useLocalCollection";
 import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+
+export interface DataCollection<T extends { id: string }> {
+  items: T[];
+  add: (item: T) => void;
+  update: (id: string, changes: Partial<T>) => void;
+  remove: (id: string) => void;
+  replace: (items: T[]) => void;
+}
 
 export interface AppDataContextValue {
   profile: Profile;
-  contacts: ReturnType<typeof useLocalCollection<Contact>>;
-  reports: ReturnType<typeof useLocalCollection<Report>>;
-  documents: ReturnType<typeof useLocalCollection<KnowledgeDocument>>;
-  helpRequests: ReturnType<typeof useLocalCollection<HelpRequest>>;
-  bulletinPosts: ReturnType<typeof useLocalCollection<BulletinPost>>;
-  buildingAnnouncements: ReturnType<typeof useLocalCollection<BuildingAnnouncement>>;
-  notificationPreferences: ReturnType<typeof useLocalCollection<NotificationPreference>>;
+  contacts: DataCollection<Contact>;
+  reports: DataCollection<Report>;
+  documents: DataCollection<KnowledgeDocument>;
+  helpRequests: DataCollection<HelpRequest>;
+  bulletinPosts: DataCollection<BulletinPost>;
+  buildingAnnouncements: DataCollection<BuildingAnnouncement>;
+  notificationPreferences: DataCollection<NotificationPreference>;
 }
 
 export const AppDataContext = createContext<AppDataContextValue | null>(null);

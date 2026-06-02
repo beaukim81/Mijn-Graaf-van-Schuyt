@@ -86,6 +86,7 @@ export function AdminPage() {
     () => buildingAnnouncements.items.filter((item) => item.importance !== "normaal").length,
     [buildingAnnouncements.items],
   );
+  const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
 
   if (profile.rol !== "admin") {
     return <EmptyState title="Geen toegang" description="Deze pagina is alleen bedoeld voor beheerders." />;
@@ -226,7 +227,7 @@ export function AdminPage() {
       <div className="admin-overview" aria-label="Beheeroverzicht">
         <AdminMetric label="Kennis te controleren" value={pendingDocuments} />
         <AdminMetric label="Open meldingen" value={openReports} />
-        <AdminMetric label="Prikbord actief" value={activePosts} />
+        <AdminMetric label="Actieve prikbordberichten" value={activePosts} />
         <AdminMetric label="Belangrijke mededelingen" value={importantAnnouncements} />
       </div>
 
@@ -406,7 +407,7 @@ export function AdminPage() {
 
       {activeTab === "prikbord" && (
         <section className="admin-section card-list compact-list">
-          {bulletinPosts.items.map((post: BulletinPost) => (
+          {activeBulletinPosts.map((post: BulletinPost) => (
             <article className="item-card admin-list-card" key={post.id}>
               <div className="item-card__header">
                 <div>
@@ -417,11 +418,12 @@ export function AdminPage() {
               </div>
               <p>{post.omschrijving}</p>
               <div className="admin-row">
-                <button className="text-button" onClick={() => bulletinPosts.update(post.id, { status: "Afgerond" })} type="button">Markeer afgerond</button>
+                <button className="text-button" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden en verwijderen</button>
                 <button className="text-button danger" onClick={() => bulletinPosts.remove(post.id)} type="button">Verwijderen</button>
               </div>
             </article>
           ))}
+          {activeBulletinPosts.length === 0 && <EmptyState title="Geen actieve prikbordberichten" description="Er staan nu geen actieve berichten op het prikbord." />}
         </section>
       )}
 
