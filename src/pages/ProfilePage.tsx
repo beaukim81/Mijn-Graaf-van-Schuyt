@@ -7,8 +7,9 @@ import type { NotificationPreference } from "../types";
 
 export function ProfilePage() {
   const { notificationPreferences, profile } = useAppData();
-  const { configured, signOut } = useAuth();
+  const { configured, deleteAccount, signOut } = useAuth();
   const [pushMessage, setPushMessage] = useState("");
+  const [accountMessage, setAccountMessage] = useState("");
   const storedPreference = useMemo(
     () => notificationPreferences.items.find((item) => item.user_id === profile.user_id),
     [notificationPreferences.items, profile.user_id],
@@ -55,6 +56,17 @@ export function ProfilePage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm("Weet je zeker dat je je account volledig wilt verwijderen? Je profiel en gekoppelde gegevens worden verwijderd. Dit kun je niet terugdraaien.");
+    if (!confirmed) return;
+    try {
+      setAccountMessage("");
+      await deleteAccount();
+    } catch (error) {
+      setAccountMessage(error instanceof Error ? error.message : "Account verwijderen is niet gelukt.");
+    }
+  }
+
   return (
     <section className="page-stack">
       <div className="page-heading">
@@ -88,6 +100,24 @@ export function ProfilePage() {
           <p className="muted">Zodra Supabase is gekoppeld, beheer je dit profiel na inloggen met je eigen account.</p>
         )}
       </article>
+
+      {configured && (
+        <article className="item-card">
+          <div className="item-card__header">
+            <div>
+              <p className="chip">Account</p>
+              <h2>Account verwijderen</h2>
+            </div>
+            <StatusBadge tone="warning">Let op</StatusBadge>
+          </div>
+          <p>Wil je de app niet meer gebruiken, dan kun je je account volledig verwijderen.</p>
+          <p className="muted">Je profiel en gekoppelde gegevens worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+          <button className="button button--soft" onClick={handleDeleteAccount} type="button">
+            Account verwijderen
+          </button>
+          {accountMessage && <p className="muted">{accountMessage}</p>}
+        </article>
+      )}
 
       <article className="item-card">
         <div className="item-card__header">

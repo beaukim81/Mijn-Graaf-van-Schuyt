@@ -1,5 +1,6 @@
 import { Download, FileText, Tag } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
+import { PhotoGrid } from "./PhotoGrid";
 import { StatusBadge } from "./StatusBadge";
 
 interface KnowledgeDocumentCardProps {
@@ -20,6 +21,8 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
         <FileText aria-hidden="true" size={16} /> {document.documenttype}
       </p>
       <p>{document.korte_samenvatting}</p>
+      {document.uitgebreide_uitleg && <p>{document.uitgebreide_uitleg}</p>}
+      <PhotoGrid images={document.image_urls ?? []} alt={document.titel} />
       {document.leverancier_of_fabrikant && <p className="muted">Leverancier of fabrikant: {document.leverancier_of_fabrikant}</p>}
       <div className="tag-row tag-row--preview" aria-label="Belangrijkste zoekwoorden">
         {document.tags.slice(0, 3).map((tag) => (
@@ -47,14 +50,16 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
         </div>
       </details>
       <p className="muted">Laatst bijgewerkt: {new Date(document.bijgewerkt_op).toLocaleDateString("nl-NL")}</p>
-      <div className="action-row">
-        <a className="button button--soft" href={document.pdf_url} target="_blank" rel="noreferrer">
-          <FileText aria-hidden="true" size={18} /> Open PDF
-        </a>
-        <a className="button button--soft" href={document.pdf_url} download>
-          <Download aria-hidden="true" size={18} /> Download PDF
-        </a>
-      </div>
+      {document.pdf_url && (
+        <div className="action-row">
+          <a className="button button--soft" href={document.pdf_url} target="_blank" rel="noreferrer">
+            <FileText aria-hidden="true" size={18} /> Open PDF
+          </a>
+          <a className="button button--soft" href={document.pdf_url} download>
+            <Download aria-hidden="true" size={18} /> Download PDF
+          </a>
+        </div>
+      )}
     </article>
   );
 }

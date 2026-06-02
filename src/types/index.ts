@@ -129,6 +129,8 @@ export interface KnowledgeDocument {
   documenttype: KnowledgeDocumentType;
   korte_samenvatting: string;
   pdf_url: string;
+  uitgebreide_uitleg?: string;
+  image_urls?: string[];
   tags: string[];
   leverancier_of_fabrikant?: string;
   faq: KnowledgeFaq[];

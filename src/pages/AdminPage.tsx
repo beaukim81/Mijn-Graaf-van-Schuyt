@@ -56,7 +56,9 @@ const blankDocument = {
   categorie: "Mechanische ventilatie" as KnowledgeCategory,
   documenttype: "Bewonerstip" as KnowledgeDocumentType,
   korte_samenvatting: "",
+  uitgebreide_uitleg: "",
   pdf_url: "",
+  image_urls: [] as string[],
   tags: "",
   leverancier_of_fabrikant: "",
   status: "Concept" as KnowledgeDocumentStatus,
@@ -116,7 +118,9 @@ export function AdminPage() {
       categorie: document.categorie,
       documenttype: document.documenttype,
       korte_samenvatting: document.korte_samenvatting,
+      uitgebreide_uitleg: document.uitgebreide_uitleg ?? "",
       pdf_url: document.pdf_url,
+      image_urls: document.image_urls ?? [],
       tags: document.tags.join(", "),
       leverancier_of_fabrikant: document.leverancier_of_fabrikant ?? "",
       status: document.status,
@@ -136,7 +140,9 @@ export function AdminPage() {
       categorie: documentDraft.categorie,
       documenttype: documentDraft.documenttype,
       korte_samenvatting: documentDraft.korte_samenvatting,
+      uitgebreide_uitleg: documentDraft.uitgebreide_uitleg,
       pdf_url: documentDraft.pdf_url,
+      image_urls: documentDraft.image_urls,
       tags: documentDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       leverancier_of_fabrikant: documentDraft.leverancier_of_fabrikant,
       status: documentDraft.status,
@@ -304,7 +310,8 @@ export function AdminPage() {
               {documentStatuses.map((item) => <option key={item}>{item}</option>)}
             </select>
             <textarea value={documentDraft.korte_samenvatting} onChange={(event) => setDocumentDraft({ ...documentDraft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
-            <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required />
+            <textarea value={documentDraft.uitgebreide_uitleg} onChange={(event) => setDocumentDraft({ ...documentDraft, uitgebreide_uitleg: event.target.value })} placeholder="Vrije uitleg of bewonerstip" />
+            <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required={documentDraft.documenttype === "Officiële handleiding"} />
             <input value={documentDraft.tags} onChange={(event) => setDocumentDraft({ ...documentDraft, tags: event.target.value })} placeholder="Tags, gescheiden door komma's" />
             <input value={documentDraft.leverancier_of_fabrikant} onChange={(event) => setDocumentDraft({ ...documentDraft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
             <button className="button" type="submit">{documentDraft.id ? "Wijzigingen opslaan" : "Toevoegen"}</button>
@@ -456,6 +463,18 @@ export function AdminPage() {
                   <option value="admin">admin</option>
                 </select>
               </label>
+              {resident.user_id !== profile.user_id && (
+                <button
+                  className="text-button danger"
+                  onClick={() => {
+                    const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
+                    if (confirmed) profiles.remove(resident.id);
+                  }}
+                  type="button"
+                >
+                  Bewoner verwijderen
+                </button>
+              )}
             </article>
           ))}
           {profiles.items.length === 0 && <EmptyState title="Nog geen bewonersprofielen" description="Zodra bewoners hun account bevestigen of inloggen, verschijnt hun profiel hier." />}

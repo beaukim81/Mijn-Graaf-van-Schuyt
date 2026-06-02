@@ -158,7 +158,12 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       const { error } = await requireSupabase().from("profiles").update(row).eq("id", nextItem.id);
       if (error) throw error;
     },
-    deleteItem: async (id: string) => {
+    deleteItem: async (id: string, item?: Profile) => {
+      if (item?.user_id) {
+        const { error } = await requireSupabase().rpc("admin_delete_user", { target_user_id: item.user_id });
+        if (error) throw error;
+        return;
+      }
       const { error } = await requireSupabase().from("profiles").delete().eq("id", id);
       if (error) throw error;
     },
@@ -285,12 +290,26 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       return (data ?? []).map(mapKnowledgeDocument);
     },
     insertItem: async (item: KnowledgeDocument) => {
-      const { error } = await requireSupabase().from("knowledge_documents").upsert(knowledgeDocumentToRow(item));
-      if (error) throw error;
+      const row = knowledgeDocumentToRow(item);
+      const optionalColumns = ["uitgebreide_uitleg", "image_urls"];
+      const { error } = await requireSupabase().from("knowledge_documents").upsert(row);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await requireSupabase().from("knowledge_documents").upsert(omitColumns(row, optionalColumns));
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
     },
     updateItem: async (_id: string, _changes: Partial<KnowledgeDocument>, nextItem: KnowledgeDocument) => {
-      const { error } = await requireSupabase().from("knowledge_documents").update(knowledgeDocumentToRow(nextItem)).eq("id", nextItem.id);
-      if (error) throw error;
+      const row = knowledgeDocumentToRow(nextItem);
+      const optionalColumns = ["uitgebreide_uitleg", "image_urls"];
+      const { error } = await requireSupabase().from("knowledge_documents").update(row).eq("id", nextItem.id);
+      if (error && isMissingSchemaColumnError(error, optionalColumns)) {
+        const { error: retryError } = await requireSupabase().from("knowledge_documents").update(omitColumns(row, optionalColumns)).eq("id", nextItem.id);
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
     },
     deleteItem: async (id: string) => {
       const { error } = await requireSupabase().from("knowledge_documents").delete().eq("id", id);
