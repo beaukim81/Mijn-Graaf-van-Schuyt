@@ -551,20 +551,45 @@ button {
   width: 100%;
 }
 
-.editable-photo-grid {
-  display: grid;
-  gap: 10px;
+.editable-photo-grid__item {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-strong);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(31, 91, 80, 0.08);
+  overflow: hidden;
+  position: relative;
 }
 
-.editable-photo-grid__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.photo-grid--1 .editable-photo-grid__item {
+  aspect-ratio: 4 / 3;
 }
 
-.editable-photo-grid__actions .button {
-  min-height: 38px;
-  padding: 8px 12px;
+.photo-grid--3 .editable-photo-grid__item:first-child,
+.photo-grid--4 .editable-photo-grid__item:first-child {
+  grid-row: span 2;
+}
+
+.editable-photo-grid__item img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.editable-photo-grid__remove {
+  align-items: center;
+  background: rgba(139, 31, 31, 0.92);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(40, 24, 18, 0.22);
+  color: #fff;
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 40px;
 }
 
 .photo-viewer {
