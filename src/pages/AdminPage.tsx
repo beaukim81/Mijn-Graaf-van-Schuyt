@@ -76,10 +76,7 @@ export function AdminPage() {
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
 
-  const pendingDocuments = useMemo(
-    () => documents.items.filter((document) => document.status !== "Gepubliceerd").length,
-    [documents.items],
-  );
+  const documentCount = useMemo(() => documents.items.length, [documents.items]);
   const openReports = useMemo(() => reports.items.filter((report) => report.status !== "Opgelost").length, [reports.items]);
   const activePosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief").length, [bulletinPosts.items]);
   const contactsCount = useMemo(() => contacts.items.length, [contacts.items]);
@@ -226,15 +223,13 @@ export function AdminPage() {
   return (
     <section className="page-stack admin-page">
       <div className="page-heading">
-        <p className="eyebrow">Alleen beheer</p>
         <h2>Beheer</h2>
-        <p>Beheer inhoud op een aparte plek. De gewone bewonerspagina's blijven rustig en overzichtelijk.</p>
       </div>
 
       <div className="admin-overview" aria-label="Beheeronderdelen">
         <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
         <AdminMetric active={activeTab === "feedback"} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
-        <AdminMetric active={activeTab === "kennisbank"} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={pendingDocuments} />
+        <AdminMetric active={activeTab === "kennisbank"} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
         <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
         <AdminMetric active={activeTab === "meldingen"} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
         <AdminMetric active={activeTab === "prikbord"} label="Prikbord" onClick={() => setActiveTab("prikbord")} value={activePosts} />
