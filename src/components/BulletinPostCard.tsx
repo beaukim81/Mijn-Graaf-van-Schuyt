@@ -1,6 +1,7 @@
 import { MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { BulletinPost } from "../types";
+import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
 import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
@@ -42,7 +43,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </div>
       <PhotoGrid images={post.image_urls?.length ? post.image_urls : post.image_url ? [post.image_url] : []} alt={post.titel} />
-      <p>{post.omschrijving}</p>
+      <p><LinkifiedText text={post.omschrijving} /></p>
       {post.contactpersoon && <p className="muted">Contactpersoon: {post.contactpersoon}</p>}
       {(isOwner || isAdmin) && (
         <div className="action-row">
@@ -106,7 +107,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                   </div>
                 </div>
               ) : (
-                <p>{item.message}</p>
+                <p><LinkifiedText text={item.message} /></p>
               )}
               {(item.author_id === currentUserId || isAdmin) && editingMessageId !== item.id && (
                 <div className="message-actions">

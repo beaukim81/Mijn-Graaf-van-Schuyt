@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { LinkifiedText } from "../components/LinkifiedText";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAppData } from "../lib/AppDataContext";
 import type { BuildingAnnouncement } from "../types";
@@ -73,7 +74,7 @@ export function HomePage() {
                     <StatusBadge tone={announcement.importance === "urgent" ? "warning" : "soft"}>{announcement.importance}</StatusBadge>
                   )}
                 </div>
-                <p>{announcement.inhoud}</p>
+                <p><LinkifiedText text={announcement.inhoud} /></p>
               </div>
             </article>
           ))}

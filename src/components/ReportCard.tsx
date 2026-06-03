@@ -4,6 +4,7 @@ import type { KnowledgeDocument, Report } from "../types";
 import { PhotoGrid } from "./PhotoGrid";
 import { adviceForReport, collectiveMessage, isLikelyRentalMaintenance, reboSummary, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 import { residentLabel } from "../lib/residentDisplay";
+import { LinkifiedText } from "./LinkifiedText";
 import { StatusBadge } from "./StatusBadge";
 
 interface ReportCardProps {
@@ -18,7 +19,8 @@ interface ReportCardProps {
 }
 
 export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
-  const relatedDocuments = relevantDocuments(report.categorie, documents);
+  const relatedDocuments =
+    report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
   const showRentalMaintenanceLink = isLikelyRentalMaintenance(report);
@@ -38,7 +40,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
       </div>
       <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
-      <p>{report.omschrijving}</p>
+      <p><LinkifiedText text={report.omschrijving} /></p>
       <dl className="meta-list">
         <div>
           <dt>Locatie</dt>
@@ -123,7 +125,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
       {report.status === "Opgelost" && report.oplossing_omschrijving && (
         <aside className="related-box">
           <strong>Oplossing</strong>
-          <span>{report.oplossing_omschrijving}</span>
+          <span><LinkifiedText text={report.oplossing_omschrijving} /></span>
           {report.opgelost_door_naam && <span>Toegevoegd door {residentLabel(report.opgelost_door_naam)}</span>}
         </aside>
       )}

@@ -1,6 +1,7 @@
 import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { HelpRequest } from "../types";
+import { LinkifiedText } from "./LinkifiedText";
 import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
@@ -45,7 +46,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         </div>
         <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
       </div>
-      <p>{request.omschrijving}</p>
+      <p><LinkifiedText text={request.omschrijving} /></p>
       <div className="action-row">
         {canOfferHelp && (
         <button className="button button--soft" onClick={() => onOffer?.(request.id)} type="button">
@@ -121,7 +122,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                   </div>
                 </div>
               ) : (
-                <p>{item.message}</p>
+                <p><LinkifiedText text={item.message} /></p>
               )}
               {(item.author_id === currentUserId || isAdmin) && editingMessageId !== item.id && (
                 <div className="message-actions">

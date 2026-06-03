@@ -19,6 +19,7 @@ export function KnowledgePage() {
   const [category, setCategory] = useState<KnowledgeCategory | "Alle">("Alle");
   const [type, setType] = useState<KnowledgeDocumentType | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     titel: "",
     categorie: "Mechanische ventilatie" as KnowledgeCategory,
@@ -72,8 +73,9 @@ export function KnowledgePage() {
         return;
       }
 
+      const existingDocument = editingId ? documents.items.find((item) => item.id === editingId) : undefined;
       const document: KnowledgeDocument = {
-        id: crypto.randomUUID(),
+        id: editingId ?? crypto.randomUUID(),
         titel: draft.titel,
         categorie: draft.categorie,
         documenttype: draft.documenttype,
@@ -83,37 +85,68 @@ export function KnowledgePage() {
         image_urls: imageUrls,
         tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
         leverancier_of_fabrikant: draft.leverancier_of_fabrikant,
-        faq: draft.faq_vraag ? [{ id: crypto.randomUUID(), vraag: draft.faq_vraag }] : [],
-        toegevoegd_door: profile.user_id,
-        status: profile.rol === "admin" ? "Gepubliceerd" : "Concept",
-        aangemaakt_op: timestamp,
+        faq: draft.faq_vraag ? [{ id: existingDocument?.faq[0]?.id ?? crypto.randomUUID(), vraag: draft.faq_vraag, antwoord: existingDocument?.faq[0]?.antwoord }] : (existingDocument?.faq ?? []),
+        toegevoegd_door: existingDocument?.toegevoegd_door ?? profile.user_id,
+        status: profile.rol === "admin" ? "Gepubliceerd" : existingDocument?.status === "Gepubliceerd" ? "Te controleren" : "Concept",
+        aangemaakt_op: existingDocument?.aangemaakt_op ?? timestamp,
         bijgewerkt_op: timestamp,
       };
-      await documents.addAsync(document);
+      if (editingId) {
+        await documents.updateAsync(editingId, document);
+      } else {
+        await documents.addAsync(document);
+      }
       setCategory(draft.categorie);
       setType(draft.documenttype);
       setQuery("");
-      setDraft({
-        titel: "",
-        categorie: "Mechanische ventilatie",
-        documenttype: "Bewonerstip",
-        korte_samenvatting: "",
-        uitgebreide_uitleg: "",
-        pdf_url: "",
-        pdf_bestandsnaam: "",
-        pdf_file: undefined,
-        image_urls: [],
-        image_files: [],
-        tags: "",
-        leverancier_of_fabrikant: "",
-        faq_vraag: "",
-      });
-      setShowForm(false);
+      resetDraft();
     } catch (error) {
       setFormError(friendlyErrorMessage(error, "Document insturen lukt nu niet. Controleer het bestand en probeer het opnieuw."));
     } finally {
       setSaving(false);
     }
+  }
+
+  function resetDraft() {
+    setDraft({
+      titel: "",
+      categorie: "Mechanische ventilatie",
+      documenttype: "Bewonerstip",
+      korte_samenvatting: "",
+      uitgebreide_uitleg: "",
+      pdf_url: "",
+      pdf_bestandsnaam: "",
+      pdf_file: undefined,
+      image_urls: [],
+      image_files: [],
+      tags: "",
+      leverancier_of_fabrikant: "",
+      faq_vraag: "",
+    });
+    setEditingId(null);
+    setShowForm(false);
+    setFormError("");
+  }
+
+  function editDocument(document: KnowledgeDocument) {
+    setEditingId(document.id);
+    setDraft({
+      titel: document.titel,
+      categorie: document.categorie,
+      documenttype: document.documenttype,
+      korte_samenvatting: document.korte_samenvatting,
+      uitgebreide_uitleg: document.uitgebreide_uitleg ?? "",
+      pdf_url: document.pdf_url,
+      pdf_bestandsnaam: "",
+      pdf_file: undefined,
+      image_urls: document.image_urls ?? [],
+      image_files: [],
+      tags: document.tags.join(", "),
+      leverancier_of_fabrikant: document.leverancier_of_fabrikant ?? "",
+      faq_vraag: document.faq[0]?.vraag ?? "",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -138,7 +171,7 @@ export function KnowledgePage() {
       )}
       {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void proposeDocument(); }}>
-        <h3>Handleiding of tip delen</h3>
+        <h3>{editingId ? "Bewonerstip bewerken" : "Handleiding of tip delen"}</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as KnowledgeCategory })}>
           {knowledgeCategories.map((item) => <option key={item}>{item}</option>)}
@@ -208,13 +241,12 @@ export function KnowledgePage() {
           />
           <small>Maximaal {maxImages} foto's. Handig voor een bewonerstip zonder PDF.</small>
         </div>
-        <p className="muted">Deel een handleiding of praktische tip. Beheer kijkt mee voordat het zichtbaar wordt voor iedereen.</p>
         <input value={draft.tags} onChange={(event) => setDraft({ ...draft, tags: event.target.value })} placeholder="Zoekwoorden, gescheiden door komma's" />
         <input value={draft.leverancier_of_fabrikant} onChange={(event) => setDraft({ ...draft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
         <input value={draft.faq_vraag} onChange={(event) => setDraft({ ...draft, faq_vraag: event.target.value })} placeholder="Eerste veelgestelde vraag optioneel" />
         {formError && <p className="form-message form-message--error">{formError}</p>}
         <button className="button" disabled={saving} type="submit">{saving ? "Bezig met insturen" : "Insturen"}</button>
-        <button className="button button--soft" disabled={saving} onClick={() => setShowForm(false)} type="button">Annuleren</button>
+        <button className="button button--soft" disabled={saving} onClick={resetDraft} type="button">Annuleren</button>
       </form>
       )}
       <div className="filter-row">
@@ -225,6 +257,9 @@ export function KnowledgePage() {
           <KnowledgeDocumentCard
             key={document.id}
             document={document}
+            canManage={profile.rol === "admin" || (document.toegevoegd_door === profile.user_id && document.documenttype === "Bewonerstip")}
+            onDelete={documents.removeAsync}
+            onEdit={editDocument}
           />
         ))}
       </div>

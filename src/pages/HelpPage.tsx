@@ -155,7 +155,7 @@ export function HelpPage() {
         <input
           value={draft.titel}
           onChange={(event) => setDraft({ ...draft, titel: event.target.value })}
-          placeholder={socialCategories.includes(draft.categorie) ? "Bijvoorbeeld: samen soep eten op zondag" : "Waar heb je hulp bij nodig?"}
+          placeholder={socialCategories.includes(draft.categorie) ? "Bijvoorbeeld: samen soep eten op zondag" : "Waar gaat je bericht over?"}
           required
         />
         <textarea

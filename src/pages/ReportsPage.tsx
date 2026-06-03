@@ -43,7 +43,8 @@ export function ReportsPage() {
   }, [reports.items, query, category]);
 
   const draftLooksLikeRentalMaintenance = isLikelyRentalMaintenance(draft);
-  const draftRelevantDocuments = relevantDocuments(draft.categorie, documents.items);
+  const draftRelevantDocuments =
+    draft.type_melding === "Appartementencomplex" ? [] : relevantDocuments(draft.categorie, documents.items);
 
   const resolvedReports = useMemo(() => {
     return reports.items.filter((report) => {

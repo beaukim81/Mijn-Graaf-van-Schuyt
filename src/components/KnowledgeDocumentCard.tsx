@@ -1,13 +1,17 @@
-import { Download, FileText, Tag } from "lucide-react";
+import { Download, FileText, Pencil, Tag, Trash2 } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
+import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
 import { StatusBadge } from "./StatusBadge";
 
 interface KnowledgeDocumentCardProps {
   document: KnowledgeDocument;
+  canManage?: boolean;
+  onDelete?: (id: string) => void;
+  onEdit?: (document: KnowledgeDocument) => void;
 }
 
-export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) {
+export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }: KnowledgeDocumentCardProps) {
   return (
     <article className="item-card library-card">
       <div className="item-card__header">
@@ -20,10 +24,10 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
       <p className="muted library-card__type">
         <FileText aria-hidden="true" size={16} /> {document.documenttype}
       </p>
-      <p>{document.korte_samenvatting}</p>
-      {document.uitgebreide_uitleg && <p>{document.uitgebreide_uitleg}</p>}
+      <p><LinkifiedText text={document.korte_samenvatting} /></p>
+      {document.uitgebreide_uitleg && <p><LinkifiedText text={document.uitgebreide_uitleg} /></p>}
       <PhotoGrid images={document.image_urls ?? []} alt={document.titel} />
-      {document.leverancier_of_fabrikant && <p className="muted">Leverancier of fabrikant: {document.leverancier_of_fabrikant}</p>}
+      {document.leverancier_of_fabrikant && <p className="muted">Leverancier of fabrikant: <LinkifiedText text={document.leverancier_of_fabrikant} /></p>}
       <div className="tag-row tag-row--preview" aria-label="Belangrijkste zoekwoorden">
         {document.tags.slice(0, 3).map((tag) => (
           <span key={tag}>
@@ -44,7 +48,7 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
           {document.faq.map((item) => (
             <div key={item.id}>
               <strong>{item.vraag}</strong>
-              <p>{item.antwoord ?? "Praktische tip kan later worden toegevoegd door bewoners of beheer."}</p>
+              {item.antwoord && <p><LinkifiedText text={item.antwoord} /></p>}
             </div>
           ))}
         </div>
@@ -58,6 +62,23 @@ export function KnowledgeDocumentCard({ document }: KnowledgeDocumentCardProps) 
           <a className="button button--soft" href={document.pdf_url} download>
             <Download aria-hidden="true" size={18} /> Download PDF
           </a>
+        </div>
+      )}
+      {canManage && (
+        <div className="action-row">
+          <button className="button button--soft" onClick={() => onEdit?.(document)} type="button">
+            <Pencil aria-hidden="true" size={18} /> Bewerken
+          </button>
+          <button
+            className="button button--danger"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je deze bewonerstip wilt verwijderen?");
+              if (confirmed) onDelete?.(document.id);
+            }}
+            type="button"
+          >
+            <Trash2 aria-hidden="true" size={18} /> Verwijderen
+          </button>
         </div>
       )}
     </article>

@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
+import { LinkifiedText } from "../components/LinkifiedText";
 import { StatusBadge } from "../components/StatusBadge";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
@@ -284,7 +285,7 @@ export function AdminPage() {
                     {announcement.notify_all ? "notificatie aan" : "geen push"}
                   </StatusBadge>
                 </div>
-                <p>{announcement.inhoud}</p>
+                <p><LinkifiedText text={announcement.inhoud} /></p>
                 {announcement.event_date && <p className="muted">Datum: {new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</p>}
                 <div className="admin-row">
                   <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
@@ -330,7 +331,7 @@ export function AdminPage() {
                   <StatusBadge tone={document.status === "Gepubliceerd" ? "good" : "warning"}>{document.status}</StatusBadge>
                 </div>
                 <p className="muted">{document.documenttype}</p>
-                <p>{document.korte_samenvatting}</p>
+                <p><LinkifiedText text={document.korte_samenvatting} /></p>
                 <div className="admin-row">
                   {document.status !== "Gepubliceerd" && (
                     <button className="text-button" onClick={() => publishDocument(document)} type="button">
@@ -372,7 +373,7 @@ export function AdminPage() {
                     <h3>{contact.naam}</h3>
                   </div>
                 </div>
-                <p>{contact.beschrijving}</p>
+                <p><LinkifiedText text={contact.beschrijving} /></p>
                 <div className="admin-row">
                   <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
                   <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
@@ -394,7 +395,7 @@ export function AdminPage() {
                 </div>
                 <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
               </div>
-              <p>{report.omschrijving}</p>
+              <p><LinkifiedText text={report.omschrijving} /></p>
               <div className="filter-row">
                 <label className="field">
                   <span>Status</span>
@@ -428,7 +429,7 @@ export function AdminPage() {
                 </div>
                 <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
               </div>
-              <p>{post.omschrijving}</p>
+              <p><LinkifiedText text={post.omschrijving} /></p>
               <div className="admin-row">
                 <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
                 <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>

@@ -1,5 +1,6 @@
 import { ExternalLink, Mail, MessageCircle, Pencil, Phone, Trash2 } from "lucide-react";
 import type { Contact } from "../types";
+import { LinkifiedText } from "./LinkifiedText";
 
 interface ContactCardProps {
   contact: Contact;
@@ -17,7 +18,7 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
           <h2>{contact.naam}</h2>
         </div>
       </div>
-      <p>{contact.beschrijving}</p>
+      <p><LinkifiedText text={contact.beschrijving} /></p>
       <div className="action-row">
         {contact.telefoonnummer && (
           <a className="button button--soft" href={`tel:${contact.telefoonnummer.replace(/\s/g, "")}`}>

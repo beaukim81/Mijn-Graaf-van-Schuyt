@@ -30,6 +30,7 @@ export function AuthPage() {
     try {
       if (mode === "login") {
         await signIn(email, password);
+        window.location.replace("/");
       } else {
         const response = await signUp({ email, password, firstName, lastName, houseNumber });
         setMessage(response);
@@ -68,7 +69,6 @@ export function AuthPage() {
         <div className="auth-card__header">
           <p className="eyebrow">Graaf van Schuyt</p>
           <h1>Inloggen of account maken</h1>
-          <p>Log in om meldingen, hulpvragen en berichten veilig aan bewoners te koppelen.</p>
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Account">
