@@ -37,15 +37,16 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
   }
 
   return (
-    <article className="item-card" id={`hulp-${request.id}`}>
-      <div className="item-card__header">
+    <details className="item-card collapsible-card" id={`hulp-${request.id}`}>
+      <summary className="item-card__header collapsible-card__summary">
         <div>
           <p className="chip">{request.categorie}</p>
           <h2>{request.titel}</h2>
           <p className="muted">Geplaatst door {residentLabel(request.aanmaker_naam, request.aanmaker_huisnummer)}</p>
         </div>
         <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
-      </div>
+      </summary>
+      <div className="collapsible-card__body">
       <p><LinkifiedText text={request.omschrijving} /></p>
       <div className="action-row">
         {canOfferHelp && (
@@ -157,6 +158,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           </button>
         </div>
       </div>
-    </article>
+      </div>
+    </details>
   );
 }

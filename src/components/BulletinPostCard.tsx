@@ -33,15 +33,16 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
   }
 
   return (
-    <article className="item-card" id={`prikbord-${post.id}`}>
-      <div className="item-card__header">
+    <details className="item-card collapsible-card" id={`prikbord-${post.id}`}>
+      <summary className="item-card__header collapsible-card__summary">
         <div>
           <p className="chip">{post.categorie}</p>
           <h2>{post.titel}</h2>
           <p className="muted">Geplaatst door {residentLabel(post.aangemaakt_door_naam, post.aangemaakt_door_huisnummer)}</p>
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
-      </div>
+      </summary>
+      <div className="collapsible-card__body">
       <PhotoGrid images={post.image_urls?.length ? post.image_urls : post.image_url ? [post.image_url] : []} alt={post.titel} />
       <p><LinkifiedText text={post.omschrijving} /></p>
       {post.contactpersoon && <p className="muted">Contactpersoon: {post.contactpersoon}</p>}
@@ -138,6 +139,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
           </button>
         </div>
       </div>
-    </article>
+      </div>
+    </details>
   );
 }

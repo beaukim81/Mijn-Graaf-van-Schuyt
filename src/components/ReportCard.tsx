@@ -30,15 +30,16 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
   }
 
   return (
-    <article className="item-card">
-      <div className="item-card__header">
+    <details className="item-card collapsible-card">
+      <summary className="item-card__header collapsible-card__summary">
         <div>
           <p className="chip">{report.categorie}</p>
           <h2>{report.titel}</h2>
           <p className="muted">Geplaatst door {residentLabel(report.aangemaakt_door_naam, report.aangemaakt_door_huisnummer)}</p>
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
-      </div>
+      </summary>
+      <div className="collapsible-card__body">
       <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
       <p><LinkifiedText text={report.omschrijving} /></p>
       <dl className="meta-list">
@@ -139,6 +140,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
           ))}
         </aside>
       )}
-    </article>
+      </div>
+    </details>
   );
 }
