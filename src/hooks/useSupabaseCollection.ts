@@ -18,15 +18,41 @@ function readStoredItems<T>(storageKey: string, fallback: T[]) {
 
   try {
     const stored = window.localStorage.getItem(storageKey);
-    return stored ? (JSON.parse(stored) as T[]) : fallback;
+    return stored ? (sanitizeForStorage(JSON.parse(stored)) as T[]) : fallback;
   } catch {
     return fallback;
   }
 }
 
+function sanitizeForStorage(value: unknown): unknown {
+  if (typeof value === "string") {
+    if (value.startsWith("data:image/") || value.startsWith("blob:")) return "";
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(sanitizeForStorage).filter((item) => item !== "");
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, sanitizeForStorage(item)]));
+  }
+
+  return value;
+}
+
 function persistItems<T>(storageKey: string, items: T[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify(items));
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(sanitizeForStorage(items)));
+  } catch (error) {
+    reportError(error);
+    try {
+      window.localStorage.removeItem(storageKey);
+    } catch {
+      // Ignore storage cleanup failures.
+    }
+  }
 }
 
 function readStoredSet(storageKey: string) {
@@ -42,7 +68,11 @@ function readStoredSet(storageKey: string) {
 
 function persistSet(storageKey: string, items: Set<string>) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify([...items]));
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify([...items]));
+  } catch (error) {
+    reportError(error);
+  }
 }
 
 function errorMessage(error: unknown) {

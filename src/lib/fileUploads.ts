@@ -24,12 +24,13 @@ export async function uploadBulletinImage(file: File, userId: string) {
     upsert: false,
   });
 
-  if (error) return fileToDataUrl(file);
+  if (error) return "";
 
   const { data } = supabase.storage.from(bulletinImageBucket).getPublicUrl(path);
   return data.publicUrl;
 }
 
 export async function uploadBulletinImages(files: File[], userId: string) {
-  return Promise.all(files.map((file) => uploadBulletinImage(file, userId)));
+  const urls = await Promise.all(files.map((file) => uploadBulletinImage(file, userId)));
+  return urls.filter(Boolean);
 }

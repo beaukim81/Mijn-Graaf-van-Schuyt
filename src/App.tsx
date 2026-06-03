@@ -60,13 +60,22 @@ function omitColumns<T extends Record<string, unknown>>(row: T, columns: string[
   return next;
 }
 
+async function getCurrentActor() {
+  const client = requireSupabase();
+  const userId = (await client.auth.getUser()).data.user?.id;
+  if (!userId) return { userId: undefined, canManageAll: false };
+
+  const { data } = await client.from("profiles").select("rol").eq("user_id", userId).maybeSingle();
+  return { userId, canManageAll: data?.rol === "admin" };
+}
+
 async function syncHelpOffers(helpRequestId: string, previousOffers: HelpOffer[] = [], nextOffers: HelpOffer[] = []) {
   const client = requireSupabase();
-  const currentUserId = (await client.auth.getUser()).data.user?.id;
+  const { userId: currentUserId, canManageAll } = await getCurrentActor();
   const previousIds = new Set(previousOffers.map((offer) => offer.id));
   const nextIds = new Set(nextOffers.map((offer) => offer.id));
-  const added = nextOffers.filter((offer) => !previousIds.has(offer.id) && offer.helper_id === currentUserId);
-  const removed = previousOffers.filter((offer) => !nextIds.has(offer.id) && offer.helper_id === currentUserId);
+  const added = nextOffers.filter((offer) => !previousIds.has(offer.id) && (offer.helper_id === currentUserId || canManageAll));
+  const removed = previousOffers.filter((offer) => !nextIds.has(offer.id) && (offer.helper_id === currentUserId || canManageAll));
 
   if (added.length > 0) {
     const { error } = await client.from("help_offers").upsert(added.map(helpOfferToRow));
@@ -84,14 +93,14 @@ async function syncHelpOffers(helpRequestId: string, previousOffers: HelpOffer[]
 
 async function syncHelpMessages(helpRequestId: string, previousMessages: HelpMessage[] = [], nextMessages: HelpMessage[] = []) {
   const client = requireSupabase();
-  const currentUserId = (await client.auth.getUser()).data.user?.id;
+  const { userId: currentUserId, canManageAll } = await getCurrentActor();
   const previousById = new Map(previousMessages.map((message) => [message.id, message]));
   const nextIds = new Set(nextMessages.map((message) => message.id));
-  const added = nextMessages.filter((message) => !previousById.has(message.id) && message.author_id === currentUserId);
+  const added = nextMessages.filter((message) => !previousById.has(message.id) && (message.author_id === currentUserId || canManageAll));
   const changed = nextMessages.filter(
-    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && message.author_id === currentUserId,
+    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && (message.author_id === currentUserId || canManageAll),
   );
-  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && message.author_id === currentUserId);
+  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && (message.author_id === currentUserId || canManageAll));
 
   if (added.length > 0) {
     const { error } = await client.from("help_messages").upsert(added.map((message) => helpMessageToRow(message, helpRequestId)));
@@ -109,14 +118,14 @@ async function syncHelpMessages(helpRequestId: string, previousMessages: HelpMes
 
 async function syncBulletinMessages(bulletinPostId: string, previousMessages: BulletinMessage[] = [], nextMessages: BulletinMessage[] = []) {
   const client = requireSupabase();
-  const currentUserId = (await client.auth.getUser()).data.user?.id;
+  const { userId: currentUserId, canManageAll } = await getCurrentActor();
   const previousById = new Map(previousMessages.map((message) => [message.id, message]));
   const nextIds = new Set(nextMessages.map((message) => message.id));
-  const added = nextMessages.filter((message) => !previousById.has(message.id) && message.author_id === currentUserId);
+  const added = nextMessages.filter((message) => !previousById.has(message.id) && (message.author_id === currentUserId || canManageAll));
   const changed = nextMessages.filter(
-    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && message.author_id === currentUserId,
+    (message) => previousById.has(message.id) && previousById.get(message.id)?.message !== message.message && (message.author_id === currentUserId || canManageAll),
   );
-  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && message.author_id === currentUserId);
+  const removed = previousMessages.filter((message) => !nextIds.has(message.id) && (message.author_id === currentUserId || canManageAll));
 
   if (added.length > 0) {
     const { error } = await client.from("bulletin_messages").upsert(added.map((message) => bulletinMessageToRow(message, bulletinPostId)));

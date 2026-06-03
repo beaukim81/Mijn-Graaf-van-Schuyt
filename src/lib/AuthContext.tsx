@@ -87,15 +87,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    const client = supabase;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.user) await loadProfile(data.session.user);
-      if (mounted) setLoading(false);
-    });
+    client.auth.getSession()
+      .then(async ({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        if (data.session?.user) await loadProfile(data.session.user);
+        if (mounted) setLoading(false);
+      })
+      .catch(async () => {
+        await client.auth.signOut();
+        if (!mounted) return;
+        setSession(null);
+        setProfile(null);
+        setLoading(false);
+      });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
       if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       setSession(nextSession);
       if (nextSession?.user) {
