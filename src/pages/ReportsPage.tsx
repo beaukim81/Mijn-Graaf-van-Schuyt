@@ -4,7 +4,7 @@ import { EmptyState } from "../components/EmptyState";
 import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
-import { PhotoGrid } from "../components/PhotoGrid";
+import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
@@ -192,7 +192,21 @@ export function ReportsPage() {
             }}
           />
           </label>
-          <PhotoGrid images={draft.image_urls} alt="Voorbeeld van gekozen foto's" />
+          <EditablePhotoGrid
+            images={draft.image_urls}
+            alt="Voorbeeld van gekozen foto's"
+            onRemove={(index) => {
+              const removedUrl = draft.image_urls[index];
+              const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+              setDraft({
+                ...draft,
+                image_urls: draft.image_urls.filter((_, itemIndex) => itemIndex !== index),
+                image_files: removedUrl?.startsWith("blob:")
+                  ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
+                  : draft.image_files,
+              });
+            }}
+          />
           <small>Maximaal {maxImages} foto's. Voeg alleen foto's toe die helpen om het probleem duidelijk te maken.</small>
         </div>
         {draftRelevantDocuments.length > 0 && (

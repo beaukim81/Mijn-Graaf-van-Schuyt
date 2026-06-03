@@ -551,6 +551,22 @@ button {
   width: 100%;
 }
 
+.editable-photo-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.editable-photo-grid__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editable-photo-grid__actions .button {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
 .photo-viewer {
   align-items: center;
   background: rgba(18, 35, 32, 0.82);

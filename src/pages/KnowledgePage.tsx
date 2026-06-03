@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { CategoryFilter } from "../components/CategoryFilter";
+import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
 import { KnowledgeDocumentCard } from "../components/KnowledgeDocumentCard";
-import { PhotoGrid } from "../components/PhotoGrid";
 import { SearchBar } from "../components/SearchBar";
 import { knowledgeCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
@@ -191,7 +191,21 @@ export function KnowledgePage() {
               }}
             />
           </label>
-          <PhotoGrid images={draft.image_urls} alt="Voorbeeld van gekozen foto's" />
+          <EditablePhotoGrid
+            images={draft.image_urls}
+            alt="Voorbeeld van gekozen foto's"
+            onRemove={(index) => {
+              const removedUrl = draft.image_urls[index];
+              const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+              setDraft({
+                ...draft,
+                image_urls: draft.image_urls.filter((_, itemIndex) => itemIndex !== index),
+                image_files: removedUrl?.startsWith("blob:")
+                  ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
+                  : draft.image_files,
+              });
+            }}
+          />
           <small>Maximaal {maxImages} foto's. Handig voor een bewonerstip zonder PDF.</small>
         </div>
         <p className="muted">Deel een handleiding of praktische tip. Beheer kijkt mee voordat het zichtbaar wordt voor iedereen.</p>

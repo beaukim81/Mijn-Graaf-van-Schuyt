@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { BulletinPostCard } from "../components/BulletinPostCard";
 import { CategoryFilter } from "../components/CategoryFilter";
+import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
-import { PhotoGrid } from "../components/PhotoGrid";
 import { bulletinCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
@@ -146,7 +146,23 @@ export function BulletinPage() {
                 }}
               />
               </label>
-              <PhotoGrid images={draft.image_urls} alt="Voorbeeld van gekozen foto's" />
+              <EditablePhotoGrid
+                images={draft.image_urls}
+                alt="Voorbeeld van gekozen foto's"
+                onRemove={(index) => {
+                  const removedUrl = draft.image_urls[index];
+                  const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+                  const nextUrls = draft.image_urls.filter((_, itemIndex) => itemIndex !== index);
+                  setDraft({
+                    ...draft,
+                    image_url: nextUrls[0] ?? "",
+                    image_urls: nextUrls,
+                    image_files: removedUrl?.startsWith("blob:")
+                      ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
+                      : draft.image_files,
+                  });
+                }}
+              />
               <small>Maximaal {maxImages} foto's. Tik later op een foto om die groter te bekijken.</small>
             </div>
           )}
