@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { KeyRound, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function AuthPage() {
   const { resetPassword, signIn, signUp } = useAuth();
@@ -34,7 +35,7 @@ export function AuthPage() {
         setMessage(response);
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Er ging iets mis. Probeer het nog een keer.");
+      setError(friendlyErrorMessage(caught, "Inloggen of account maken lukt nu niet. Controleer je gegevens en probeer het opnieuw."));
     } finally {
       setBusy(false);
     }
@@ -55,7 +56,7 @@ export function AuthPage() {
         "We hebben een e-mail gestuurd waarmee je een nieuw wachtwoord kunt instellen. Kijk ook in spam of ongewenste mail als je niets ziet.",
       );
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Er ging iets mis. Probeer het nog een keer.");
+      setError(friendlyErrorMessage(caught, "De herstelmail versturen lukt nu niet. Controleer je e-mailadres en probeer het opnieuw."));
     } finally {
       setBusy(false);
     }

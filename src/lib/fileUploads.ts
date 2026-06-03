@@ -6,7 +6,7 @@ function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Foto lezen is niet gelukt."));
+    reader.onerror = () => reject(new Error("De foto openen lukt niet. Kies de foto opnieuw of probeer een andere foto."));
     reader.readAsDataURL(file);
   });
 }

@@ -1,4 +1,5 @@
 import type { BuildingAnnouncement, NotificationPreference, Profile } from "../types";
+import { friendlyErrorMessage } from "./friendlyErrors";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const defaultNotificationPreferences: Omit<NotificationPreference, "id" | "user_id" | "updated_at"> = {
@@ -17,7 +18,7 @@ async function invokePushFunction(body: Record<string, unknown>) {
 
   const { data, error } = await supabase.functions.invoke("send-push-notification", { body });
   if (error) {
-    throw new Error(error.message || "Pushmelding versturen is niet gelukt.");
+    throw new Error(friendlyErrorMessage(error, "Pushmelding versturen lukt nu niet. Probeer het later opnieuw."));
   }
   return data as { sent?: number; skipped?: string; error?: string } | undefined;
 }
@@ -63,15 +64,15 @@ export async function saveNotificationPreference(preference: NotificationPrefere
 
 export async function enablePushNotifications(profile: Profile, preference: NotificationPreference) {
   if (!pushSupported()) {
-    throw new Error("Pushmeldingen worden door deze browser niet ondersteund.");
+    throw new Error("Pushmeldingen werken niet in deze browser. Probeer de app op je telefoon via Chrome, Edge of Safari als beginscherm-app.");
   }
   if (!vapidPublicKey) {
-    throw new Error("De publieke VAPID-sleutel ontbreekt nog in de omgevingsvariabelen.");
+    throw new Error("Pushmeldingen zijn nog niet helemaal ingesteld. Geef dit door aan de beheerder.");
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    throw new Error("Pushmeldingen zijn niet toegestaan.");
+    throw new Error("Je browser staat pushmeldingen niet toe. Zet meldingen aan in je browser of telefooninstellingen.");
   }
 
   const registration = await navigator.serviceWorker.ready;

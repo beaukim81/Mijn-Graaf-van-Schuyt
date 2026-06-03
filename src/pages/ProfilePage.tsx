@@ -4,6 +4,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../lib/AuthContext";
 import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function ProfilePage() {
   const { notificationPreferences, profile } = useAppData();
@@ -35,7 +36,7 @@ export function ProfilePage() {
       await enablePushNotifications(profile, preference);
       setPushMessage("Pushmeldingen zijn ingeschakeld.");
     } catch (error) {
-      setPushMessage(error instanceof Error ? error.message : "Pushmeldingen inschakelen is niet gelukt.");
+      setPushMessage(friendlyErrorMessage(error, "Pushmeldingen inschakelen lukt nu niet. Controleer of meldingen in je browser zijn toegestaan."));
     }
   }
 
@@ -55,7 +56,7 @@ export function ProfilePage() {
       });
       setPushMessage((result?.sent ?? 0) > 0 ? "Testmelding is verstuurd." : "Testmelding kon niet worden bezorgd. Zet pushmeldingen eerst aan op dit apparaat.");
     } catch (error) {
-      setPushMessage(error instanceof Error ? error.message : "Testmelding versturen is niet gelukt.");
+      setPushMessage(friendlyErrorMessage(error, "Testmelding versturen lukt nu niet. Controleer je internet en probeer het opnieuw."));
     }
   }
 
@@ -66,7 +67,7 @@ export function ProfilePage() {
       setAccountMessage("");
       await deleteAccount();
     } catch (error) {
-      setAccountMessage(error instanceof Error ? error.message : "Account verwijderen is niet gelukt.");
+      setAccountMessage(friendlyErrorMessage(error, "Account verwijderen lukt nu niet. Log opnieuw in en probeer het nog een keer."));
     }
   }
 
@@ -86,9 +87,11 @@ export function ProfilePage() {
       setEmailBusy(true);
       setEmailMessage("");
       await updateEmail(nextEmail);
-      setEmailMessage("We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Open de link in die mail om de wijziging af te ronden. Kijk ook in spam of ongewenste mail.");
+      setEmailMessage(
+        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Tot je die mail bevestigt, log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.",
+      );
     } catch (error) {
-      setEmailMessage(error instanceof Error ? error.message : "E-mailadres wijzigen is niet gelukt.");
+      setEmailMessage(friendlyErrorMessage(error, "E-mailadres wijzigen lukt nu niet. Controleer het adres en probeer het opnieuw."));
     } finally {
       setEmailBusy(false);
     }
@@ -137,6 +140,10 @@ export function ProfilePage() {
             </div>
           </div>
           <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
+          <p className="muted">
+            Na het wijzigen krijg je een bevestigingsmail. Tot je de wijziging bevestigt, log je nog in met je oude
+            e-mailadres. Kijk ook in spam of ongewenste mail.
+          </p>
           <form className="form-panel" onSubmit={handleEmailUpdate}>
             <input
               autoComplete="email"

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataCollection } from "../lib/AppDataContext";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 type WithId = { id: string };
@@ -75,12 +76,6 @@ function persistSet(storageKey: string, items: Set<string>) {
   }
 }
 
-function errorMessage(error: unknown) {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error && "message" in error) return String(error.message);
-  return "Opslaan in de database is nog niet gelukt.";
-}
-
 function reportError(error: unknown) {
   console.error(error);
 }
@@ -128,7 +123,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
         }
       })
       .catch((error) => {
-        setSyncError(`Gegevens ophalen lukte niet: ${errorMessage(error)}`);
+        setSyncError(friendlyErrorMessage(error, "Gegevens ophalen lukt nu niet. Vernieuw de pagina of probeer het later opnieuw."));
         reportError(error);
       });
 
@@ -153,7 +148,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
           setSyncError(undefined);
         })
         .catch((error) => {
-          setSyncError(`Opslaan in de database is nog niet gelukt: ${errorMessage(error)}`);
+          setSyncError(friendlyErrorMessage(error, "Opslaan lukt nu niet. Controleer je internet en probeer het opnieuw."));
           reportError(error);
         })
         .finally(() => retryingUpsertIds.current.delete(item.id));
@@ -170,7 +165,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
           setSyncError(undefined);
         })
         .catch((error) => {
-          setSyncError(`Verwijderen in de database is nog niet gelukt: ${errorMessage(error)}`);
+          setSyncError(friendlyErrorMessage(error, "Verwijderen lukt nu niet. Controleer je internet en probeer het opnieuw."));
           reportError(error);
         })
         .finally(() => retryingDeleteIds.current.delete(id));
@@ -194,7 +189,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
             setSyncError(undefined);
           })
           .catch((error) => {
-            setSyncError(`Je bericht is lokaal bewaard, maar nog niet in de database opgeslagen: ${errorMessage(error)}`);
+            setSyncError(friendlyErrorMessage(error, "Je bericht kon nog niet online worden opgeslagen. Controleer je internet en probeer het opnieuw."));
             reportError(error);
           });
       }
@@ -223,7 +218,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
             setSyncError(undefined);
           })
           .catch((error) => {
-            setSyncError(`De wijziging is lokaal bewaard, maar nog niet in de database opgeslagen: ${errorMessage(error)}`);
+            setSyncError(friendlyErrorMessage(error, "De wijziging kon nog niet online worden opgeslagen. Controleer je internet en probeer het opnieuw."));
             reportError(error);
           });
       }
@@ -249,7 +244,7 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
             setSyncError(undefined);
           })
           .catch((error) => {
-            setSyncError(`Verwijderen is lokaal verwerkt, maar nog niet in de database opgeslagen: ${errorMessage(error)}`);
+            setSyncError(friendlyErrorMessage(error, "Verwijderen kon nog niet online worden opgeslagen. Controleer je internet en probeer het opnieuw."));
             reportError(error);
           });
       }
