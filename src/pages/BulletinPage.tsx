@@ -6,6 +6,7 @@ import { PhotoGrid } from "../components/PhotoGrid";
 import { bulletinCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import type { BulletinCategory, BulletinPost } from "../types";
 
 interface BulletinDraft {
@@ -36,6 +37,8 @@ export function BulletinPage() {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const filteredPosts = useMemo(() => {
     return bulletinPosts.items.filter((post) => category === "Alle" || post.categorie === category);
@@ -50,41 +53,49 @@ export function BulletinPage() {
   }
 
   async function savePost() {
-    const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
-    const existingImageUrls = draft.image_urls.filter((url) => !url.startsWith("blob:"));
-    const imageUrls = canAddImage ? [...existingImageUrls, ...uploadedImageUrls].slice(0, maxImages) : [];
+    try {
+      setSaving(true);
+      setFormError("");
+      const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
+      const existingImageUrls = draft.image_urls.filter((url) => !url.startsWith("blob:"));
+      const imageUrls = canAddImage ? [...existingImageUrls, ...uploadedImageUrls].slice(0, maxImages) : [];
 
-    if (editingId) {
-      bulletinPosts.update(editingId, {
-        titel: draft.titel,
-        omschrijving: draft.omschrijving,
-        categorie: draft.categorie,
-        contactpersoon: draft.contactpersoon,
-        image_url: imageUrls[0] ?? "",
-        image_urls: imageUrls,
-        image_name: draft.image_name,
-      });
-    } else {
-      const post: BulletinPost = {
-        id: crypto.randomUUID(),
-        titel: draft.titel,
-        omschrijving: draft.omschrijving,
-        categorie: draft.categorie,
-        contactpersoon: draft.contactpersoon,
-        image_name: draft.image_name,
-        image_url: imageUrls[0] ?? "",
-        image_urls: imageUrls,
-        aangemaakt_door: profile.user_id,
-        aangemaakt_door_naam: profile.naam_of_bijnaam,
-        aangemaakt_door_huisnummer: profile.huisnummer,
-        status: "Actief",
-        aangemaakt_op: new Date().toISOString(),
-        messages: [],
-      };
-      bulletinPosts.add(post);
+      if (editingId) {
+        await bulletinPosts.updateAsync(editingId, {
+          titel: draft.titel,
+          omschrijving: draft.omschrijving,
+          categorie: draft.categorie,
+          contactpersoon: draft.contactpersoon,
+          image_url: imageUrls[0] ?? "",
+          image_urls: imageUrls,
+          image_name: draft.image_name,
+        });
+      } else {
+        const post: BulletinPost = {
+          id: crypto.randomUUID(),
+          titel: draft.titel,
+          omschrijving: draft.omschrijving,
+          categorie: draft.categorie,
+          contactpersoon: draft.contactpersoon,
+          image_name: draft.image_name,
+          image_url: imageUrls[0] ?? "",
+          image_urls: imageUrls,
+          aangemaakt_door: profile.user_id,
+          aangemaakt_door_naam: profile.naam_of_bijnaam,
+          aangemaakt_door_huisnummer: profile.huisnummer,
+          status: "Actief",
+          aangemaakt_op: new Date().toISOString(),
+          messages: [],
+        };
+        await bulletinPosts.addAsync(post);
+      }
+      setCategory(draft.categorie);
+      resetDraft();
+    } catch (error) {
+      setFormError(friendlyErrorMessage(error, "Bericht opslaan lukt nu niet. Controleer je foto's en probeer het opnieuw."));
+    } finally {
+      setSaving(false);
     }
-    setCategory(draft.categorie);
-    resetDraft();
   }
 
   return (
@@ -139,8 +150,9 @@ export function BulletinPage() {
               <small>Maximaal {maxImages} foto's. Tik later op een foto om die groter te bekijken.</small>
             </div>
           )}
-          <button className="button" type="submit">{editingId ? "Wijzigingen opslaan" : "Plaatsen"}</button>
-          <button className="button button--soft" onClick={resetDraft} type="button">
+          {formError && <p className="form-message form-message--error">{formError}</p>}
+          <button className="button" disabled={saving} type="submit">{saving ? "Bezig met opslaan" : editingId ? "Wijzigingen opslaan" : "Plaatsen"}</button>
+          <button className="button button--soft" disabled={saving} onClick={resetDraft} type="button">
             Annuleren
           </button>
         </form>

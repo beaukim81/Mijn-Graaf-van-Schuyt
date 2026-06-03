@@ -6,8 +6,11 @@ export interface DataCollection<T extends { id: string }> {
   syncError?: string;
   clearSyncError: () => void;
   add: (item: T) => void;
+  addAsync: (item: T) => Promise<void>;
   update: (id: string, changes: Partial<T>) => void;
+  updateAsync: (id: string, changes: Partial<T>) => Promise<void>;
   remove: (id: string) => void;
+  removeAsync: (id: string) => Promise<void>;
   replace: (items: T[]) => void;
 }
 

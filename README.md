@@ -63,6 +63,18 @@ of plak de migraties in volgorde in de SQL editor van Supabase:
 
 1. `supabase/migrations/001_initial_schema.sql`
 2. `supabase/migrations/002_push_notifications.sql`
+3. `supabase/migrations/004_bulletin_image_storage.sql`
+4. `supabase/migrations/005_report_rebo_fields.sql`
+5. `supabase/migrations/006_bulletin_image_columns.sql`
+6. `supabase/migrations/007_schema_cache_repair.sql`
+7. `supabase/migrations/008_multiple_post_images.sql`
+8. `supabase/migrations/009_profiles_replies_and_photos.sql`
+9. `supabase/migrations/010_knowledge_tips_text_and_images.sql`
+10. `supabase/migrations/011_account_deletion.sql`
+11. `supabase/migrations/012_fix_account_deletion_storage.sql`
+12. `supabase/migrations/013_full_database_repair.sql`
+13. `supabase/migrations/014_fix_image_upload_policy.sql`
+14. `supabase/migrations/015_storage_privacy_and_reliable_uploads.sql`
 
 De migratie bevat:
 
@@ -83,7 +95,7 @@ De migratie bevat:
 - startdata voor contacten en kennisbank
 - automatische profielaanmaak bij nieuwe accounts
 
-PDF-bestanden voor kennisbankdocumenten kunnen in Supabase Storage worden geplaatst. Sla de publieke of ondertekende bestandslink op in `pdf_url`.
+PDF-bestanden voor kennisbankdocumenten worden opgeslagen in de Supabase Storage bucket `knowledge-files`. Foto's voor meldingen, prikbord en bewonerstips worden opgeslagen in `bulletin-images`.
 
 ## Web push notificaties
 

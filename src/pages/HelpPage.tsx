@@ -4,6 +4,7 @@ import { EmptyState } from "../components/EmptyState";
 import { HelpRequestCard } from "../components/HelpRequestCard";
 import { helpCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { notifyUser } from "../lib/pushNotifications";
 import { residentLabel } from "../lib/residentDisplay";
 import type { HelpCategory, HelpRequest } from "../types";
@@ -14,6 +15,7 @@ export function HelpPage() {
   const { helpRequests, profile } = useAppData();
   const [category, setCategory] = useState<HelpCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
@@ -53,33 +55,38 @@ export function HelpPage() {
     setShowForm(false);
   }
 
-  function offerHelp(id: string) {
+  async function offerHelp(id: string) {
     const request = helpRequests.items.find((item) => item.id === id);
     if (!request) return;
     if (request.aangemaakt_door === profile.user_id) return;
     if (request.offers.some((offer) => offer.helper_id === profile.user_id)) return;
 
-    helpRequests.update(id, {
-      offers: [
-        ...request.offers,
-        {
-          id: crypto.randomUUID(),
-          help_request_id: id,
-          helper_id: profile.user_id,
-          helper_name: profile.naam_of_bijnaam,
-          helper_house_number: profile.huisnummer,
-          contact_allowed: false,
-          contact_info: "",
-          aangemaakt_op: new Date().toISOString(),
-        },
-      ],
-    });
-    void notifyUser(request.aangemaakt_door, {
-      title: "Nieuwe reactie op je hulpvraag",
-      body: `${residentLabel(profile.naam_of_bijnaam, profile.huisnummer)} wil ${socialCategories.includes(request.categorie) ? "meedoen" : "helpen"}.`,
-      url: `/hulp#hulp-${request.id}`,
-      category: "help",
-    });
+    try {
+      setActionMessage("");
+      await helpRequests.updateAsync(id, {
+        offers: [
+          ...request.offers,
+          {
+            id: crypto.randomUUID(),
+            help_request_id: id,
+            helper_id: profile.user_id,
+            helper_name: profile.naam_of_bijnaam,
+            helper_house_number: profile.huisnummer,
+            contact_allowed: false,
+            contact_info: "",
+            aangemaakt_op: new Date().toISOString(),
+          },
+        ],
+      });
+      void notifyUser(request.aangemaakt_door, {
+        title: "Nieuwe reactie op je hulpvraag",
+        body: `${residentLabel(profile.naam_of_bijnaam, profile.huisnummer)} wil ${socialCategories.includes(request.categorie) ? "meedoen" : "helpen"}.`,
+        url: `/hulp#hulp-${request.id}`,
+        category: "help",
+      });
+    } catch (error) {
+      setActionMessage(friendlyErrorMessage(error, "Reageren lukt nu niet. Probeer het later opnieuw."));
+    }
   }
 
   function withdrawOffer(id: string) {
@@ -115,6 +122,12 @@ export function HelpPage() {
         <div className="notice notice--warning">
           <p>{helpRequests.syncError}</p>
           <button className="text-button" onClick={helpRequests.clearSyncError} type="button">Melding sluiten</button>
+        </div>
+      )}
+      {actionMessage && (
+        <div className="notice notice--warning">
+          <p>{actionMessage}</p>
+          <button className="text-button" onClick={() => setActionMessage("")} type="button">Melding sluiten</button>
         </div>
       )}
       {openCategoryFilters.length > 0 && (

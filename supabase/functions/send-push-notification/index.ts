@@ -35,6 +35,11 @@ function preferenceColumn(category?: PushRequest["category"]) {
   return "personal_notifications";
 }
 
+function idFromUrl(url: string | undefined, prefix: string) {
+  const hash = url?.split("#")[1] ?? "";
+  return hash.startsWith(prefix) ? hash.slice(prefix.length) : "";
+}
+
 serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
@@ -73,6 +78,62 @@ serve(async (request) => {
 
       if (payload.importance !== "belangrijk" && payload.importance !== "urgent") {
         return new Response(JSON.stringify({ sent: 0, skipped: "Geen push voor normale meldingen." }), { headers: corsHeaders });
+      }
+    }
+
+    if (payload.audience === "user" && payload.user_id && payload.user_id !== userData.user.id) {
+      const { data: senderProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("rol")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+      const senderIsAdmin = senderProfile?.rol === "admin";
+      let allowedPersonalPush = senderIsAdmin;
+
+      if (!allowedPersonalPush && payload.category === "help") {
+        const helpRequestId = idFromUrl(payload.url, "hulp-");
+        if (helpRequestId) {
+          const { data: request } = await supabaseAdmin
+            .from("help_requests")
+            .select("aangemaakt_door")
+            .eq("id", helpRequestId)
+            .maybeSingle();
+          const { data: offer } = await supabaseAdmin
+            .from("help_offers")
+            .select("id")
+            .eq("help_request_id", helpRequestId)
+            .eq("helper_id", userData.user.id)
+            .maybeSingle();
+          const { data: message } = await supabaseAdmin
+            .from("help_messages")
+            .select("id")
+            .eq("help_request_id", helpRequestId)
+            .eq("author_id", userData.user.id)
+            .maybeSingle();
+          allowedPersonalPush = request?.aangemaakt_door === payload.user_id && Boolean(offer || message);
+        }
+      }
+
+      if (!allowedPersonalPush && payload.category === "bulletin") {
+        const bulletinPostId = idFromUrl(payload.url, "prikbord-");
+        if (bulletinPostId) {
+          const { data: post } = await supabaseAdmin
+            .from("bulletin_posts")
+            .select("aangemaakt_door")
+            .eq("id", bulletinPostId)
+            .maybeSingle();
+          const { data: message } = await supabaseAdmin
+            .from("bulletin_messages")
+            .select("id")
+            .eq("bulletin_post_id", bulletinPostId)
+            .eq("author_id", userData.user.id)
+            .maybeSingle();
+          allowedPersonalPush = post?.aangemaakt_door === payload.user_id && Boolean(message);
+        }
+      }
+
+      if (!allowedPersonalPush) {
+        return new Response(JSON.stringify({ error: "Deze persoonlijke melding mag niet worden verstuurd." }), { status: 403, headers: corsHeaders });
       }
     }
 

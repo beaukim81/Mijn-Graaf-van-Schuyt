@@ -6,7 +6,8 @@ import { PhotoGrid } from "../components/PhotoGrid";
 import { SearchBar } from "../components/SearchBar";
 import { knowledgeCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
-import { uploadBulletinImages } from "../lib/fileUploads";
+import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import type { KnowledgeCategory, KnowledgeDocument, KnowledgeDocumentType } from "../types";
 
 const documentTypes: KnowledgeDocumentType[] = ["Officiële handleiding", "Bewonerstip", "Onderdeleninformatie", "Veelgestelde vraag"];
@@ -26,12 +27,15 @@ export function KnowledgePage() {
     uitgebreide_uitleg: "",
     pdf_url: "",
     pdf_bestandsnaam: "",
+    pdf_file: undefined as File | undefined,
     image_urls: [] as string[],
     image_files: [] as File[],
     tags: "",
     leverancier_of_fabrikant: "",
     faq_vraag: "",
   });
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const filteredDocuments = useMemo(() => {
     return documents.items.filter((document) => {
@@ -56,45 +60,60 @@ export function KnowledgePage() {
   }, [category, documents.items, profile.rol, profile.user_id, query, type]);
 
   async function proposeDocument() {
-    const timestamp = new Date().toISOString();
-    const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
-    const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
-    const document: KnowledgeDocument = {
-      id: crypto.randomUUID(),
-      titel: draft.titel,
-      categorie: draft.categorie,
-      documenttype: draft.documenttype,
-      korte_samenvatting: draft.korte_samenvatting,
-      uitgebreide_uitleg: draft.uitgebreide_uitleg,
-      pdf_url: draft.pdf_url,
-      image_urls: imageUrls,
-      tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      leverancier_of_fabrikant: draft.leverancier_of_fabrikant,
-      faq: draft.faq_vraag ? [{ id: crypto.randomUUID(), vraag: draft.faq_vraag }] : [],
-      toegevoegd_door: profile.user_id,
-      status: profile.rol === "admin" ? "Gepubliceerd" : "Concept",
-      aangemaakt_op: timestamp,
-      bijgewerkt_op: timestamp,
-    };
-    documents.add(document);
-    setCategory(draft.categorie);
-    setType(draft.documenttype);
-    setQuery("");
-    setDraft({
-      titel: "",
-      categorie: "Mechanische ventilatie",
-      documenttype: "Bewonerstip",
-      korte_samenvatting: "",
-      uitgebreide_uitleg: "",
-      pdf_url: "",
-      pdf_bestandsnaam: "",
-      image_urls: [],
-      image_files: [],
-      tags: "",
-      leverancier_of_fabrikant: "",
-      faq_vraag: "",
-    });
-    setShowForm(false);
+    try {
+      setSaving(true);
+      setFormError("");
+      const timestamp = new Date().toISOString();
+      const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
+      const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
+      const pdfUrl = draft.pdf_file ? await uploadKnowledgePdf(draft.pdf_file, profile.user_id) : draft.pdf_url;
+      if (draft.documenttype === "Officiële handleiding" && !pdfUrl) {
+        setFormError("Voeg een PDF-bestand of PDF-link toe voor een officiële handleiding.");
+        return;
+      }
+
+      const document: KnowledgeDocument = {
+        id: crypto.randomUUID(),
+        titel: draft.titel,
+        categorie: draft.categorie,
+        documenttype: draft.documenttype,
+        korte_samenvatting: draft.korte_samenvatting,
+        uitgebreide_uitleg: draft.uitgebreide_uitleg,
+        pdf_url: pdfUrl,
+        image_urls: imageUrls,
+        tags: draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+        leverancier_of_fabrikant: draft.leverancier_of_fabrikant,
+        faq: draft.faq_vraag ? [{ id: crypto.randomUUID(), vraag: draft.faq_vraag }] : [],
+        toegevoegd_door: profile.user_id,
+        status: profile.rol === "admin" ? "Gepubliceerd" : "Concept",
+        aangemaakt_op: timestamp,
+        bijgewerkt_op: timestamp,
+      };
+      await documents.addAsync(document);
+      setCategory(draft.categorie);
+      setType(draft.documenttype);
+      setQuery("");
+      setDraft({
+        titel: "",
+        categorie: "Mechanische ventilatie",
+        documenttype: "Bewonerstip",
+        korte_samenvatting: "",
+        uitgebreide_uitleg: "",
+        pdf_url: "",
+        pdf_bestandsnaam: "",
+        pdf_file: undefined,
+        image_urls: [],
+        image_files: [],
+        tags: "",
+        leverancier_of_fabrikant: "",
+        faq_vraag: "",
+      });
+      setShowForm(false);
+    } catch (error) {
+      setFormError(friendlyErrorMessage(error, "Document insturen lukt nu niet. Controleer het bestand en probeer het opnieuw."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -136,7 +155,7 @@ export function KnowledgePage() {
         />
         <input
           value={draft.pdf_url}
-          onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "" })}
+          onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "", pdf_file: undefined })}
           placeholder={draft.documenttype === "Officiële handleiding" ? "Link naar PDF" : "Link naar PDF optioneel"}
           required={draft.documenttype === "Officiële handleiding"}
         />
@@ -148,7 +167,7 @@ export function KnowledgePage() {
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (!file) return;
-              setDraft({ ...draft, pdf_url: URL.createObjectURL(file), pdf_bestandsnaam: file.name });
+              setDraft({ ...draft, pdf_url: "", pdf_bestandsnaam: file.name, pdf_file: file });
             }}
           />
           {draft.pdf_bestandsnaam && <small>Gekozen bestand: {draft.pdf_bestandsnaam}</small>}
@@ -179,8 +198,9 @@ export function KnowledgePage() {
         <input value={draft.tags} onChange={(event) => setDraft({ ...draft, tags: event.target.value })} placeholder="Zoekwoorden, gescheiden door komma's" />
         <input value={draft.leverancier_of_fabrikant} onChange={(event) => setDraft({ ...draft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
         <input value={draft.faq_vraag} onChange={(event) => setDraft({ ...draft, faq_vraag: event.target.value })} placeholder="Eerste veelgestelde vraag optioneel" />
-        <button className="button" type="submit">Insturen</button>
-        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
+        {formError && <p className="form-message form-message--error">{formError}</p>}
+        <button className="button" disabled={saving} type="submit">{saving ? "Bezig met insturen" : "Insturen"}</button>
+        <button className="button button--soft" disabled={saving} onClick={() => setShowForm(false)} type="button">Annuleren</button>
       </form>
       )}
       <div className="filter-row">

@@ -8,6 +8,7 @@ import { PhotoGrid } from "../components/PhotoGrid";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { residentLabel } from "../lib/residentDisplay";
 import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
@@ -21,6 +22,8 @@ export function ReportsPage() {
   const [category, setCategory] = useState<ReportCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
@@ -51,53 +54,61 @@ export function ReportsPage() {
   }, [reports.items, query, category]);
 
   async function createReport() {
-    const timestamp = new Date().toISOString();
-    const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
-    const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
-    const locatie_in_gebouw =
-      draft.type_melding === "Appartementencomplex"
-        ? draft.locatie_in_gebouw
-        : draft.type_melding === "Mogelijk meerdere woningen"
-          ? "Meerdere woningen"
-          : "Eigen woning";
-    if (editingId) {
-      reports.update(editingId, {
-        titel: draft.titel,
-        omschrijving: draft.omschrijving,
-        categorie: draft.categorie,
+    try {
+      setSaving(true);
+      setFormError("");
+      const timestamp = new Date().toISOString();
+      const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
+      const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
+      const locatie_in_gebouw =
+        draft.type_melding === "Appartementencomplex"
+          ? draft.locatie_in_gebouw
+          : draft.type_melding === "Mogelijk meerdere woningen"
+            ? "Meerdere woningen"
+            : "Eigen woning";
+      if (editingId) {
+        await reports.updateAsync(editingId, {
+          titel: draft.titel,
+          omschrijving: draft.omschrijving,
+          categorie: draft.categorie,
+          locatie_in_gebouw,
+          type_melding: draft.type_melding,
+          image_urls: imageUrls,
+          bijgewerkt_op: timestamp,
+        });
+        setEditingId(null);
+        setCategory(draft.categorie);
+        setQuery("");
+        setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+        setShowForm(false);
+        return;
+      }
+
+      const report: Report = {
+        id: crypto.randomUUID(),
+        ...draft,
         locatie_in_gebouw,
-        type_melding: draft.type_melding,
-        image_urls: imageUrls,
+        status: "Nieuw",
+        aangemaakt_door: profile.user_id,
+        aangemaakt_door_naam: profile.naam_of_bijnaam,
+        aangemaakt_door_huisnummer: profile.huisnummer,
+        aangemaakt_op: timestamp,
         bijgewerkt_op: timestamp,
-      });
-      setEditingId(null);
+        confirmations: 1,
+        declined: 0,
+        current_user_response: "confirmed",
+        image_urls: imageUrls,
+      };
+      await reports.addAsync(report);
       setCategory(draft.categorie);
       setQuery("");
       setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
       setShowForm(false);
-      return;
+    } catch (error) {
+      setFormError(friendlyErrorMessage(error, "Melding opslaan lukt nu niet. Controleer je foto's en probeer het opnieuw."));
+    } finally {
+      setSaving(false);
     }
-
-    const report: Report = {
-      id: crypto.randomUUID(),
-      ...draft,
-      locatie_in_gebouw,
-      status: "Nieuw",
-      aangemaakt_door: profile.user_id,
-      aangemaakt_door_naam: profile.naam_of_bijnaam,
-      aangemaakt_door_huisnummer: profile.huisnummer,
-      aangemaakt_op: timestamp,
-      bijgewerkt_op: timestamp,
-      confirmations: 1,
-      declined: 0,
-      current_user_response: "confirmed",
-      image_urls: imageUrls,
-    };
-    reports.add(report);
-    setCategory(draft.categorie);
-    setQuery("");
-    setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
-    setShowForm(false);
   }
 
   function confirmReport(id: string) {
@@ -204,9 +215,11 @@ export function ReportsPage() {
             </a>
           </div>
         )}
-        <button className="button" type="submit">{editingId ? "Wijzigingen opslaan" : "Melding opslaan"}</button>
+        {formError && <p className="form-message form-message--error">{formError}</p>}
+        <button className="button" disabled={saving} type="submit">{saving ? "Bezig met opslaan" : editingId ? "Wijzigingen opslaan" : "Melding opslaan"}</button>
         <button
           className="button button--soft"
+          disabled={saving}
           onClick={() => {
             setEditingId(null);
             setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });

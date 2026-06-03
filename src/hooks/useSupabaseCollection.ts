@@ -197,6 +197,21 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
     [options, pendingDeleteKey, pendingUpsertKey],
   );
 
+  const addAsync = useCallback(
+    async (item: T) => {
+      setSyncError(undefined);
+      if (options.enabled && isSupabaseConfigured && supabase) {
+        await options.insertItem(item);
+      }
+      pendingUpsertIds.current.delete(item.id);
+      pendingDeleteIds.current.delete(item.id);
+      persistSet(pendingUpsertKey, pendingUpsertIds.current);
+      persistSet(pendingDeleteKey, pendingDeleteIds.current);
+      setItems((current) => [item, ...current.filter((currentItem) => currentItem.id !== item.id)]);
+    },
+    [options, pendingDeleteKey, pendingUpsertKey],
+  );
+
   const update = useCallback(
     (id: string, changes: Partial<T>) => {
       const previousItem = items.find((item) => item.id === id);
@@ -222,6 +237,25 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
             reportError(error);
           });
       }
+    },
+    [items, options, pendingDeleteKey, pendingUpsertKey],
+  );
+
+  const updateAsync = useCallback(
+    async (id: string, changes: Partial<T>) => {
+      const previousItem = items.find((item) => item.id === id);
+      const nextItem = previousItem ? { ...previousItem, ...changes } : undefined;
+      if (!nextItem) return;
+
+      setSyncError(undefined);
+      if (options.enabled && isSupabaseConfigured && supabase) {
+        await options.updateItem(id, changes, nextItem, previousItem);
+      }
+      pendingUpsertIds.current.delete(id);
+      pendingDeleteIds.current.delete(id);
+      persistSet(pendingUpsertKey, pendingUpsertIds.current);
+      persistSet(pendingDeleteKey, pendingDeleteIds.current);
+      setItems((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item)));
     },
     [items, options, pendingDeleteKey, pendingUpsertKey],
   );
@@ -252,16 +286,35 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
     [items, options, pendingDeleteKey, pendingUpsertKey],
   );
 
+  const removeAsync = useCallback(
+    async (id: string) => {
+      const item = items.find((current) => current.id === id);
+      setSyncError(undefined);
+      if (options.enabled && isSupabaseConfigured && supabase) {
+        await options.deleteItem(id, item);
+      }
+      pendingUpsertIds.current.delete(id);
+      pendingDeleteIds.current.delete(id);
+      persistSet(pendingUpsertKey, pendingUpsertIds.current);
+      persistSet(pendingDeleteKey, pendingDeleteIds.current);
+      setItems((current) => current.filter((current) => current.id !== id));
+    },
+    [items, options, pendingDeleteKey, pendingUpsertKey],
+  );
+
   return useMemo(
     () => ({
       items,
       syncError,
       clearSyncError: () => setSyncError(undefined),
       add,
+      addAsync,
       update,
+      updateAsync,
       remove,
+      removeAsync,
       replace: setItems,
     }),
-    [add, items, remove, syncError, update],
+    [add, addAsync, items, remove, removeAsync, syncError, update, updateAsync],
   );
 }
