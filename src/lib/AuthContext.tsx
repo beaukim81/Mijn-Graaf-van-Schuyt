@@ -148,7 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
         if (error) throw error;
-        return data.session ? "Je account is aangemaakt." : "Controleer je e-mail om je account te bevestigen.";
+        return data.session
+          ? "Je account is aangemaakt. Je kunt de app nu gebruiken."
+          : "Je account is bijna klaar. We hebben je een bevestigingsmail gestuurd. Open de link in die mail om je account te activeren. Kijk ook even in spam of ongewenste mail als je niets ziet.";
       },
       resetPassword: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");

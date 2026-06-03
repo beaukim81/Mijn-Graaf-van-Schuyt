@@ -14,6 +14,12 @@ export function AuthPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  function switchMode(nextMode: "login" | "signup") {
+    setMode(nextMode);
+    setError("");
+    setMessage("");
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -45,7 +51,9 @@ export function AuthPage() {
 
     try {
       await resetPassword(email);
-      setMessage("We hebben een e-mail gestuurd waarmee je een nieuw wachtwoord kunt instellen.");
+      setMessage(
+        "We hebben een e-mail gestuurd waarmee je een nieuw wachtwoord kunt instellen. Kijk ook in spam of ongewenste mail als je niets ziet.",
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Er ging iets mis. Probeer het nog een keer.");
     } finally {
@@ -63,10 +71,10 @@ export function AuthPage() {
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Account">
-          <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")} type="button">
+          <button className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")} type="button">
             <LogIn aria-hidden="true" size={18} /> Inloggen
           </button>
-          <button className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")} type="button">
+          <button className={mode === "signup" ? "active" : ""} onClick={() => switchMode("signup")} type="button">
             <UserPlus aria-hidden="true" size={18} /> Account maken
           </button>
         </div>
@@ -89,7 +97,17 @@ export function AuthPage() {
             required
             type="password"
           />
-          {mode === "signup" && <p className="muted">Kies een wachtwoord van minimaal 8 tekens.</p>}
+          {mode === "signup" ? (
+            <p className="muted">
+              Kies een wachtwoord van minimaal 8 tekens. Na het aanmaken krijg je een bevestigingsmail van Graaf van
+              Schuyt. Kijk ook in spam of ongewenste mail.
+            </p>
+          ) : (
+            <p className="muted">
+              Wachtwoord vergeten? Vul je e-mailadres in en gebruik de knop hieronder. De herstelmail kan soms in spam
+              of ongewenste mail terechtkomen.
+            </p>
+          )}
           {error && <p className="form-message form-message--error">{error}</p>}
           {message && <p className="form-message">{message}</p>}
           <button className="button button--full" disabled={busy} type="submit">
