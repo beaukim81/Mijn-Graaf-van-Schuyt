@@ -281,19 +281,20 @@ export function AdminPage() {
                   <textarea
                     onChange={(event) => setFeedbackReplies({ ...feedbackReplies, [item.id]: event.target.value })}
                     placeholder="Typ hier een korte reactie..."
-                    value={feedbackReplies[item.id] ?? item.beheer_reactie ?? ""}
+                    value={feedbackReplies[item.id] ?? ""}
                   />
                 </label>
                 <div className="admin-row">
                   <button
                     className="button button--soft"
-                    onClick={() => {
-                      const reply = (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim();
-                      feedbackItems.update(item.id, {
+                    onClick={async () => {
+                      const reply = (feedbackReplies[item.id] ?? "").trim();
+                      await feedbackItems.updateAsync(item.id, {
                         beheer_reactie: reply || undefined,
                         status: reply ? "In behandeling" as FeedbackStatus : item.status,
                         updated_at: new Date().toISOString(),
                       });
+                      setFeedbackReplies((current) => ({ ...current, [item.id]: "" }));
                       if (reply) {
                         void notifyUser(item.aangemaakt_door, {
                           title: "Reactie op je feedback",
@@ -309,14 +310,15 @@ export function AdminPage() {
                   </button>
                   <button
                     className="button button--soft"
-                    onClick={() => {
-                      const reply = (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim();
-                      feedbackItems.update(item.id, {
+                    onClick={async () => {
+                      const reply = (feedbackReplies[item.id] ?? "").trim();
+                      await feedbackItems.updateAsync(item.id, {
                         status: "Opgelost",
                         beheer_reactie: reply || item.beheer_reactie,
                         opgelost_op: new Date().toISOString(),
                         updated_at: new Date().toISOString(),
                       });
+                      setFeedbackReplies((current) => ({ ...current, [item.id]: "" }));
                       void notifyUser(item.aangemaakt_door, {
                         title: "Feedback opgelost",
                         body: reply || `Je feedback is gemarkeerd als opgelost: ${item.onderwerp}`,

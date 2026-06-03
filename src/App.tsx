@@ -476,8 +476,14 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       const { error } = await requireSupabase().from("feedback_items").upsert(feedbackItemToRow(item));
       if (error) throw error;
     },
-    updateItem: async (_id: string, _changes: Partial<FeedbackItem>, nextItem: FeedbackItem) => {
-      const { error } = await requireSupabase().from("feedback_items").update(feedbackItemToRow(nextItem)).eq("id", nextItem.id);
+    updateItem: async (_id: string, changes: Partial<FeedbackItem>, nextItem: FeedbackItem) => {
+      const row: Record<string, string | null> = {};
+      if ("onderwerp" in changes) row.onderwerp = nextItem.onderwerp;
+      if ("bericht" in changes) row.bericht = nextItem.bericht;
+      if ("status" in changes) row.status = nextItem.status;
+      if ("beheer_reactie" in changes) row.beheer_reactie = nextItem.beheer_reactie ?? null;
+      if ("opgelost_op" in changes) row.opgelost_op = nextItem.opgelost_op ?? null;
+      const { error } = await requireSupabase().from("feedback_items").update(row).eq("id", nextItem.id);
       if (error) throw error;
     },
     deleteItem: async (id: string) => {

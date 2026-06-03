@@ -2453,3 +2453,24 @@ details,
 .admin-overview button.active:focus-visible {
   background: var(--primary-dark);
 }
+
+.collapsible-card__summary {
+  flex-wrap: wrap;
+}
+
+.collapsible-card__summary > div {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.collapsible-card__summary .status-badge {
+  flex: 0 1 auto;
+  justify-content: center;
+  max-width: min(190px, 46vw);
+  text-align: center;
+  white-space: normal;
+}
+
+.collapsible-card__summary::after {
+  margin-left: auto;
+}
