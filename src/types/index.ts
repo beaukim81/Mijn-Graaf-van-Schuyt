@@ -223,3 +223,19 @@ export interface NotificationPreference {
   bulletin_notifications: boolean;
   updated_at: string;
 }
+
+export type FeedbackStatus = "Nieuw" | "In behandeling" | "Opgelost";
+
+export interface FeedbackItem {
+  id: string;
+  onderwerp: string;
+  bericht: string;
+  status: FeedbackStatus;
+  aangemaakt_door: string;
+  aangemaakt_door_naam?: string;
+  aangemaakt_door_huisnummer?: string;
+  beheer_reactie?: string;
+  opgelost_op?: string;
+  created_at: string;
+  updated_at: string;
+}

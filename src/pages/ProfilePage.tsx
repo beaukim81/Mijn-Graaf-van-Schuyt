@@ -1,13 +1,14 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useAppData } from "../lib/AppDataContext";
 import { StatusBadge } from "../components/StatusBadge";
+import { LinkifiedText } from "../components/LinkifiedText";
 import { useAuth } from "../lib/AuthContext";
 import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function ProfilePage() {
-  const { notificationPreferences, profile } = useAppData();
+  const { feedbackItems, notificationPreferences, profile } = useAppData();
   const { configured, deleteAccount, signOut, updateEmail } = useAuth();
   const [pushMessage, setPushMessage] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
@@ -19,6 +20,10 @@ export function ProfilePage() {
     [notificationPreferences.items, profile.user_id],
   );
   const preference = mergeNotificationPreference(profile.user_id, storedPreference);
+  const myFeedback = useMemo(
+    () => feedbackItems.items.filter((item) => item.aangemaakt_door === profile.user_id),
+    [feedbackItems.items, profile.user_id],
+  );
 
   async function updatePreference(changes: Partial<NotificationPreference>) {
     const next = { ...preference, ...changes, updated_at: new Date().toISOString() };
@@ -131,6 +136,17 @@ export function ProfilePage() {
         )}
       </article>
 
+      <article className="item-card">
+        <div className="item-card__header">
+          <div>
+            <p className="chip">Privacy</p>
+            <h2>Wat zien andere bewoners?</h2>
+          </div>
+        </div>
+        <p>Je voornaam of bijnaam, huisnummer en geplaatste berichten zijn zichtbaar voor ingelogde bewoners.</p>
+        <p className="muted">Je e-mailadres is niet openbaar zichtbaar. Dat gebruiken we alleen voor je account, inloggen en belangrijke accountmails.</p>
+      </article>
+
       {configured && (
         <article className="item-card">
           <div className="item-card__header">
@@ -178,6 +194,43 @@ export function ProfilePage() {
           {accountMessage && <p className="muted">{accountMessage}</p>}
         </article>
       )}
+
+      <article className="item-card">
+        <div className="item-card__header">
+          <div>
+            <p className="chip">Testfase</p>
+            <h2>Mijn feedback</h2>
+          </div>
+        </div>
+        {myFeedback.length === 0 ? (
+          <p className="muted">Heb je feedback doorgegeven via de homepage, dan kun je hier later de status en reactie van beheer terugvinden.</p>
+        ) : (
+          <div className="card-list compact-list">
+            {myFeedback.map((item) => (
+              <details className="item-card collapsible-card" key={item.id}>
+                <summary className="item-card__header collapsible-card__summary">
+                  <div>
+                    <p className="chip">{new Date(item.created_at).toLocaleDateString("nl-NL")}</p>
+                    <h3>{item.onderwerp}</h3>
+                  </div>
+                  <StatusBadge tone={item.status === "Opgelost" ? "good" : "soft"}>{item.status}</StatusBadge>
+                </summary>
+                <div className="collapsible-card__body">
+                  <p><LinkifiedText text={item.bericht} /></p>
+                  {item.beheer_reactie ? (
+                    <aside className="related-box">
+                      <strong>Reactie van beheer</strong>
+                      <span><LinkifiedText text={item.beheer_reactie} /></span>
+                    </aside>
+                  ) : (
+                    <p className="muted">Er is nog geen reactie geplaatst.</p>
+                  )}
+                </div>
+              </details>
+            ))}
+          </div>
+        )}
+      </article>
 
       <article className="item-card">
         <div className="item-card__header">

@@ -14,6 +14,7 @@ import type {
   BulletinPost,
   Contact,
   ContactCategory,
+  FeedbackStatus,
   KnowledgeCategory,
   KnowledgeDocument,
   KnowledgeDocumentStatus,
@@ -23,10 +24,11 @@ import type {
   ReportStatus,
 } from "../types";
 
-type AdminTab = "algemeen" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
+type AdminTab = "algemeen" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
 
 const tabs: { id: AdminTab; label: string }[] = [
   { id: "algemeen", label: "Algemeen" },
+  { id: "feedback", label: "Feedback" },
   { id: "kennisbank", label: "Kennisbank" },
   { id: "contacten", label: "Contacten" },
   { id: "meldingen", label: "Meldingen" },
@@ -77,11 +79,12 @@ const blankAnnouncement = {
 };
 
 export function AdminPage() {
-  const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, profiles, reports } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
+  const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
 
   const pendingDocuments = useMemo(
     () => documents.items.filter((document) => document.status !== "Gepubliceerd").length,
@@ -95,6 +98,7 @@ export function AdminPage() {
   );
   const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
+  const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
 
   if (profile.rol !== "admin") {
     return <EmptyState title="Geen toegang" description="Deze pagina is alleen bedoeld voor beheerders." />;
@@ -241,6 +245,7 @@ export function AdminPage() {
         <AdminMetric label="Open meldingen" value={openReports} />
         <AdminMetric label="Actieve prikbordberichten" value={activePosts} />
         <AdminMetric label="Belangrijke mededelingen" value={importantAnnouncements} />
+        <AdminMetric label="Open feedback" value={openFeedback} />
         <AdminMetric label="Bewoners" value={residentsCount} />
       </div>
 
@@ -251,6 +256,78 @@ export function AdminPage() {
           </button>
         ))}
       </div>
+
+      {activeTab === "feedback" && (
+        <section className="admin-section card-list compact-list">
+          {feedbackItems.syncError && (
+            <div className="notice notice--warning">
+              <p>{feedbackItems.syncError}</p>
+              <button className="text-button" onClick={feedbackItems.clearSyncError} type="button">Melding sluiten</button>
+            </div>
+          )}
+          {feedbackItems.items.map((item) => (
+            <details className="item-card collapsible-card admin-list-card" key={item.id}>
+              <summary className="item-card__header collapsible-card__summary">
+                <div>
+                  <p className="chip">{residentLabel(item.aangemaakt_door_naam, item.aangemaakt_door_huisnummer)}</p>
+                  <h3>{item.onderwerp}</h3>
+                  <p className="muted">{new Date(item.created_at).toLocaleDateString("nl-NL")}</p>
+                </div>
+                <StatusBadge tone={item.status === "Opgelost" ? "good" : "soft"}>{item.status}</StatusBadge>
+              </summary>
+              <div className="collapsible-card__body">
+                <p><LinkifiedText text={item.bericht} /></p>
+                {item.beheer_reactie && (
+                  <aside className="related-box">
+                    <strong>Reactie van beheer</strong>
+                    <span><LinkifiedText text={item.beheer_reactie} /></span>
+                  </aside>
+                )}
+                <label className="field">
+                  <span>Reactie richting bewoner</span>
+                  <textarea
+                    onChange={(event) => setFeedbackReplies({ ...feedbackReplies, [item.id]: event.target.value })}
+                    placeholder="Typ hier een korte reactie..."
+                    value={feedbackReplies[item.id] ?? item.beheer_reactie ?? ""}
+                  />
+                </label>
+                <div className="admin-row">
+                  <button
+                    className="button button--soft"
+                    onClick={() => {
+                      const reply = (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim();
+                      feedbackItems.update(item.id, {
+                        beheer_reactie: reply || undefined,
+                        status: reply ? "In behandeling" as FeedbackStatus : item.status,
+                        updated_at: new Date().toISOString(),
+                      });
+                    }}
+                    type="button"
+                  >
+                    Reactie opslaan
+                  </button>
+                  <button
+                    className="button button--soft"
+                    onClick={() => feedbackItems.update(item.id, {
+                      status: "Opgelost",
+                      beheer_reactie: (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim() || item.beheer_reactie,
+                      opgelost_op: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    })}
+                    type="button"
+                  >
+                    Markeer als opgelost
+                  </button>
+                  <button className="button button--danger" onClick={() => feedbackItems.remove(item.id)} type="button">
+                    <Trash2 aria-hidden="true" size={18} /> Verwijderen
+                  </button>
+                </div>
+              </div>
+            </details>
+          ))}
+          {feedbackItems.items.length === 0 && <EmptyState title="Nog geen feedback" description="Feedback van bewoners verschijnt hier zodra zij iets doorgeven via de homepage." />}
+        </section>
+      )}
 
       {activeTab === "algemeen" && (
         <section className="admin-section">
@@ -445,7 +522,7 @@ export function AdminPage() {
               </div>
             </article>
           ))}
-          {activeBulletinPosts.length === 0 && <EmptyState title="Geen actieve prikbordberichten" description="Er staan nu geen actieve berichten op het prikbord." />}
+          {activeBulletinPosts.length === 0 && <EmptyState title="Geen actieve prikbordberichten" description="Wanneer bewoners iets plaatsen op het prikbord, kun je het hier beheren of verwijderen." />}
         </section>
       )}
 

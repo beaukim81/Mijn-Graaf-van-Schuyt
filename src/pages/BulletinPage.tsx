@@ -235,7 +235,7 @@ export function BulletinPage() {
           />
         ))}
       </div>
-      {filteredPosts.length === 0 && <EmptyState title="Geen berichten" description="Er staat nu niets op het prikbord in deze categorie." />}
+      {filteredPosts.length === 0 && <EmptyState title="Nog niets op het prikbord" description="Plaats hier een praktisch bericht, bijvoorbeeld iets dat je aanbiedt, zoekt of gevonden hebt." />}
     </section>
   );
 }

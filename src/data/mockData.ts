@@ -1,4 +1,4 @@
-import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+import type { BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 const now = new Date().toISOString();
 
@@ -434,3 +434,5 @@ export const notificationPreferences: NotificationPreference[] = [
     updated_at: now,
   },
 ];
+
+export const feedbackItems: FeedbackItem[] = [];

@@ -11,6 +11,7 @@ import {
   bulletinMessageToRow,
   bulletinPostToRow,
   contactToRow,
+  feedbackItemToRow,
   helpMessageToRow,
   helpOfferToRow,
   helpRequestToRow,
@@ -19,6 +20,7 @@ import {
   mapBulletinMessage,
   mapBulletinPost,
   mapContact,
+  mapFeedbackItem,
   mapHelpMessage,
   mapHelpOffer,
   mapHelpRequest,
@@ -42,7 +44,7 @@ import { KnowledgePage } from "./pages/KnowledgePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
-import type { BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
+import type { BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
 
 function requireSupabase() {
   if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -462,6 +464,29 @@ function AppDataProvider({ children }: { children: ReactNode }) {
   }), [useDatabase]);
   const notificationPreferences = useSupabaseCollection(mock.notificationPreferences, notificationPreferencesOptions);
 
+  const feedbackOptions = useMemo(() => ({
+    storageKey: "mijn-graaf-van-schuyt:feedback",
+    enabled: useDatabase,
+    fetchItems: async () => {
+      const { data, error } = await requireSupabase().from("feedback_items").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(mapFeedbackItem);
+    },
+    insertItem: async (item: FeedbackItem) => {
+      const { error } = await requireSupabase().from("feedback_items").upsert(feedbackItemToRow(item));
+      if (error) throw error;
+    },
+    updateItem: async (_id: string, _changes: Partial<FeedbackItem>, nextItem: FeedbackItem) => {
+      const { error } = await requireSupabase().from("feedback_items").update(feedbackItemToRow(nextItem)).eq("id", nextItem.id);
+      if (error) throw error;
+    },
+    deleteItem: async (id: string) => {
+      const { error } = await requireSupabase().from("feedback_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+  }), [useDatabase]);
+  const feedbackItems = useSupabaseCollection(mock.feedbackItems, feedbackOptions);
+
   if (configured && loading) {
     return <LoadingState />;
   }
@@ -488,6 +513,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     bulletinPosts,
     buildingAnnouncements,
     notificationPreferences,
+    feedbackItems,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { BuildingAnnouncement, BulletinPost, Contact, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+import type { BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 export interface DataCollection<T extends { id: string }> {
   items: T[];
@@ -24,6 +24,7 @@ export interface AppDataContextValue {
   bulletinPosts: DataCollection<BulletinPost>;
   buildingAnnouncements: DataCollection<BuildingAnnouncement>;
   notificationPreferences: DataCollection<NotificationPreference>;
+  feedbackItems: DataCollection<FeedbackItem>;
 }
 
 export const AppDataContext = createContext<AppDataContextValue | null>(null);

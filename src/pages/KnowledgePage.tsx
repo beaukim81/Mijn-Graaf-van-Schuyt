@@ -268,7 +268,7 @@ export function KnowledgePage() {
           />
         ))}
       </div>
-      {filteredDocuments.length === 0 && <EmptyState title="Geen documenten gevonden" description="Probeer een ander trefwoord, onderdeel of categorie." />}
+      {filteredDocuments.length === 0 && <EmptyState title="Geen documenten gevonden" description="Probeer een ander trefwoord, of deel zelf een praktische tip of handleiding als je informatie mist." />}
     </section>
   );
 }

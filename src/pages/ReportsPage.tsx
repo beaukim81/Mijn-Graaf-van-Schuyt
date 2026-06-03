@@ -287,7 +287,7 @@ export function ReportsPage() {
           />
         ))}
       </div>
-      {filteredReports.length === 0 && <EmptyState title="Geen meldingen gevonden" description="Er is op dit moment niets dat past bij je filter." />}
+      {filteredReports.length === 0 && <EmptyState title="Geen open meldingen" description="Zie je een probleem in je woning of in het gebouw, maak dan een nieuwe melding. Spoed en persoonlijke reparaties blijven via REBO." />}
       {resolvedReports.length > 0 && (
         <section className="page-stack">
           <div className="page-heading">

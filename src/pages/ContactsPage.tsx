@@ -104,7 +104,7 @@ export function ContactsPage() {
           <ContactCard key={contact.id} contact={contact} isAdmin={isAdmin} onEdit={(item) => { setDraft(item); setShowForm(true); }} onDelete={contacts.remove} />
         ))}
       </div>
-      {visibleContacts.length === 0 && <EmptyState title="Geen contacten gevonden" description="Pas de zoekterm of categorie aan." />}
+      {visibleContacts.length === 0 && <EmptyState title="Geen contacten gevonden" description="Probeer een andere zoekterm of categorie. Mist er een belangrijk contact, geef dit door via feedback." />}
     </section>
   );
 }

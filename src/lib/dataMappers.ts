@@ -7,6 +7,8 @@ import type {
   BulletinStatus,
   Contact,
   ContactCategory,
+  FeedbackItem,
+  FeedbackStatus,
   HelpCategory,
   HelpMessage,
   HelpOffer,
@@ -373,5 +375,35 @@ export function notificationPreferenceToRow(preference: NotificationPreference) 
     report_notifications: preference.report_notifications,
     knowledge_notifications: preference.knowledge_notifications,
     bulletin_notifications: preference.bulletin_notifications,
+  };
+}
+
+export function mapFeedbackItem(row: Row): FeedbackItem {
+  return {
+    id: text(row.id),
+    onderwerp: text(row.onderwerp),
+    bericht: text(row.bericht),
+    status: text(row.status, "Nieuw") as FeedbackStatus,
+    aangemaakt_door: text(row.aangemaakt_door),
+    aangemaakt_door_naam: optionalText(row.aangemaakt_door_naam),
+    aangemaakt_door_huisnummer: optionalText(row.aangemaakt_door_huisnummer),
+    beheer_reactie: optionalText(row.beheer_reactie),
+    opgelost_op: optionalText(row.opgelost_op),
+    created_at: text(row.created_at),
+    updated_at: text(row.updated_at ?? row.created_at),
+  };
+}
+
+export function feedbackItemToRow(item: FeedbackItem) {
+  return {
+    id: item.id,
+    onderwerp: item.onderwerp,
+    bericht: item.bericht,
+    status: item.status,
+    aangemaakt_door: item.aangemaakt_door,
+    aangemaakt_door_naam: item.aangemaakt_door_naam ?? null,
+    aangemaakt_door_huisnummer: item.aangemaakt_door_huisnummer ?? null,
+    beheer_reactie: item.beheer_reactie ?? null,
+    opgelost_op: item.opgelost_op ?? null,
   };
 }

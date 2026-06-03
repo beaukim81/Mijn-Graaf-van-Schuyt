@@ -219,7 +219,7 @@ export function HelpPage() {
           />
         ))}
       </div>
-      {filteredRequests.length === 0 && <EmptyState title="Geen hulpvragen" description="Er staat nu geen hulpvraag in deze categorie." />}
+      {filteredRequests.length === 0 && <EmptyState title="Nog geen oproepen" description="Plaats een hulpvraag, uitnodiging of klein verzoek aan buren. Houd het kort en praktisch." />}
     </section>
   );
 }
