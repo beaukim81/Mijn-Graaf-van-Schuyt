@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAppData } from "../lib/AppDataContext";
 import type { BuildingAnnouncement } from "../types";
@@ -36,10 +36,6 @@ function isExpired(announcement: BuildingAnnouncement) {
 
 export function HomePage() {
   const { buildingAnnouncements } = useAppData();
-  const expiredAnnouncementIds = useMemo(
-    () => buildingAnnouncements.items.filter(isExpired).map((announcement) => announcement.id),
-    [buildingAnnouncements.items],
-  );
   const visibleAnnouncements = useMemo(
     () =>
       [...buildingAnnouncements.items]
@@ -47,10 +43,6 @@ export function HomePage() {
         .sort((first, second) => dateSortValue(first) - dateSortValue(second)),
     [buildingAnnouncements.items],
   );
-
-  useEffect(() => {
-    expiredAnnouncementIds.forEach((id) => buildingAnnouncements.remove(id));
-  }, [buildingAnnouncements, expiredAnnouncementIds]);
 
   return (
     <section className="page-stack">
