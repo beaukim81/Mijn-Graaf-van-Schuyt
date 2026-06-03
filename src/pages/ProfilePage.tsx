@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useAppData } from "../lib/AppDataContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../lib/AuthContext";
@@ -7,9 +7,12 @@ import type { NotificationPreference } from "../types";
 
 export function ProfilePage() {
   const { notificationPreferences, profile } = useAppData();
-  const { configured, deleteAccount, signOut } = useAuth();
+  const { configured, deleteAccount, signOut, updateEmail } = useAuth();
   const [pushMessage, setPushMessage] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
+  const [email, setEmail] = useState(profile.email ?? "");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
   const storedPreference = useMemo(
     () => notificationPreferences.items.find((item) => item.user_id === profile.user_id),
     [notificationPreferences.items, profile.user_id],
@@ -67,6 +70,30 @@ export function ProfilePage() {
     }
   }
 
+  async function handleEmailUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextEmail = email.trim().toLowerCase();
+    if (!nextEmail) {
+      setEmailMessage("Vul eerst een e-mailadres in.");
+      return;
+    }
+    if (nextEmail === profile.email?.toLowerCase()) {
+      setEmailMessage("Dit e-mailadres staat al bij je account.");
+      return;
+    }
+
+    try {
+      setEmailBusy(true);
+      setEmailMessage("");
+      await updateEmail(nextEmail);
+      setEmailMessage("We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Open de link in die mail om de wijziging af te ronden. Kijk ook in spam of ongewenste mail.");
+    } catch (error) {
+      setEmailMessage(error instanceof Error ? error.message : "E-mailadres wijzigen is niet gelukt.");
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+
   return (
     <section className="page-stack">
       <div className="page-heading">
@@ -100,6 +127,32 @@ export function ProfilePage() {
           <p className="muted">Zodra Supabase is gekoppeld, beheer je dit profiel na inloggen met je eigen account.</p>
         )}
       </article>
+
+      {configured && (
+        <article className="item-card">
+          <div className="item-card__header">
+            <div>
+              <p className="chip">Account</p>
+              <h2>E-mailadres wijzigen</h2>
+            </div>
+          </div>
+          <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
+          <form className="form-panel" onSubmit={handleEmailUpdate}>
+            <input
+              autoComplete="email"
+              inputMode="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Nieuw e-mailadres"
+              type="email"
+              value={email}
+            />
+            <button className="button button--soft" disabled={emailBusy} type="submit">
+              {emailBusy ? "Even geduld" : "E-mailadres wijzigen"}
+            </button>
+          </form>
+          {emailMessage && <p className="muted">{emailMessage}</p>}
+        </article>
+      )}
 
       {configured && (
         <article className="item-card">

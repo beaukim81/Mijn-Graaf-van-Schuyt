@@ -14,6 +14,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: SignUpInput) => Promise<string>;
   resetPassword: (email: string) => Promise<void>;
+  updateEmail: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -56,7 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
     if (error) throw error;
     if (data) {
-      setProfile(mapProfile(data));
+      const mappedProfile = mapProfile(data);
+      if (currentUser.email && mappedProfile.email !== currentUser.email) {
+        const { data: syncedProfile } = await supabase
+          .from("profiles")
+          .update({ email: currentUser.email })
+          .eq("user_id", currentUser.id)
+          .select("*")
+          .maybeSingle();
+        setProfile(syncedProfile ? mapProfile(syncedProfile) : { ...mappedProfile, email: currentUser.email });
+        return;
+      }
+      setProfile(mappedProfile);
       return;
     }
 
@@ -155,6 +167,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resetPassword: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+        if (error) throw error;
+      },
+      updateEmail: async (email) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: window.location.origin });
         if (error) throw error;
       },
       updatePassword: async (password) => {
