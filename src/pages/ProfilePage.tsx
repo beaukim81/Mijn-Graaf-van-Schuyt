@@ -1,14 +1,19 @@
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useAppData } from "../lib/AppDataContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAuth } from "../lib/AuthContext";
-import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
+import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function ProfilePage() {
   const { notificationPreferences, profile } = useAppData();
-  const { configured, signOut } = useAuth();
+  const { configured, deleteAccount, signOut, updateEmail } = useAuth();
   const [pushMessage, setPushMessage] = useState("");
+  const [accountMessage, setAccountMessage] = useState("");
+  const [email, setEmail] = useState(profile.email ?? "");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
   const storedPreference = useMemo(
     () => notificationPreferences.items.find((item) => item.user_id === profile.user_id),
     [notificationPreferences.items, profile.user_id],
@@ -31,13 +36,65 @@ export function ProfilePage() {
       await enablePushNotifications(profile, preference);
       setPushMessage("Pushmeldingen zijn ingeschakeld.");
     } catch (error) {
-      setPushMessage(error instanceof Error ? error.message : "Pushmeldingen inschakelen is niet gelukt.");
+      setPushMessage(friendlyErrorMessage(error, "Pushmeldingen inschakelen lukt nu niet. Controleer of meldingen in je browser zijn toegestaan."));
     }
   }
 
   async function disablePush() {
     await disablePushNotifications(profile);
     setPushMessage("Pushmeldingen zijn uitgezet op dit apparaat.");
+  }
+
+  async function sendTestPush() {
+    try {
+      setPushMessage("");
+      const result = await notifyUser(profile.user_id, {
+        title: "Testmelding Graaf van Schuyt",
+        body: "Deze testmelding werkt via Supabase en je telefoon.",
+        url: "/profiel",
+        category: "personal",
+      });
+      setPushMessage((result?.sent ?? 0) > 0 ? "Testmelding is verstuurd." : "Testmelding kon niet worden bezorgd. Zet pushmeldingen eerst aan op dit apparaat.");
+    } catch (error) {
+      setPushMessage(friendlyErrorMessage(error, "Testmelding versturen lukt nu niet. Controleer je internet en probeer het opnieuw."));
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm("Weet je zeker dat je je account volledig wilt verwijderen? Je profiel en gekoppelde gegevens worden verwijderd. Dit kun je niet terugdraaien.");
+    if (!confirmed) return;
+    try {
+      setAccountMessage("");
+      await deleteAccount();
+    } catch (error) {
+      setAccountMessage(friendlyErrorMessage(error, "Account verwijderen lukt nu niet. Log opnieuw in en probeer het nog een keer."));
+    }
+  }
+
+  async function handleEmailUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextEmail = email.trim().toLowerCase();
+    if (!nextEmail) {
+      setEmailMessage("Vul eerst een e-mailadres in.");
+      return;
+    }
+    if (nextEmail === profile.email?.toLowerCase()) {
+      setEmailMessage("Dit e-mailadres staat al bij je account.");
+      return;
+    }
+
+    try {
+      setEmailBusy(true);
+      setEmailMessage("");
+      await updateEmail(nextEmail);
+      setEmailMessage(
+        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Tot je die mail bevestigt, log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.",
+      );
+    } catch (error) {
+      setEmailMessage(friendlyErrorMessage(error, "E-mailadres wijzigen lukt nu niet. Controleer het adres en probeer het opnieuw."));
+    } finally {
+      setEmailBusy(false);
+    }
   }
 
   return (
@@ -74,6 +131,54 @@ export function ProfilePage() {
         )}
       </article>
 
+      {configured && (
+        <article className="item-card">
+          <div className="item-card__header">
+            <div>
+              <p className="chip">Account</p>
+              <h2>E-mailadres wijzigen</h2>
+            </div>
+          </div>
+          <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
+          <p className="muted">
+            Na het wijzigen krijg je een bevestigingsmail. Tot je de wijziging bevestigt, log je nog in met je oude
+            e-mailadres. Kijk ook in spam of ongewenste mail.
+          </p>
+          <form className="form-panel" onSubmit={handleEmailUpdate}>
+            <input
+              autoComplete="email"
+              inputMode="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Nieuw e-mailadres"
+              type="email"
+              value={email}
+            />
+            <button className="button button--soft" disabled={emailBusy} type="submit">
+              {emailBusy ? "Even geduld" : "E-mailadres wijzigen"}
+            </button>
+          </form>
+          {emailMessage && <p className="muted">{emailMessage}</p>}
+        </article>
+      )}
+
+      {configured && (
+        <article className="item-card">
+          <div className="item-card__header">
+            <div>
+              <p className="chip">Account</p>
+              <h2>Account verwijderen</h2>
+            </div>
+            <StatusBadge tone="warning">Let op</StatusBadge>
+          </div>
+          <p>Wil je de app niet meer gebruiken, dan kun je je account volledig verwijderen.</p>
+          <p className="muted">Je profiel en gekoppelde gegevens worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+          <button className="button button--soft" onClick={handleDeleteAccount} type="button">
+            Account verwijderen
+          </button>
+          {accountMessage && <p className="muted">{accountMessage}</p>}
+        </article>
+      )}
+
       <article className="item-card">
         <div className="item-card__header">
           <div>
@@ -86,9 +191,9 @@ export function ProfilePage() {
         <p className="muted">Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat.</p>
         <div className="settings-list">
           <PreferenceToggle label="Persoonlijke meldingen" checked={preference.personal_notifications} onChange={(checked) => updatePreference({ personal_notifications: checked })} />
-          <PreferenceToggle label="Algemene gebouwmeldingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
+          <PreferenceToggle label="Algemene mededelingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
           <PreferenceToggle label="Hulpvragen" checked={preference.help_notifications} onChange={(checked) => updatePreference({ help_notifications: checked })} />
-          <PreferenceToggle label="Gebouwmeldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
+          <PreferenceToggle label="Mijn meldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
           <PreferenceToggle label="Kennisbank" checked={preference.knowledge_notifications} onChange={(checked) => updatePreference({ knowledge_notifications: checked })} />
           <PreferenceToggle label="Prikbord" checked={preference.bulletin_notifications} onChange={(checked) => updatePreference({ bulletin_notifications: checked })} />
         </div>
@@ -98,6 +203,9 @@ export function ProfilePage() {
           </button>
           <button className="button button--soft" onClick={disablePush} type="button">
             Uitzetten op dit apparaat
+          </button>
+          <button className="button button--soft" onClick={sendTestPush} type="button">
+            Testmelding sturen
           </button>
         </div>
         {pushMessage && <p className="muted">{pushMessage}</p>}

@@ -44,7 +44,10 @@ create table public.reports (
   opgelost_door uuid references auth.users(id) on delete set null,
   opgelost_door_naam text,
   oplossing_omschrijving text,
+  image_urls jsonb not null default '[]'::jsonb,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
+  aangemaakt_door_naam text,
+  aangemaakt_door_huisnummer text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -124,7 +127,10 @@ create table public.bulletin_posts (
   contactpersoon text,
   image_url text,
   image_name text,
+  image_urls jsonb not null default '[]'::jsonb,
   aangemaakt_door uuid not null references auth.users(id) on delete cascade,
+  aangemaakt_door_naam text,
+  aangemaakt_door_huisnummer text,
   status text not null default 'Actief',
   created_at timestamptz not null default now()
 );

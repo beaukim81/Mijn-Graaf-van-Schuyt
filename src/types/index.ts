@@ -99,11 +99,14 @@ export interface Report {
   type_melding: ReportType;
   status: ReportStatus;
   aangemaakt_door: string;
+  aangemaakt_door_naam?: string;
+  aangemaakt_door_huisnummer?: string;
   aangemaakt_op: string;
   bijgewerkt_op: string;
   confirmations: number;
   declined: number;
   current_user_response?: "confirmed" | "declined";
+  image_urls?: string[];
   opgelost_op?: string;
   opgelost_door?: string;
   opgelost_door_naam?: string;
@@ -126,6 +129,8 @@ export interface KnowledgeDocument {
   documenttype: KnowledgeDocumentType;
   korte_samenvatting: string;
   pdf_url: string;
+  uitgebreide_uitleg?: string;
+  image_urls?: string[];
   tags: string[];
   leverancier_of_fabrikant?: string;
   faq: KnowledgeFaq[];
@@ -185,8 +190,11 @@ export interface BulletinPost {
   categorie: BulletinCategory;
   contactpersoon?: string;
   image_url?: string;
+  image_urls?: string[];
   image_name?: string;
   aangemaakt_door: string;
+  aangemaakt_door_naam?: string;
+  aangemaakt_door_huisnummer?: string;
   status: BulletinStatus;
   aangemaakt_op: string;
   messages: BulletinMessage[];
@@ -198,6 +206,7 @@ export interface BuildingAnnouncement {
   inhoud: string;
   importance: AnnouncementImportance;
   notify_all: boolean;
+  event_date?: string;
   created_at: string;
   updated_at: string;
   created_by: string;

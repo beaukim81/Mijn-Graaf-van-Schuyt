@@ -25,9 +25,13 @@ export function useLocalCollection<T extends WithId>(initialItems: T[], storageK
     () => ({
       items,
       add: (item: T) => setItems((current) => [item, ...current]),
+      addAsync: async (item: T) => setItems((current) => [item, ...current]),
       update: (id: string, changes: Partial<T>) =>
         setItems((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item))),
+      updateAsync: async (id: string, changes: Partial<T>) =>
+        setItems((current) => current.map((item) => (item.id === id ? { ...item, ...changes } : item))),
       remove: (id: string) => setItems((current) => current.filter((item) => item.id !== id)),
+      removeAsync: async (id: string) => setItems((current) => current.filter((item) => item.id !== id)),
       replace: setItems,
     }),
     [items],

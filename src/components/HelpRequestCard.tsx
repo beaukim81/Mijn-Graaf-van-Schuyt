@@ -1,6 +1,7 @@
 import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { HelpRequest } from "../types";
+import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
 const socialCategories = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
@@ -25,6 +26,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
   const isSocial = socialCategories.includes(request.categorie);
   const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
   const canOfferHelp = request.aangemaakt_door !== currentUserId && !currentUserOffer;
+  const displayStatus = request.status === "Open" && request.offers.length > 0 ? "Iemand helpt" : request.status;
 
   function sendMessage() {
     const trimmed = message.trim();
@@ -39,12 +41,9 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         <div>
           <p className="chip">{request.categorie}</p>
           <h2>{request.titel}</h2>
-          <p className="muted">
-            Geplaatst door {request.aanmaker_naam}
-            {request.aanmaker_huisnummer ? `, huisnummer ${request.aanmaker_huisnummer}` : ""}
-          </p>
+          <p className="muted">Geplaatst door {residentLabel(request.aanmaker_naam, request.aanmaker_huisnummer)}</p>
         </div>
-        <StatusBadge tone={request.status === "Afgerond" ? "good" : "soft"}>{request.status}</StatusBadge>
+        <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
       </div>
       <p>{request.omschrijving}</p>
       <div className="action-row">
@@ -71,8 +70,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
             <div className="neighbor-offer" key={offer.id}>
               <Home aria-hidden="true" size={18} />
               <span>
-                {offer.helper_name}
-                {offer.helper_house_number ? `, huisnummer ${offer.helper_house_number}` : ""}
+                {residentLabel(offer.helper_name, offer.helper_house_number)}
               </span>
               {offer.contact_allowed && offer.contact_info && offer.contact_info !== `Huisnummer ${offer.helper_house_number}` ? (
                 <small>{offer.contact_info}</small>
@@ -91,15 +89,14 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           request.messages.map((item) => (
             <div className="chat-message" key={item.id}>
               <span>
-                {item.author_name}
-                {item.author_house_number ? `, huisnummer ${item.author_house_number}` : ""}
+                {residentLabel(item.author_name, item.author_house_number)}
               </span>
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
                   <div className="admin-row">
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         const trimmed = editedMessage.trim();
                         if (!trimmed) return;
@@ -112,7 +109,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                       Opslaan
                     </button>
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(null);
                         setEditedMessage("");
@@ -130,7 +127,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                 <div className="message-actions">
                   {item.author_id === currentUserId && (
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(item.id);
                         setEditedMessage(item.message);
@@ -140,7 +137,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                       <Pencil aria-hidden="true" size={15} /> Bewerken
                     </button>
                   )}
-                  <button className="text-button danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
+                  <button className="button button--danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
                     <Trash2 aria-hidden="true" size={15} /> Verwijderen
                   </button>
                 </div>

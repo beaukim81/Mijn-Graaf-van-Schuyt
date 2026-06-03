@@ -1,7 +1,9 @@
-import { Check, ClipboardCopy, Send } from "lucide-react";
+import { Check, ClipboardCopy, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
+import { PhotoGrid } from "./PhotoGrid";
 import { adviceForReport, collectiveMessage, isLikelyRentalMaintenance, reboSummary, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
+import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
 interface ReportCardProps {
@@ -10,10 +12,12 @@ interface ReportCardProps {
   canResolve?: boolean;
   onConfirm?: (id: string) => void;
   onForwardToRebo?: (id: string) => void;
+  onEdit?: (report: Report) => void;
+  onDelete?: (id: string) => void;
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
   const relatedDocuments = relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
@@ -29,9 +33,11 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
         <div>
           <p className="chip">{report.categorie}</p>
           <h2>{report.titel}</h2>
+          <p className="muted">Geplaatst door {residentLabel(report.aangemaakt_door_naam, report.aangemaakt_door_huisnummer)}</p>
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
       </div>
+      <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
       <p>{report.omschrijving}</p>
       <dl className="meta-list">
         <div>
@@ -56,7 +62,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
         <aside className="related-box">
           <strong>Al doorgegeven aan REBO</strong>
           <span>
-            {report.rebo_melding_door_naam ? `${report.rebo_melding_door_naam} heeft aangegeven dat deze melding is doorgegeven aan REBO.` : "Een bewoner heeft aangegeven dat deze melding is doorgegeven aan REBO."}
+            {report.rebo_melding_door_naam ? `${residentLabel(report.rebo_melding_door_naam)} heeft aangegeven dat deze melding is doorgegeven aan REBO.` : "Een bewoner heeft aangegeven dat deze melding is doorgegeven aan REBO."}
             {" "}Herken je dit ook? Dan kun je eventueel zelf ook een melding doen met dezelfde samenvatting.
           </span>
         </aside>
@@ -76,6 +82,23 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
           )}
           <button className="button button--soft" onClick={copySummary} type="button">
             <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
+          </button>
+        </div>
+      )}
+      {canResolve && (
+        <div className="action-row">
+          <button className="button button--soft" onClick={() => onEdit?.(report)} type="button">
+            <Pencil aria-hidden="true" size={18} /> Bewerken
+          </button>
+          <button
+            className="button button--danger"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je deze melding wilt verwijderen?");
+              if (confirmed) onDelete?.(report.id);
+            }}
+            type="button"
+          >
+            <Trash2 aria-hidden="true" size={18} /> Verwijderen
           </button>
         </div>
       )}
@@ -101,7 +124,7 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
         <aside className="related-box">
           <strong>Oplossing</strong>
           <span>{report.oplossing_omschrijving}</span>
-          {report.opgelost_door_naam && <span>Toegevoegd door {report.opgelost_door_naam}</span>}
+          {report.opgelost_door_naam && <span>Toegevoegd door {residentLabel(report.opgelost_door_naam)}</span>}
         </aside>
       )}
       {relatedDocuments.length > 0 && (

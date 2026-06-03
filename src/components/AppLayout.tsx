@@ -1,7 +1,8 @@
-import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+﻿import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
+import { residentLabel } from "../lib/residentDisplay";
 import { paths } from "../routes/paths";
 
 const navItems = [
@@ -36,19 +37,28 @@ function readDismissed(key: string) {
   return new Set(stored ? (JSON.parse(stored) as string[]) : []);
 }
 
+function readStringSet(key: string) {
+  const stored = window.localStorage.getItem(key);
+  return new Set(stored ? (JSON.parse(stored) as string[]) : []);
+}
+
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bulletinPosts, helpRequests, profile } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, helpRequests, profile } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
   const bulletinSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-bulletin`;
   const dismissedKey = `mijn-graaf-van-schuyt:${profile.user_id}:dismissed-notifications`;
+  const readNotificationsKey = `mijn-graaf-van-schuyt:${profile.user_id}:read-notifications`;
   const textSizeKey = `mijn-graaf-van-schuyt:${profile.user_id}:text-size`;
+  const notificationMenuRef = useRef<HTMLDivElement>(null);
+  const accessibilityMenuRef = useRef<HTMLDivElement>(null);
   const [lastSeenHelp, setLastSeenHelp] = useState(() => readNumber(helpSeenKey));
   const [lastSeenBulletin, setLastSeenBulletin] = useState(() => readNumber(bulletinSeenKey));
   const [dismissedNotifications, setDismissedNotifications] = useState(() => readDismissed(dismissedKey));
+  const [readNotifications, setReadNotifications] = useState(() => readStringSet(readNotificationsKey));
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [textSize, setTextSize] = useState<TextSize>(() => readTextSize(textSizeKey));
@@ -60,6 +70,8 @@ export function AppLayout() {
 
   useEffect(() => {
     const currentHash = location.hash.replace("#", "");
+    setShowNotifications(false);
+    setShowAccessibility(false);
     if (!currentHash) return;
     window.setTimeout(() => {
       document.getElementById(currentHash)?.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -78,6 +90,18 @@ export function AppLayout() {
     }
   }, [bulletinPosts.items.length, helpRequests.items.length, bulletinSeenKey, helpSeenKey, location.pathname]);
 
+  useEffect(() => {
+    function closeMenusOnOutsideClick(event: PointerEvent) {
+      const target = event.target as Node;
+      if (notificationMenuRef.current?.contains(target) || accessibilityMenuRef.current?.contains(target)) return;
+      setShowNotifications(false);
+      setShowAccessibility(false);
+    }
+
+    document.addEventListener("pointerdown", closeMenusOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeMenusOnOutsideClick);
+  }, []);
+
   const navNotifications = useMemo(
     () => ({
       [paths.help]: helpRequests.items.filter((request) => Date.parse(request.aangemaakt_op) > lastSeenHelp).length,
@@ -87,6 +111,16 @@ export function AppLayout() {
   );
 
   const personalNotifications = useMemo(() => {
+    const buildingNotifications = buildingAnnouncements.items
+      .filter((announcement) => announcement.importance !== "normaal")
+      .map((announcement) => ({
+        id: `building-${announcement.id}-${announcement.updated_at}`,
+        date: Date.parse(announcement.updated_at) || Date.parse(announcement.event_date ?? "") || 0,
+        title: `Algemene mededeling: ${announcement.titel}`,
+        description: announcement.inhoud,
+        to: paths.home,
+      }));
+
     const helpNotifications = helpRequests.items.flatMap((request) => {
       if (request.aangemaakt_door !== profile.user_id) return [];
       return request.messages
@@ -95,7 +129,7 @@ export function AppLayout() {
           id: `help-${request.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${request.titel}`,
-          description: `${message.author_name}${message.author_house_number ? `, huisnummer ${message.author_house_number}` : ""}: ${message.message}`,
+          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.help}#hulp-${request.id}`,
         }));
     });
@@ -108,15 +142,30 @@ export function AppLayout() {
           id: `bulletin-${post.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${post.titel}`,
-          description: `${message.author_name}${message.author_house_number ? `, huisnummer ${message.author_house_number}` : ""}: ${message.message}`,
+          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.bulletin}#prikbord-${post.id}`,
         }));
     });
 
-    return [...helpNotifications, ...bulletinNotifications]
+    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [bulletinPosts.items, dismissedNotifications, helpRequests.items, profile.user_id]);
+  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, helpRequests.items, profile.user_id]);
+
+  const unreadNotifications = useMemo(
+    () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),
+    [personalNotifications, readNotifications],
+  );
+
+  function markNotificationsAsRead(ids: string[]) {
+    if (ids.length === 0) return;
+    setReadNotifications((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.add(id));
+      window.localStorage.setItem(readNotificationsKey, JSON.stringify([...next]));
+      return next;
+    });
+  }
 
   function dismissNotification(id: string) {
     setDismissedNotifications((current) => {
@@ -125,6 +174,8 @@ export function AppLayout() {
       window.localStorage.setItem(dismissedKey, JSON.stringify([...next]));
       return next;
     });
+    markNotificationsAsRead([id]);
+    setShowNotifications(false);
   }
 
   return (
@@ -134,16 +185,21 @@ export function AppLayout() {
           <p className="eyebrow">Graaf van Schuyt</p>
         </div>
         <div className="header-actions">
-          <div className="accessibility-menu">
+          <div className="accessibility-menu" ref={accessibilityMenuRef}>
             <button
-              className={textSize === "normal" ? "reading-mode-button" : "reading-mode-button active"}
+              aria-label="Leesmodus"
+              className={textSize === "normal" ? "icon-button reading-mode-button" : "icon-button reading-mode-button active"}
               onClick={() => {
                 setShowNotifications(false);
                 setShowAccessibility((current) => !current);
               }}
+              title="Leesmodus"
               type="button"
             >
-              <span aria-hidden="true">👓</span> Leesmodus
+              <span aria-hidden="true" className="reading-mode-glyph">
+                <small>A</small>
+                <strong>A</strong>
+              </span>
             </button>
             {showAccessibility && (
               <div className="accessibility-panel">
@@ -151,7 +207,13 @@ export function AppLayout() {
                 <p className="muted">Maak tekst en knoppen groter voor comfortabeler lezen.</p>
                 <label className="field">
                   <span>Tekstgrootte</span>
-                  <select value={textSize} onChange={(event) => setTextSize(event.target.value as TextSize)}>
+                  <select
+                    value={textSize}
+                    onChange={(event) => {
+                      setTextSize(event.target.value as TextSize);
+                      setShowAccessibility(false);
+                    }}
+                  >
                     {textSizeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -162,18 +224,22 @@ export function AppLayout() {
               </div>
             )}
           </div>
-          <div className="notification-menu">
+          <div className="notification-menu" ref={notificationMenuRef}>
             <button
               aria-label="Notificaties"
-              className={personalNotifications.length > 0 ? "icon-button notification-button has-notifications" : "icon-button notification-button"}
+              className={unreadNotifications.length > 0 ? "icon-button notification-button has-notifications" : "icon-button notification-button"}
               onClick={() => {
                 setShowAccessibility(false);
-                setShowNotifications((current) => !current);
+                setShowNotifications((current) => {
+                  const next = !current;
+                  if (next) markNotificationsAsRead(personalNotifications.map((notification) => notification.id));
+                  return next;
+                });
               }}
               type="button"
             >
               <Bell aria-hidden="true" />
-              {personalNotifications.length > 0 && <span className="notification-dot" />}
+              {unreadNotifications.length > 0 && <span className="notification-dot" />}
             </button>
             {showNotifications && (
               <div className="notification-panel">
@@ -204,11 +270,11 @@ export function AppLayout() {
             )}
           </div>
           {isAdmin && (
-            <NavLink aria-label="Beheer" className="icon-button" to={paths.admin}>
+            <NavLink aria-label="Beheer" className="icon-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.admin}>
               <Settings aria-hidden="true" />
             </NavLink>
           )}
-          <NavLink aria-label="Profiel" className="icon-button" to={paths.profile}>
+          <NavLink aria-label="Profiel" className="icon-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.profile}>
             <UserRound aria-hidden="true" />
           </NavLink>
         </div>
@@ -238,3 +304,4 @@ export function AppLayout() {
     </div>
   );
 }
+

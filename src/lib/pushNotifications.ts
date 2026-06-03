@@ -1,4 +1,5 @@
 import type { BuildingAnnouncement, NotificationPreference, Profile } from "../types";
+import { friendlyErrorMessage } from "./friendlyErrors";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 export const defaultNotificationPreferences: Omit<NotificationPreference, "id" | "user_id" | "updated_at"> = {
@@ -11,6 +12,16 @@ export const defaultNotificationPreferences: Omit<NotificationPreference, "id" |
 };
 
 const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+
+async function invokePushFunction(body: Record<string, unknown>) {
+  if (!supabase || !isSupabaseConfigured) return undefined;
+
+  const { data, error } = await supabase.functions.invoke("send-push-notification", { body });
+  if (error) {
+    throw new Error(friendlyErrorMessage(error, "Pushmelding versturen lukt nu niet. Probeer het later opnieuw."));
+  }
+  return data as { sent?: number; skipped?: string; error?: string } | undefined;
+}
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -53,15 +64,15 @@ export async function saveNotificationPreference(preference: NotificationPrefere
 
 export async function enablePushNotifications(profile: Profile, preference: NotificationPreference) {
   if (!pushSupported()) {
-    throw new Error("Pushmeldingen worden door deze browser niet ondersteund.");
+    throw new Error("Pushmeldingen werken niet in deze browser. Probeer de app op je telefoon via Chrome, Edge of Safari als beginscherm-app.");
   }
   if (!vapidPublicKey) {
-    throw new Error("De publieke VAPID-sleutel ontbreekt nog in de omgevingsvariabelen.");
+    throw new Error("Pushmeldingen zijn nog niet helemaal ingesteld. Geef dit door aan de beheerder.");
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    throw new Error("Pushmeldingen zijn niet toegestaan.");
+    throw new Error("Je browser staat pushmeldingen niet toe. Zet meldingen aan in je browser of telefooninstellingen.");
   }
 
   const registration = await navigator.serviceWorker.ready;
@@ -85,8 +96,17 @@ export async function enablePushNotifications(profile: Profile, preference: Noti
   await saveNotificationPreference(preference);
 
   if (isSupabaseConfigured && supabase) {
-    await supabase.from("push_subscriptions").upsert(storedSubscription, { onConflict: "endpoint" });
+    const { error } = await supabase.from("push_subscriptions").upsert(storedSubscription, { onConflict: "endpoint" });
+    if (error) throw error;
   }
+
+  await registration.showNotification("Pushmeldingen staan aan", {
+    body: "Je ontvangt nu belangrijke mededelingen en persoonlijke meldingen.",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    tag: "push-enabled",
+    data: { url: "/profiel" },
+  });
 
   return subscription;
 }
@@ -107,36 +127,32 @@ export async function notifyBuildingAnnouncement(announcement: BuildingAnnouncem
   if (!announcement.notify_all || announcement.importance === "normaal") return;
 
   const urgent = announcement.importance === "urgent";
-  await supabase.functions.invoke("send-push-notification", {
-    body: {
-      kind: "building_announcement",
-      audience: "all",
-      announcement_id: announcement.id,
-      title: isUpdate ? "Melding bijgewerkt" : urgent ? "Urgente melding Graaf van Schuyt" : "Nieuwe melding Graaf van Schuyt",
-      body: isUpdate
-        ? `Een belangrijke mededeling is bijgewerkt: ${announcement.titel}`
-        : urgent
-          ? `${announcement.titel}\nBekijk de app voor meer informatie.`
-          : `Er is een belangrijke mededeling geplaatst: ${announcement.titel}`,
-      url: "/",
-      category: "building",
-      importance: announcement.importance,
-    },
+  return invokePushFunction({
+    kind: "building_announcement",
+    audience: "all",
+    announcement_id: announcement.id,
+    title: isUpdate ? "Melding bijgewerkt" : urgent ? "Urgente melding Graaf van Schuyt" : "Nieuwe melding Graaf van Schuyt",
+    body: isUpdate
+      ? `Een belangrijke mededeling is bijgewerkt: ${announcement.titel}`
+      : urgent
+        ? `${announcement.titel}\nBekijk de app voor meer informatie.`
+        : `Er is een belangrijke mededeling geplaatst: ${announcement.titel}`,
+    url: "/",
+    category: "building",
+    importance: announcement.importance,
   });
 }
 
 export async function notifyUser(userId: string, payload: { title: string; body: string; url: string; category: "personal" | "help" | "report" | "knowledge" | "bulletin" }) {
   if (!supabase || !isSupabaseConfigured) return;
 
-  await supabase.functions.invoke("send-push-notification", {
-    body: {
-      audience: "user",
-      user_id: userId,
-      title: payload.title,
-      body: payload.body,
-      url: payload.url,
-      category: payload.category,
-      importance: "normaal",
-    },
+  return invokePushFunction({
+    audience: "user",
+    user_id: userId,
+    title: payload.title,
+    body: payload.body,
+    url: payload.url,
+    category: payload.category,
+    importance: "normaal",
   });
 }

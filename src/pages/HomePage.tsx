@@ -1,12 +1,48 @@
+import { useMemo } from "react";
 import { StatusBadge } from "../components/StatusBadge";
 import { useAppData } from "../lib/AppDataContext";
+import type { BuildingAnnouncement } from "../types";
 
 function announcementDate(value: string) {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
+function dateValue(announcement: BuildingAnnouncement) {
+  return announcement.event_date ?? announcement.updated_at;
+}
+
+function dateSortValue(announcement: BuildingAnnouncement) {
+  return announcement.event_date ? localDateStart(announcement.event_date).getTime() : new Date(announcement.updated_at).getTime();
+}
+
+function localDateStart(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return new Date(value);
+  return new Date(year, month - 1, day);
+}
+
+function isExpired(announcement: BuildingAnnouncement) {
+  if (!announcement.event_date) return false;
+
+  const removeAfter = localDateStart(announcement.event_date);
+  removeAfter.setDate(removeAfter.getDate() + 1);
+  removeAfter.setHours(0, 0, 0, 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return today >= removeAfter;
+}
+
 export function HomePage() {
   const { buildingAnnouncements } = useAppData();
+  const visibleAnnouncements = useMemo(
+    () =>
+      [...buildingAnnouncements.items]
+        .filter((announcement) => !isExpired(announcement))
+        .sort((first, second) => dateSortValue(first) - dateSortValue(second)),
+    [buildingAnnouncements.items],
+  );
 
   return (
     <section className="page-stack">
@@ -17,20 +53,19 @@ export function HomePage() {
         <div className="home-welcome__text">
           <p className="eyebrow">Bewonersapp</p>
           <h2>Welkom</h2>
-          <p>Een praktische plek voor contactgegevens, meldingen, handleidingen, hulpvragen en korte berichten in het gebouw.</p>
-          <p>Gebruik de navigatie onderin om direct naar het onderdeel te gaan dat je nodig hebt.</p>
+          <p>Alles wat handig is voor bewoners van Graaf van Schuyt: contacten, meldingen, handleidingen, hulpvragen en korte berichten.</p>
+          <p>Onderaan vind je de vaste onderdelen van de app.</p>
         </div>
       </section>
 
       <section className="home-updates" aria-label="Belangrijke meldingen">
         <div className="section-heading">
-          <p className="eyebrow">Binnenkort belangrijk</p>
-          <h2>Praktische meldingen</h2>
+          <h2>Algemene meldingen</h2>
         </div>
         <div className="home-update-list">
-          {buildingAnnouncements.items.map((announcement) => (
+          {visibleAnnouncements.map((announcement) => (
             <article className={`home-update home-update--${announcement.importance}`} key={announcement.id}>
-              <time>{announcementDate(announcement.updated_at)}</time>
+              <time>{announcementDate(dateValue(announcement))}</time>
               <div>
                 <div className="home-update__header">
                   <h3>{announcement.titel}</h3>

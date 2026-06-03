@@ -1,9 +1,11 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBadge } from "../components/StatusBadge";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
+import { residentLabel } from "../lib/residentDisplay";
 import type {
   AnnouncementImportance,
   BuildingAnnouncement,
@@ -14,6 +16,7 @@ import type {
   KnowledgeDocument,
   KnowledgeDocumentStatus,
   KnowledgeDocumentType,
+  Role,
   ReportCategory,
   ReportStatus,
 } from "../types";
@@ -54,7 +57,9 @@ const blankDocument = {
   categorie: "Mechanische ventilatie" as KnowledgeCategory,
   documenttype: "Bewonerstip" as KnowledgeDocumentType,
   korte_samenvatting: "",
+  uitgebreide_uitleg: "",
   pdf_url: "",
+  image_urls: [] as string[],
   tags: "",
   leverancier_of_fabrikant: "",
   status: "Concept" as KnowledgeDocumentStatus,
@@ -66,11 +71,12 @@ const blankAnnouncement = {
   inhoud: "",
   importance: "normaal" as AnnouncementImportance,
   notify_all: false,
+  event_date: "",
 };
 
 export function AdminPage() {
-  const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, reports } = useAppData();
-  const [activeTab, setActiveTab] = useState<AdminTab>("kennisbank");
+  const { buildingAnnouncements, bulletinPosts, contacts, documents, profile, profiles, reports } = useAppData();
+  const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
@@ -85,6 +91,8 @@ export function AdminPage() {
     () => buildingAnnouncements.items.filter((item) => item.importance !== "normaal").length,
     [buildingAnnouncements.items],
   );
+  const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
+  const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
 
   if (profile.rol !== "admin") {
     return <EmptyState title="Geen toegang" description="Deze pagina is alleen bedoeld voor beheerders." />;
@@ -111,7 +119,9 @@ export function AdminPage() {
       categorie: document.categorie,
       documenttype: document.documenttype,
       korte_samenvatting: document.korte_samenvatting,
+      uitgebreide_uitleg: document.uitgebreide_uitleg ?? "",
       pdf_url: document.pdf_url,
+      image_urls: document.image_urls ?? [],
       tags: document.tags.join(", "),
       leverancier_of_fabrikant: document.leverancier_of_fabrikant ?? "",
       status: document.status,
@@ -131,7 +141,9 @@ export function AdminPage() {
       categorie: documentDraft.categorie,
       documenttype: documentDraft.documenttype,
       korte_samenvatting: documentDraft.korte_samenvatting,
+      uitgebreide_uitleg: documentDraft.uitgebreide_uitleg,
       pdf_url: documentDraft.pdf_url,
+      image_urls: documentDraft.image_urls,
       tags: documentDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
       leverancier_of_fabrikant: documentDraft.leverancier_of_fabrikant,
       status: documentDraft.status,
@@ -159,6 +171,7 @@ export function AdminPage() {
       inhoud: announcement.inhoud,
       importance: announcement.importance,
       notify_all: announcement.notify_all,
+      event_date: announcement.event_date ? announcement.event_date.slice(0, 10) : "",
     });
     setActiveTab("algemeen");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -173,6 +186,7 @@ export function AdminPage() {
       inhoud: announcementDraft.inhoud,
       importance: announcementDraft.importance,
       notify_all: announcementDraft.notify_all,
+      event_date: announcementDraft.event_date || undefined,
       created_at: isUpdate ? (buildingAnnouncements.items.find((item) => item.id === announcementDraft.id)?.created_at ?? timestamp) : timestamp,
       updated_at: timestamp,
       created_by: profile.user_id,
@@ -223,8 +237,9 @@ export function AdminPage() {
       <div className="admin-overview" aria-label="Beheeroverzicht">
         <AdminMetric label="Kennis te controleren" value={pendingDocuments} />
         <AdminMetric label="Open meldingen" value={openReports} />
-        <AdminMetric label="Prikbord actief" value={activePosts} />
+        <AdminMetric label="Actieve prikbordberichten" value={activePosts} />
         <AdminMetric label="Belangrijke mededelingen" value={importantAnnouncements} />
+        <AdminMetric label="Bewoners" value={residentsCount} />
       </div>
 
       <div className="admin-tabs" role="tablist" aria-label="Beheeronderdelen">
@@ -241,6 +256,10 @@ export function AdminPage() {
             <h3>{announcementDraft.id ? "Algemene melding aanpassen" : "Algemene melding plaatsen"}</h3>
             <input value={announcementDraft.titel} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, titel: event.target.value })} placeholder="Titel" required />
             <textarea value={announcementDraft.inhoud} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, inhoud: event.target.value })} placeholder="Praktische uitleg of tip" required />
+            <label className="field">
+              <span>Datum</span>
+              <input value={announcementDraft.event_date} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, event_date: event.target.value })} type="date" />
+            </label>
             <select value={announcementDraft.importance} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, importance: event.target.value as AnnouncementImportance })}>
               {announcementImportance.map((item) => <option key={item}>{item}</option>)}
             </select>
@@ -266,9 +285,10 @@ export function AdminPage() {
                   </StatusBadge>
                 </div>
                 <p>{announcement.inhoud}</p>
+                {announcement.event_date && <p className="muted">Datum: {new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</p>}
                 <div className="admin-row">
-                  <button className="text-button" onClick={() => editAnnouncement(announcement)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -291,7 +311,8 @@ export function AdminPage() {
               {documentStatuses.map((item) => <option key={item}>{item}</option>)}
             </select>
             <textarea value={documentDraft.korte_samenvatting} onChange={(event) => setDocumentDraft({ ...documentDraft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
-            <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required />
+            <textarea value={documentDraft.uitgebreide_uitleg} onChange={(event) => setDocumentDraft({ ...documentDraft, uitgebreide_uitleg: event.target.value })} placeholder="Vrije uitleg of bewonerstip" />
+            <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required={documentDraft.documenttype === "Officiële handleiding"} />
             <input value={documentDraft.tags} onChange={(event) => setDocumentDraft({ ...documentDraft, tags: event.target.value })} placeholder="Tags, gescheiden door komma's" />
             <input value={documentDraft.leverancier_of_fabrikant} onChange={(event) => setDocumentDraft({ ...documentDraft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
             <button className="button" type="submit">{documentDraft.id ? "Wijzigingen opslaan" : "Toevoegen"}</button>
@@ -316,8 +337,8 @@ export function AdminPage() {
                       Publiceren
                     </button>
                   )}
-                  <button className="text-button" onClick={() => editDocument(document)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => documents.remove(document.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => documents.remove(document.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -353,8 +374,8 @@ export function AdminPage() {
                 </div>
                 <p>{contact.beschrijving}</p>
                 <div className="admin-row">
-                  <button className="text-button" onClick={() => setContactDraft(contact)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => contacts.remove(contact.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -389,7 +410,7 @@ export function AdminPage() {
                 </label>
               </div>
               <div className="admin-row">
-                <button className="text-button danger" onClick={() => reports.remove(report.id)} type="button">Verwijderen</button>
+                <button className="button button--danger" onClick={() => reports.remove(report.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
               </div>
             </article>
           ))}
@@ -398,7 +419,7 @@ export function AdminPage() {
 
       {activeTab === "prikbord" && (
         <section className="admin-section card-list compact-list">
-          {bulletinPosts.items.map((post: BulletinPost) => (
+          {activeBulletinPosts.map((post: BulletinPost) => (
             <article className="item-card admin-list-card" key={post.id}>
               <div className="item-card__header">
                 <div>
@@ -409,27 +430,55 @@ export function AdminPage() {
               </div>
               <p>{post.omschrijving}</p>
               <div className="admin-row">
-                <button className="text-button" onClick={() => bulletinPosts.update(post.id, { status: "Afgerond" })} type="button">Markeer afgerond</button>
-                <button className="text-button danger" onClick={() => bulletinPosts.remove(post.id)} type="button">Verwijderen</button>
+                <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
+                <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
               </div>
             </article>
           ))}
+          {activeBulletinPosts.length === 0 && <EmptyState title="Geen actieve prikbordberichten" description="Er staan nu geen actieve berichten op het prikbord." />}
         </section>
       )}
 
       {activeTab === "bewoners" && (
-        <section className="admin-section">
-          <article className="item-card admin-list-card">
-            <div className="item-card__header">
-              <div>
-                <p className="chip">Ingelogde beheerder</p>
-                <h3>{profile.naam_of_bijnaam}{profile.huisnummer ? `, huisnummer ${profile.huisnummer}` : ""}</h3>
-              </div>
-              <StatusBadge tone="good">{profile.rol}</StatusBadge>
+        <section className="admin-section card-list compact-list">
+          {profiles.syncError && (
+            <div className="notice notice--warning">
+              <p>{profiles.syncError}</p>
+              <button className="text-button" onClick={profiles.clearSyncError} type="button">Melding sluiten</button>
             </div>
-            <p className="muted">{profile.email ?? "E-mailadres nog niet beschikbaar in dit profiel."}</p>
-            <p>Een volledige bewoners- en rollenlijst kan hier worden aangesloten zodra alle bewoners via Supabase inloggen.</p>
-          </article>
+          )}
+          {profiles.items.map((resident) => (
+            <article className="item-card admin-list-card" key={resident.id}>
+              <div className="item-card__header">
+                <div>
+                  <p className="chip">{resident.huisnummer ? `Huisnummer ${resident.huisnummer}` : "Bewoner"}</p>
+                  <h3>{residentLabel(resident.naam_of_bijnaam, resident.huisnummer)}</h3>
+                </div>
+                <StatusBadge tone={resident.rol === "admin" ? "good" : "soft"}>{resident.rol}</StatusBadge>
+              </div>
+              <p className="muted">{resident.email ?? "Geen e-mailadres in profiel opgeslagen."}</p>
+              <label className="field">
+                <span>Rol</span>
+                <select value={resident.rol} onChange={(event) => profiles.update(resident.id, { rol: event.target.value as Role })}>
+                  <option value="bewoner">bewoner</option>
+                  <option value="admin">admin</option>
+                </select>
+              </label>
+              {resident.user_id !== profile.user_id && (
+                <button
+                  className="button button--danger"
+                  onClick={() => {
+                    const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
+                    if (confirmed) profiles.remove(resident.id);
+                  }}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={18} /> Bewoner verwijderen
+                </button>
+              )}
+            </article>
+          ))}
+          {profiles.items.length === 0 && <EmptyState title="Nog geen bewonersprofielen" description="Zodra bewoners hun account bevestigen of inloggen, verschijnt hun profiel hier." />}
         </section>
       )}
     </section>

@@ -14,7 +14,9 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: SignUpInput) => Promise<string>;
   resetPassword: (email: string) => Promise<void>;
+  updateEmail: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -55,7 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
     if (error) throw error;
     if (data) {
-      setProfile(mapProfile(data));
+      const mappedProfile = mapProfile(data);
+      if (currentUser.email && mappedProfile.email !== currentUser.email) {
+        const { data: syncedProfile } = await supabase
+          .from("profiles")
+          .update({ email: currentUser.email })
+          .eq("user_id", currentUser.id)
+          .select("*")
+          .maybeSingle();
+        setProfile(syncedProfile ? mapProfile(syncedProfile) : { ...mappedProfile, email: currentUser.email });
+        return;
+      }
+      setProfile(mappedProfile);
       return;
     }
 
@@ -86,15 +99,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     let mounted = true;
+    const client = supabase;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.user) await loadProfile(data.session.user);
-      if (mounted) setLoading(false);
-    });
+    client.auth.getSession()
+      .then(async ({ data }) => {
+        if (!mounted) return;
+        setSession(data.session);
+        if (data.session?.user) await loadProfile(data.session.user);
+        if (mounted) setLoading(false);
+      })
+      .catch(async () => {
+        await client.auth.signOut();
+        if (!mounted) return;
+        setSession(null);
+        setProfile(null);
+        setLoading(false);
+      });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
       if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
       setSession(nextSession);
       if (nextSession?.user) {
@@ -138,11 +160,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
         if (error) throw error;
-        return data.session ? "Je account is aangemaakt." : "Controleer je e-mail om je account te bevestigen.";
+        return data.session
+          ? "Je account is aangemaakt. Je kunt de app nu gebruiken."
+          : "Je account is bijna klaar. We hebben je een bevestigingsmail gestuurd. Open de link in die mail om je account te activeren. Kijk ook even in spam of ongewenste mail als je niets ziet.";
       },
       resetPassword: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+        if (error) throw error;
+      },
+      updateEmail: async (email) => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: window.location.origin });
         if (error) throw error;
       },
       updatePassword: async (password) => {
@@ -150,6 +179,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         setPasswordRecovery(false);
+      },
+      deleteAccount: async () => {
+        if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
+        const { error } = await supabase.rpc("delete_own_account");
+        if (error) throw error;
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
       },
       signOut: async () => {
         if (!supabase) return;

@@ -4,24 +4,34 @@ import { EmptyState } from "../components/EmptyState";
 import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
+import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { uploadBulletinImages } from "../lib/fileUploads";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
+import { residentLabel } from "../lib/residentDisplay";
 import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
 const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Appartementencomplex"];
+const maxImages = 10;
 
 export function ReportsPage() {
   const { reports, documents, profile } = useAppData();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<ReportCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
     categorie: "Mechanische ventilatie" as ReportCategory,
     locatie_in_gebouw: "",
     type_melding: "Alleen mijn woning" as ReportType,
+    image_urls: [] as string[],
+    image_files: [] as File[],
   });
 
   const filteredReports = useMemo(() => {
@@ -43,29 +53,62 @@ export function ReportsPage() {
     });
   }, [reports.items, query, category]);
 
-  function createReport() {
-    const timestamp = new Date().toISOString();
-    const locatie_in_gebouw =
-      draft.type_melding === "Appartementencomplex"
-        ? draft.locatie_in_gebouw
-        : draft.type_melding === "Mogelijk meerdere woningen"
-          ? "Meerdere woningen"
-          : "Eigen woning";
-    const report: Report = {
-      id: crypto.randomUUID(),
-      ...draft,
-      locatie_in_gebouw,
-      status: "Nieuw",
-      aangemaakt_door: profile.user_id,
-      aangemaakt_op: timestamp,
-      bijgewerkt_op: timestamp,
-      confirmations: 1,
-      declined: 0,
-      current_user_response: "confirmed",
-    };
-    reports.add(report);
-    setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning" });
-    setShowForm(false);
+  async function createReport() {
+    try {
+      setSaving(true);
+      setFormError("");
+      const timestamp = new Date().toISOString();
+      const uploadedImageUrls = draft.image_files.length > 0 ? await uploadBulletinImages(draft.image_files, profile.user_id) : [];
+      const imageUrls = [...draft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxImages);
+      const locatie_in_gebouw =
+        draft.type_melding === "Appartementencomplex"
+          ? draft.locatie_in_gebouw
+          : draft.type_melding === "Mogelijk meerdere woningen"
+            ? "Meerdere woningen"
+            : "Eigen woning";
+      if (editingId) {
+        await reports.updateAsync(editingId, {
+          titel: draft.titel,
+          omschrijving: draft.omschrijving,
+          categorie: draft.categorie,
+          locatie_in_gebouw,
+          type_melding: draft.type_melding,
+          image_urls: imageUrls,
+          bijgewerkt_op: timestamp,
+        });
+        setEditingId(null);
+        setCategory(draft.categorie);
+        setQuery("");
+        setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+        setShowForm(false);
+        return;
+      }
+
+      const report: Report = {
+        id: crypto.randomUUID(),
+        ...draft,
+        locatie_in_gebouw,
+        status: "Nieuw",
+        aangemaakt_door: profile.user_id,
+        aangemaakt_door_naam: profile.naam_of_bijnaam,
+        aangemaakt_door_huisnummer: profile.huisnummer,
+        aangemaakt_op: timestamp,
+        bijgewerkt_op: timestamp,
+        confirmations: 1,
+        declined: 0,
+        current_user_response: "confirmed",
+        image_urls: imageUrls,
+      };
+      await reports.addAsync(report);
+      setCategory(draft.categorie);
+      setQuery("");
+      setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+      setShowForm(false);
+    } catch (error) {
+      setFormError(friendlyErrorMessage(error, "Melding opslaan lukt nu niet. Controleer je foto's en probeer het opnieuw."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   function confirmReport(id: string) {
@@ -78,8 +121,6 @@ export function ReportsPage() {
       confirmations,
       declined,
       current_user_response: "confirmed",
-      status: confirmations >= 3 && report.status === "Nieuw" ? "Herkend door meerdere bewoners" : report.status,
-      bijgewerkt_op: new Date().toISOString(),
     });
   }
 
@@ -90,7 +131,7 @@ export function ReportsPage() {
       status: "Doorgezet naar REBO",
       rebo_melding_op: new Date().toISOString(),
       rebo_melding_door: profile.user_id,
-      rebo_melding_door_naam: profile.naam_of_bijnaam,
+      rebo_melding_door_naam: residentLabel(profile.naam_of_bijnaam, profile.huisnummer),
       bijgewerkt_op: new Date().toISOString(),
     });
   }
@@ -101,14 +142,20 @@ export function ReportsPage() {
         <h2>Meldingen</h2>
         <p>Bekijk meldingen in het gebouw of geef rustig een nieuw probleem door.</p>
       </div>
+      {reports.syncError && (
+        <div className="notice notice--warning">
+          <p>{reports.syncError}</p>
+          <button className="text-button" onClick={reports.clearSyncError} type="button">Melding sluiten</button>
+        </div>
+      )}
       {!showForm && (
         <button className="button button--full" onClick={() => setShowForm(true)} type="button">
           Nieuwe melding
         </button>
       )}
       {showForm && (
-      <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createReport(); }}>
-        <h3>Melding maken</h3>
+      <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void createReport(); }}>
+        <h3>{editingId ? "Melding bewerken" : "Melding maken"}</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Korte titel" required />
         <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Wat merk je?" required />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as ReportCategory })}>
@@ -126,6 +173,42 @@ export function ReportsPage() {
         {draft.type_melding === "Appartementencomplex" && (
           <input value={draft.locatie_in_gebouw} onChange={(event) => setDraft({ ...draft, locatie_in_gebouw: event.target.value })} placeholder="Locatie in het appartementencomplex" required />
         )}
+        <div className="upload-field">
+          <label className="field">
+            <span>Foto's toevoegen</span>
+          <input
+            accept="image/*"
+            multiple
+            type="file"
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? []).slice(0, Math.max(0, maxImages - draft.image_urls.length));
+              if (files.length === 0) return;
+              const previewUrls = files.map((file) => URL.createObjectURL(file));
+              setDraft({
+                ...draft,
+                image_urls: [...draft.image_urls, ...previewUrls].slice(0, maxImages),
+                image_files: [...draft.image_files, ...files].slice(0, maxImages),
+              });
+            }}
+          />
+          </label>
+          <EditablePhotoGrid
+            images={draft.image_urls}
+            alt="Voorbeeld van gekozen foto's"
+            onRemove={(index) => {
+              const removedUrl = draft.image_urls[index];
+              const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+              setDraft({
+                ...draft,
+                image_urls: draft.image_urls.filter((_, itemIndex) => itemIndex !== index),
+                image_files: removedUrl?.startsWith("blob:")
+                  ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
+                  : draft.image_files,
+              });
+            }}
+          />
+          <small>Maximaal {maxImages} foto's. Voeg alleen foto's toe die helpen om het probleem duidelijk te maken.</small>
+        </div>
         {draftRelevantDocuments.length > 0 && (
           <div className="related-box">
             <strong>Bekijk eerst deze kennisbankdocumenten</strong>
@@ -146,8 +229,20 @@ export function ReportsPage() {
             </a>
           </div>
         )}
-        <button className="button" type="submit">Melding opslaan</button>
-        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
+        {formError && <p className="form-message form-message--error">{formError}</p>}
+        <button className="button" disabled={saving} type="submit">{saving ? "Bezig met opslaan" : editingId ? "Wijzigingen opslaan" : "Melding opslaan"}</button>
+        <button
+          className="button button--soft"
+          disabled={saving}
+          onClick={() => {
+            setEditingId(null);
+            setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+            setShowForm(false);
+          }}
+          type="button"
+        >
+          Annuleren
+        </button>
       </form>
       )}
       <div className="filter-row filter-row--equal">
@@ -163,11 +258,26 @@ export function ReportsPage() {
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
             onConfirm={confirmReport}
             onForwardToRebo={forwardToRebo}
+            onEdit={(item) => {
+              setEditingId(item.id);
+              setDraft({
+                titel: item.titel,
+                omschrijving: item.omschrijving,
+                categorie: item.categorie,
+                locatie_in_gebouw: item.type_melding === "Appartementencomplex" ? item.locatie_in_gebouw : "",
+                type_melding: item.type_melding,
+                image_urls: item.image_urls ?? [],
+                image_files: [],
+              });
+              setShowForm(true);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onDelete={reports.remove}
             onResolve={(id, resolution) => reports.update(id, {
               status: "Opgelost",
               opgelost_op: new Date().toISOString(),
               opgelost_door: profile.user_id,
-              opgelost_door_naam: profile.naam_of_bijnaam,
+              opgelost_door_naam: residentLabel(profile.naam_of_bijnaam, profile.huisnummer),
               oplossing_omschrijving: resolution || "Opgelost. Er is geen extra toelichting toegevoegd.",
               bijgewerkt_op: new Date().toISOString(),
             })}
@@ -193,7 +303,7 @@ export function ReportsPage() {
 }
 
 function ResolvedReportItem({ report, documents }: { report: Report; documents: KnowledgeDocument[] }) {
-  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${report.opgelost_door_naam}` : "Opgelost";
+  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${residentLabel(report.opgelost_door_naam)}` : "Opgelost";
   const solution = report.oplossing_omschrijving || "Er is geen extra toelichting toegevoegd.";
 
   return (

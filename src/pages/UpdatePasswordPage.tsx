@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { KeyRound } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function UpdatePasswordPage() {
   const { updatePassword } = useAuth();
@@ -19,7 +20,7 @@ export function UpdatePasswordPage() {
       await updatePassword(password);
       setMessage("Je wachtwoord is aangepast. Je kunt de app nu weer gebruiken.");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Het wachtwoord kon niet worden aangepast.");
+      setError(friendlyErrorMessage(caught, "Het wachtwoord kon niet worden aangepast. Probeer de link uit de mail opnieuw."));
     } finally {
       setBusy(false);
     }

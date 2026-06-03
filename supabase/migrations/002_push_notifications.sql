@@ -31,10 +31,14 @@ create table if not exists public.building_announcements (
   inhoud text not null,
   importance public.announcement_importance not null default 'normaal',
   notify_all boolean not null default false,
+  event_date date,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   created_by uuid references auth.users(id) on delete set null
 );
+
+alter table public.building_announcements
+add column if not exists event_date date;
 
 create table if not exists public.bulletin_messages (
   id uuid primary key default gen_random_uuid(),
