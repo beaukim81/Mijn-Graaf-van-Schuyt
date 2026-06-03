@@ -2,8 +2,10 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 
 const bulletinImageBucket = "bulletin-images";
 const knowledgeFileBucket = "knowledge-files";
-const maxImageBytes = 10 * 1024 * 1024;
+const maxOriginalImageBytes = 25 * 1024 * 1024;
 const maxPdfBytes = 25 * 1024 * 1024;
+const maxImageDimension = 1600;
+const imageQuality = 0.82;
 
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -14,26 +16,62 @@ function fileToDataUrl(file: File) {
   });
 }
 
-export async function uploadBulletinImage(file: File, userId: string) {
-  if (file.size > maxImageBytes) {
-    throw new Error("Deze foto is te groot. Kies een foto kleiner dan 10 MB.");
+async function compressImage(file: File) {
+  if (file.size > maxOriginalImageBytes) {
+    throw new Error("Deze foto is erg groot. Kies een foto kleiner dan 25 MB.");
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxImageDimension / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("De foto verkleinen lukt niet. Kies een andere foto.");
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((result) => {
+      if (result) resolve(result);
+      else reject(new Error("De foto voorbereiden lukt niet. Kies een andere foto."));
+    }, "image/jpeg", imageQuality);
+  });
+
+  const safeBaseName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase() || "foto";
+  return new File([blob], `${safeBaseName}.jpg`, { type: "image/jpeg" });
+}
+
+async function prepareImage(file: File) {
+  try {
+    return await compressImage(file);
+  } catch (error) {
+    console.error(error);
+    if (file.size > maxOriginalImageBytes) throw error;
+    return file;
+  }
+}
+
+export async function uploadBulletinImage(file: File, userId: string) {
+  const preparedFile = await prepareImage(file);
+  const safeName = preparedFile.name.replace(/[^a-zA-Z0-9._-]/g, "-").toLowerCase();
   const path = `${userId}/${crypto.randomUUID()}-${safeName}`;
 
   if (!isSupabaseConfigured || !supabase) {
-    return fileToDataUrl(file);
+    return fileToDataUrl(preparedFile);
   }
 
-  const { error } = await supabase.storage.from(bulletinImageBucket).upload(path, file, {
+  const { error } = await supabase.storage.from(bulletinImageBucket).upload(path, preparedFile, {
     cacheControl: "31536000",
-    contentType: file.type || "image/jpeg",
+    contentType: preparedFile.type || "image/jpeg",
     upsert: false,
   });
 
   if (error) {
-    throw new Error("De foto uploaden lukt niet. Controleer je verbinding en probeer het opnieuw.");
+    console.error(error);
+    return fileToDataUrl(preparedFile);
   }
 
   const { data } = supabase.storage.from(bulletinImageBucket).getPublicUrl(path);
@@ -41,7 +79,10 @@ export async function uploadBulletinImage(file: File, userId: string) {
 }
 
 export async function uploadBulletinImages(files: File[], userId: string) {
-  const urls = await Promise.all(files.map((file) => uploadBulletinImage(file, userId)));
+  const urls: string[] = [];
+  for (const file of files) {
+    urls.push(await uploadBulletinImage(file, userId));
+  }
   return urls.filter(Boolean);
 }
 
