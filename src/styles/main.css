@@ -841,6 +841,10 @@ button {
   position: relative;
 }
 
+.admin-button {
+  position: relative;
+}
+
 .notification-dot,
 .nav-dot {
   background: #d94c3d;

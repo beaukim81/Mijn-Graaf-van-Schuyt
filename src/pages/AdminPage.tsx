@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { EmptyState } from "../components/EmptyState";
 import { LinkifiedText } from "../components/LinkifiedText";
 import { StatusBadge } from "../components/StatusBadge";
@@ -70,6 +71,7 @@ const blankAnnouncement = {
 
 export function AdminPage() {
   const { buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
@@ -87,6 +89,18 @@ export function AdminPage() {
   const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
   const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
+
+  useEffect(() => {
+    const hash = location.hash.replace("#", "");
+    if (!hash) return;
+    if (hash.startsWith("feedback-")) setActiveTab("feedback");
+    if (hash.startsWith("kennisbank-")) setActiveTab("kennisbank");
+    if (hash.startsWith("melding-")) setActiveTab("meldingen");
+
+    window.setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 120);
+  }, [location.hash]);
 
   if (profile.rol !== "admin") {
     return <EmptyState title="Geen toegang" description="Deze pagina is alleen bedoeld voor beheerders." />;
@@ -245,7 +259,7 @@ export function AdminPage() {
             </div>
           )}
           {feedbackItems.items.map((item) => (
-            <details className="item-card collapsible-card admin-list-card" key={item.id}>
+            <details className="item-card collapsible-card admin-list-card" id={`feedback-${item.id}`} key={item.id}>
               <summary className="item-card__header collapsible-card__summary">
                 <div>
                   <p className="chip">{residentLabel(item.aangemaakt_door_naam, item.aangemaakt_door_huisnummer)}</p>
@@ -401,7 +415,7 @@ export function AdminPage() {
 
           <div className="card-list compact-list">
             {documents.items.map((document) => (
-              <article className="item-card admin-list-card" key={document.id}>
+              <article className="item-card admin-list-card" id={`kennisbank-${document.id}`} key={document.id}>
                 <div className="item-card__header">
                   <div>
                     <p className="chip">{document.categorie}</p>
@@ -469,7 +483,7 @@ export function AdminPage() {
       {activeTab === "meldingen" && (
         <section className="admin-section card-list compact-list">
           {reports.items.map((report) => (
-            <article className="item-card admin-list-card" key={report.id}>
+            <article className="item-card admin-list-card" id={`melding-${report.id}`} key={report.id}>
               <div className="item-card__header">
                 <div>
                   <p className="chip">{report.categorie}</p>

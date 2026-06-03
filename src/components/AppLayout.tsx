@@ -45,7 +45,7 @@ function readStringSet(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { buildingAnnouncements, bulletinPosts, feedbackItems, helpRequests, profile } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -157,14 +157,50 @@ export function AppLayout() {
         to: `${paths.profile}#feedback-${item.id}`,
       }));
 
-    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications]
+    const adminNotifications = isAdmin
+      ? [
+          ...feedbackItems.items
+            .filter((item) => item.status !== "Opgelost")
+            .map((item) => ({
+              id: `admin-feedback-${item.id}-${item.created_at}`,
+              date: Date.parse(item.created_at) || 0,
+              title: `Nieuwe feedback: ${item.onderwerp}`,
+              description: item.bericht,
+              to: `${paths.admin}#feedback-${item.id}`,
+            })),
+          ...documents.items
+            .filter((document) => document.status !== "Gepubliceerd")
+            .map((document) => ({
+              id: `admin-knowledge-${document.id}-${document.aangemaakt_op}`,
+              date: Date.parse(document.aangemaakt_op) || Date.parse(document.bijgewerkt_op) || 0,
+              title: `Nieuw kennisbankitem: ${document.titel}`,
+              description: `${document.documenttype} in ${document.categorie}`,
+              to: `${paths.admin}#kennisbank-${document.id}`,
+            })),
+          ...reports.items
+            .filter((report) => report.type_melding === "Appartementencomplex" && report.status !== "Opgelost")
+            .map((report) => ({
+              id: `admin-report-${report.id}-${report.aangemaakt_op}`,
+              date: Date.parse(report.aangemaakt_op) || 0,
+              title: `Nieuwe complexmelding: ${report.titel}`,
+              description: `${report.categorie}${report.locatie_in_gebouw ? ` - ${report.locatie_in_gebouw}` : ""}`,
+              to: `${paths.admin}#melding-${report.id}`,
+            })),
+        ]
+      : [];
+
+    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications, ...adminNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, feedbackItems.items, helpRequests.items, profile.user_id]);
+  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items]);
 
   const unreadNotifications = useMemo(
     () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),
     [personalNotifications, readNotifications],
+  );
+  const unreadAdminNotifications = useMemo(
+    () => unreadNotifications.filter((notification) => notification.id.startsWith("admin-")),
+    [unreadNotifications],
   );
 
   function markNotificationsAsRead(ids: string[]) {
@@ -280,8 +316,18 @@ export function AppLayout() {
             )}
           </div>
           {isAdmin && (
-            <NavLink aria-label="Beheer" className="icon-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.admin}>
+            <NavLink
+              aria-label="Beheer"
+              className={unreadAdminNotifications.length > 0 ? "icon-button admin-button has-notifications" : "icon-button admin-button"}
+              onClick={() => {
+                markNotificationsAsRead(unreadAdminNotifications.map((notification) => notification.id));
+                setShowNotifications(false);
+                setShowAccessibility(false);
+              }}
+              to={paths.admin}
+            >
               <Settings aria-hidden="true" />
+              {unreadAdminNotifications.length > 0 && <span className="notification-dot" />}
             </NavLink>
           )}
           <NavLink aria-label="Profiel" className="icon-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.profile}>
