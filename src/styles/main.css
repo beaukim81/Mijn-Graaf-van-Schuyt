@@ -2397,3 +2397,55 @@ details,
 .collapsible-card:not([open]) {
   padding-bottom: 18px;
 }
+
+.admin-overview {
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+}
+
+.admin-overview button {
+  align-items: start;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: none;
+  color: var(--text);
+  display: grid;
+  gap: 3px;
+  min-height: 72px;
+  padding: 10px 11px;
+  text-align: left;
+}
+
+.admin-overview button strong {
+  color: var(--primary);
+  font-size: 1.28rem;
+  line-height: 1;
+}
+
+.admin-overview button span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-overview button.active {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+.admin-overview button.active strong,
+.admin-overview button.active span {
+  color: #fff;
+}
+
+.admin-overview button:hover,
+.admin-overview button:focus-visible {
+  background: var(--surface-strong);
+  color: var(--primary-dark);
+}
+
+.admin-overview button.active:hover,
+.admin-overview button.active:focus-visible {
+  background: var(--primary-dark);
+}

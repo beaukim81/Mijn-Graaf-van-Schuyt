@@ -26,16 +26,6 @@ import type {
 
 type AdminTab = "algemeen" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
 
-const tabs: { id: AdminTab; label: string }[] = [
-  { id: "algemeen", label: "Algemeen" },
-  { id: "feedback", label: "Feedback" },
-  { id: "kennisbank", label: "Kennisbank" },
-  { id: "contacten", label: "Contacten" },
-  { id: "meldingen", label: "Meldingen" },
-  { id: "prikbord", label: "Prikbord" },
-  { id: "bewoners", label: "Bewoners" },
-];
-
 const documentTypes: KnowledgeDocumentType[] = ["Officiële handleiding", "Bewonerstip", "Onderdeleninformatie", "Veelgestelde vraag"];
 const documentStatuses: KnowledgeDocumentStatus[] = ["Concept", "Gepubliceerd", "Te controleren"];
 const reportStatuses: ReportStatus[] = ["Nieuw", "Herkend door meerdere bewoners", "Doorgezet naar REBO", "In behandeling", "Opgelost"];
@@ -92,6 +82,7 @@ export function AdminPage() {
   );
   const openReports = useMemo(() => reports.items.filter((report) => report.status !== "Opgelost").length, [reports.items]);
   const activePosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief").length, [bulletinPosts.items]);
+  const contactsCount = useMemo(() => contacts.items.length, [contacts.items]);
   const importantAnnouncements = useMemo(
     () => buildingAnnouncements.items.filter((item) => item.importance !== "normaal").length,
     [buildingAnnouncements.items],
@@ -240,21 +231,14 @@ export function AdminPage() {
         <p>Beheer inhoud op een aparte plek. De gewone bewonerspagina's blijven rustig en overzichtelijk.</p>
       </div>
 
-      <div className="admin-overview" aria-label="Beheeroverzicht">
-        <AdminMetric label="Kennis te controleren" value={pendingDocuments} />
-        <AdminMetric label="Open meldingen" value={openReports} />
-        <AdminMetric label="Actieve prikbordberichten" value={activePosts} />
-        <AdminMetric label="Belangrijke mededelingen" value={importantAnnouncements} />
-        <AdminMetric label="Open feedback" value={openFeedback} />
-        <AdminMetric label="Bewoners" value={residentsCount} />
-      </div>
-
-      <div className="admin-tabs" role="tablist" aria-label="Beheeronderdelen">
-        {tabs.map((tab) => (
-          <button className={activeTab === tab.id ? "active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button">
-            {tab.label}
-          </button>
-        ))}
+      <div className="admin-overview" aria-label="Beheeronderdelen">
+        <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
+        <AdminMetric active={activeTab === "feedback"} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
+        <AdminMetric active={activeTab === "kennisbank"} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={pendingDocuments} />
+        <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
+        <AdminMetric active={activeTab === "meldingen"} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
+        <AdminMetric active={activeTab === "prikbord"} label="Prikbord" onClick={() => setActiveTab("prikbord")} value={activePosts} />
+        <AdminMetric active={activeTab === "bewoners"} label="Bewoners" onClick={() => setActiveTab("bewoners")} value={residentsCount} />
       </div>
 
       {activeTab === "feedback" && (
@@ -301,6 +285,14 @@ export function AdminPage() {
                         status: reply ? "In behandeling" as FeedbackStatus : item.status,
                         updated_at: new Date().toISOString(),
                       });
+                      if (reply) {
+                        void notifyUser(item.aangemaakt_door, {
+                          title: "Reactie op je feedback",
+                          body: reply,
+                          url: `/profiel#feedback-${item.id}`,
+                          category: "personal",
+                        });
+                      }
                     }}
                     type="button"
                   >
@@ -308,12 +300,21 @@ export function AdminPage() {
                   </button>
                   <button
                     className="button button--soft"
-                    onClick={() => feedbackItems.update(item.id, {
-                      status: "Opgelost",
-                      beheer_reactie: (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim() || item.beheer_reactie,
-                      opgelost_op: new Date().toISOString(),
-                      updated_at: new Date().toISOString(),
-                    })}
+                    onClick={() => {
+                      const reply = (feedbackReplies[item.id] ?? item.beheer_reactie ?? "").trim();
+                      feedbackItems.update(item.id, {
+                        status: "Opgelost",
+                        beheer_reactie: reply || item.beheer_reactie,
+                        opgelost_op: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                      });
+                      void notifyUser(item.aangemaakt_door, {
+                        title: "Feedback opgelost",
+                        body: reply || `Je feedback is gemarkeerd als opgelost: ${item.onderwerp}`,
+                        url: `/profiel#feedback-${item.id}`,
+                        category: "personal",
+                      });
+                    }}
                     type="button"
                   >
                     Markeer als opgelost
@@ -572,11 +573,11 @@ export function AdminPage() {
   );
 }
 
-function AdminMetric({ label, value }: { label: string; value: number }) {
+function AdminMetric({ active, label, onClick, value }: { active?: boolean; label: string; onClick: () => void; value: number }) {
   return (
-    <article>
+    <button className={active ? "active" : ""} onClick={onClick} type="button">
       <strong>{value}</strong>
       <span>{label}</span>
-    </article>
+    </button>
   );
 }

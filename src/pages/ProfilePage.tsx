@@ -207,7 +207,7 @@ export function ProfilePage() {
         ) : (
           <div className="card-list compact-list">
             {myFeedback.map((item) => (
-              <details className="item-card collapsible-card" key={item.id}>
+              <details className="item-card collapsible-card" id={`feedback-${item.id}`} key={item.id}>
                 <summary className="item-card__header collapsible-card__summary">
                   <div>
                     <p className="chip">{new Date(item.created_at).toLocaleDateString("nl-NL")}</p>

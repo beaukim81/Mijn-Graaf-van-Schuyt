@@ -45,7 +45,7 @@ function readStringSet(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { buildingAnnouncements, bulletinPosts, helpRequests, profile } = useAppData();
+  const { buildingAnnouncements, bulletinPosts, feedbackItems, helpRequests, profile } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -147,10 +147,20 @@ export function AppLayout() {
         }));
     });
 
-    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications]
+    const feedbackNotifications = feedbackItems.items
+      .filter((item) => item.aangemaakt_door === profile.user_id && (item.beheer_reactie || item.status === "Opgelost"))
+      .map((item) => ({
+        id: `feedback-${item.id}-${item.updated_at}`,
+        date: Date.parse(item.updated_at) || Date.parse(item.created_at) || 0,
+        title: item.status === "Opgelost" ? `Feedback opgelost: ${item.onderwerp}` : `Reactie op je feedback: ${item.onderwerp}`,
+        description: item.beheer_reactie || "Beheer heeft je feedback gemarkeerd als opgelost.",
+        to: `${paths.profile}#feedback-${item.id}`,
+      }));
+
+    return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, helpRequests.items, profile.user_id]);
+  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, feedbackItems.items, helpRequests.items, profile.user_id]);
 
   const unreadNotifications = useMemo(
     () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),

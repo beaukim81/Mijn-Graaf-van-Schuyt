@@ -2,7 +2,6 @@ import { Download, FileText, Pencil, Tag, Trash2 } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
-import { StatusBadge } from "./StatusBadge";
 
 interface KnowledgeDocumentCardProps {
   document: KnowledgeDocument;
@@ -22,7 +21,6 @@ export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }:
             <FileText aria-hidden="true" size={16} /> {document.documenttype}
           </p>
         </div>
-        <StatusBadge tone={document.status === "Gepubliceerd" ? "good" : "warning"}>{document.status}</StatusBadge>
       </summary>
       <div className="collapsible-card__body">
       <p><LinkifiedText text={document.korte_samenvatting} /></p>
