@@ -684,6 +684,13 @@ button {
   color: var(--primary-dark);
 }
 
+.button--danger {
+  background: #fff7f2;
+  border: 1px solid rgba(154, 52, 18, 0.22);
+  box-shadow: 0 8px 22px rgba(154, 52, 18, 0.06);
+  color: var(--danger);
+}
+
 .back-button {
   background: transparent;
   color: var(--primary-dark);

@@ -20,6 +20,7 @@ export function ReportsPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<ReportCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     titel: "",
     omschrijving: "",
@@ -59,6 +60,24 @@ export function ReportsPage() {
         : draft.type_melding === "Mogelijk meerdere woningen"
           ? "Meerdere woningen"
           : "Eigen woning";
+    if (editingId) {
+      reports.update(editingId, {
+        titel: draft.titel,
+        omschrijving: draft.omschrijving,
+        categorie: draft.categorie,
+        locatie_in_gebouw,
+        type_melding: draft.type_melding,
+        image_urls: imageUrls,
+        bijgewerkt_op: timestamp,
+      });
+      setEditingId(null);
+      setCategory(draft.categorie);
+      setQuery("");
+      setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+      setShowForm(false);
+      return;
+    }
+
     const report: Report = {
       id: crypto.randomUUID(),
       ...draft,
@@ -125,7 +144,7 @@ export function ReportsPage() {
       )}
       {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void createReport(); }}>
-        <h3>Melding maken</h3>
+        <h3>{editingId ? "Melding bewerken" : "Melding maken"}</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Korte titel" required />
         <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Wat merk je?" required />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as ReportCategory })}>
@@ -185,8 +204,18 @@ export function ReportsPage() {
             </a>
           </div>
         )}
-        <button className="button" type="submit">Melding opslaan</button>
-        <button className="button button--soft" onClick={() => setShowForm(false)} type="button">Annuleren</button>
+        <button className="button" type="submit">{editingId ? "Wijzigingen opslaan" : "Melding opslaan"}</button>
+        <button
+          className="button button--soft"
+          onClick={() => {
+            setEditingId(null);
+            setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+            setShowForm(false);
+          }}
+          type="button"
+        >
+          Annuleren
+        </button>
       </form>
       )}
       <div className="filter-row filter-row--equal">
@@ -202,6 +231,21 @@ export function ReportsPage() {
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
             onConfirm={confirmReport}
             onForwardToRebo={forwardToRebo}
+            onEdit={(item) => {
+              setEditingId(item.id);
+              setDraft({
+                titel: item.titel,
+                omschrijving: item.omschrijving,
+                categorie: item.categorie,
+                locatie_in_gebouw: item.type_melding === "Appartementencomplex" ? item.locatie_in_gebouw : "",
+                type_melding: item.type_melding,
+                image_urls: item.image_urls ?? [],
+                image_files: [],
+              });
+              setShowForm(true);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onDelete={reports.remove}
             onResolve={(id, resolution) => reports.update(id, {
               status: "Opgelost",
               opgelost_op: new Date().toISOString(),

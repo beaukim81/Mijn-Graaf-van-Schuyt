@@ -11,13 +11,14 @@ interface BulletinPostCardProps {
   isAdmin?: boolean;
   currentUserId: string;
   onComplete?: (id: string) => void;
+  onDelete?: (id: string) => void;
   onEdit?: (post: BulletinPost) => void;
   onSendMessage?: (postId: string, message: string) => void;
   onUpdateMessage?: (postId: string, messageId: string, message: string) => void;
   onDeleteMessage?: (postId: string, messageId: string) => void;
 }
 
-export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComplete, onEdit, onSendMessage, onUpdateMessage, onDeleteMessage }: BulletinPostCardProps) {
+export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComplete, onDelete, onEdit, onSendMessage, onUpdateMessage, onDeleteMessage }: BulletinPostCardProps) {
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
@@ -44,12 +45,22 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
       <p>{post.omschrijving}</p>
       {post.contactpersoon && <p className="muted">Contactpersoon: {post.contactpersoon}</p>}
       {(isOwner || isAdmin) && (
-        <div className="admin-row">
-          <button className="text-button" onClick={() => onComplete?.(post.id)} type="button">
-            Afronden en verwijderen
+        <div className="action-row">
+          <button className="button button--soft" onClick={() => onEdit?.(post)} type="button">
+            <Pencil aria-hidden="true" size={18} /> Bewerken
           </button>
-          <button className="text-button" onClick={() => onEdit?.(post)} type="button">
-            Bewerken
+          <button
+            className="button button--danger"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je dit prikbordbericht wilt verwijderen?");
+              if (confirmed) onDelete?.(post.id);
+            }}
+            type="button"
+          >
+            <Trash2 aria-hidden="true" size={18} /> Verwijderen
+          </button>
+          <button className="button button--soft" onClick={() => onComplete?.(post.id)} type="button">
+            Afronden
           </button>
         </div>
       )}
@@ -70,7 +81,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
                   <div className="admin-row">
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         const trimmed = editedMessage.trim();
                         if (!trimmed) return;
@@ -83,7 +94,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                       Opslaan
                     </button>
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(null);
                         setEditedMessage("");
@@ -101,7 +112,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                 <div className="message-actions">
                   {item.author_id === currentUserId && (
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(item.id);
                         setEditedMessage(item.message);
@@ -111,7 +122,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                       <Pencil aria-hidden="true" size={15} /> Bewerken
                     </button>
                   )}
-                  <button className="text-button danger" onClick={() => onDeleteMessage?.(post.id, item.id)} type="button">
+                  <button className="button button--danger" onClick={() => onDeleteMessage?.(post.id, item.id)} type="button">
                     <Trash2 aria-hidden="true" size={15} /> Verwijderen
                   </button>
                 </div>

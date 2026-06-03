@@ -1,4 +1,4 @@
-import { ExternalLink, Mail, MessageCircle, Phone } from "lucide-react";
+import { ExternalLink, Mail, MessageCircle, Pencil, Phone, Trash2 } from "lucide-react";
 import type { Contact } from "../types";
 
 interface ContactCardProps {
@@ -41,12 +41,12 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
         )}
       </div>
       {isAdmin && (
-        <div className="admin-row">
-          <button className="text-button" onClick={() => onEdit?.(contact)} type="button">
-            Wijzigen
+        <div className="action-row">
+          <button className="button button--soft" onClick={() => onEdit?.(contact)} type="button">
+            <Pencil aria-hidden="true" size={18} /> Bewerken
           </button>
-          <button className="text-button danger" onClick={() => onDelete?.(contact.id)} type="button">
-            Verwijderen
+          <button className="button button--danger" onClick={() => onDelete?.(contact.id)} type="button">
+            <Trash2 aria-hidden="true" size={18} /> Verwijderen
           </button>
         </div>
       )}

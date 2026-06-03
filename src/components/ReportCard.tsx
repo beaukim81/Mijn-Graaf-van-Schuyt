@@ -1,4 +1,4 @@
-import { Check, ClipboardCopy, Send } from "lucide-react";
+import { Check, ClipboardCopy, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 import type { KnowledgeDocument, Report } from "../types";
 import { PhotoGrid } from "./PhotoGrid";
@@ -12,10 +12,12 @@ interface ReportCardProps {
   canResolve?: boolean;
   onConfirm?: (id: string) => void;
   onForwardToRebo?: (id: string) => void;
+  onEdit?: (report: Report) => void;
+  onDelete?: (id: string) => void;
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
   const relatedDocuments = relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
@@ -80,6 +82,23 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
           )}
           <button className="button button--soft" onClick={copySummary} type="button">
             <ClipboardCopy aria-hidden="true" size={18} /> Kopieer samenvatting
+          </button>
+        </div>
+      )}
+      {canResolve && (
+        <div className="action-row">
+          <button className="button button--soft" onClick={() => onEdit?.(report)} type="button">
+            <Pencil aria-hidden="true" size={18} /> Bewerken
+          </button>
+          <button
+            className="button button--danger"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je deze melding wilt verwijderen?");
+              if (confirmed) onDelete?.(report.id);
+            }}
+            type="button"
+          >
+            <Trash2 aria-hidden="true" size={18} /> Verwijderen
           </button>
         </div>
       )}

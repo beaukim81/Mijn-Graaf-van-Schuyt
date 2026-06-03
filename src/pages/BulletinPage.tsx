@@ -155,6 +155,7 @@ export function BulletinPage() {
             isAdmin={profile.rol === "admin"}
             currentUserId={profile.user_id}
             onComplete={bulletinPosts.remove}
+            onDelete={bulletinPosts.remove}
             onEdit={(item) => {
               setEditingId(item.id);
               setDraft({

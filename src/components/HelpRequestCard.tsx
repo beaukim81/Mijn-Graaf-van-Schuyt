@@ -96,7 +96,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
                   <div className="admin-row">
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         const trimmed = editedMessage.trim();
                         if (!trimmed) return;
@@ -109,7 +109,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                       Opslaan
                     </button>
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(null);
                         setEditedMessage("");
@@ -127,7 +127,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                 <div className="message-actions">
                   {item.author_id === currentUserId && (
                     <button
-                      className="text-button"
+                      className="button button--soft"
                       onClick={() => {
                         setEditingMessageId(item.id);
                         setEditedMessage(item.message);
@@ -137,7 +137,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                       <Pencil aria-hidden="true" size={15} /> Bewerken
                     </button>
                   )}
-                  <button className="text-button danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
+                  <button className="button button--danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
                     <Trash2 aria-hidden="true" size={15} /> Verwijderen
                   </button>
                 </div>

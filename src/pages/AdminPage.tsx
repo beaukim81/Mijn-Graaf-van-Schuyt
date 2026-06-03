@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { StatusBadge } from "../components/StatusBadge";
@@ -286,8 +287,8 @@ export function AdminPage() {
                 <p>{announcement.inhoud}</p>
                 {announcement.event_date && <p className="muted">Datum: {new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</p>}
                 <div className="admin-row">
-                  <button className="text-button" onClick={() => editAnnouncement(announcement)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -336,8 +337,8 @@ export function AdminPage() {
                       Publiceren
                     </button>
                   )}
-                  <button className="text-button" onClick={() => editDocument(document)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => documents.remove(document.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => documents.remove(document.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -373,8 +374,8 @@ export function AdminPage() {
                 </div>
                 <p>{contact.beschrijving}</p>
                 <div className="admin-row">
-                  <button className="text-button" onClick={() => setContactDraft(contact)} type="button">Aanpassen</button>
-                  <button className="text-button danger" onClick={() => contacts.remove(contact.id)} type="button">Verwijderen</button>
+                  <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                  <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </article>
             ))}
@@ -409,7 +410,7 @@ export function AdminPage() {
                 </label>
               </div>
               <div className="admin-row">
-                <button className="text-button danger" onClick={() => reports.remove(report.id)} type="button">Verwijderen</button>
+                <button className="button button--danger" onClick={() => reports.remove(report.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
               </div>
             </article>
           ))}
@@ -429,8 +430,8 @@ export function AdminPage() {
               </div>
               <p>{post.omschrijving}</p>
               <div className="admin-row">
-                <button className="text-button" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden en verwijderen</button>
-                <button className="text-button danger" onClick={() => bulletinPosts.remove(post.id)} type="button">Verwijderen</button>
+                <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
+                <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
               </div>
             </article>
           ))}
@@ -465,14 +466,14 @@ export function AdminPage() {
               </label>
               {resident.user_id !== profile.user_id && (
                 <button
-                  className="text-button danger"
+                  className="button button--danger"
                   onClick={() => {
                     const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
                     if (confirmed) profiles.remove(resident.id);
                   }}
                   type="button"
                 >
-                  Bewoner verwijderen
+                  <Trash2 aria-hidden="true" size={18} /> Bewoner verwijderen
                 </button>
               )}
             </article>
