@@ -13,17 +13,18 @@ interface KnowledgeDocumentCardProps {
 
 export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }: KnowledgeDocumentCardProps) {
   return (
-    <article className="item-card library-card">
-      <div className="item-card__header">
+    <details className="item-card library-card collapsible-card">
+      <summary className="item-card__header collapsible-card__summary">
         <div>
           <p className="chip">{document.categorie}</p>
           <h2>{document.titel}</h2>
+          <p className="muted library-card__type">
+            <FileText aria-hidden="true" size={16} /> {document.documenttype}
+          </p>
         </div>
         <StatusBadge tone={document.status === "Gepubliceerd" ? "good" : "warning"}>{document.status}</StatusBadge>
-      </div>
-      <p className="muted library-card__type">
-        <FileText aria-hidden="true" size={16} /> {document.documenttype}
-      </p>
+      </summary>
+      <div className="collapsible-card__body">
       <p><LinkifiedText text={document.korte_samenvatting} /></p>
       {document.uitgebreide_uitleg && <p><LinkifiedText text={document.uitgebreide_uitleg} /></p>}
       <PhotoGrid images={document.image_urls ?? []} alt={document.titel} />
@@ -81,6 +82,7 @@ export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }:
           </button>
         </div>
       )}
-    </article>
+      </div>
+    </details>
   );
 }
