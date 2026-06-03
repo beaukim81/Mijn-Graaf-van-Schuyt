@@ -5,6 +5,7 @@ import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
+import { UrlPreview } from "../components/UrlPreview";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
@@ -159,6 +160,7 @@ export function ReportsPage() {
         <h3>{editingId ? "Melding bewerken" : "Melding maken"}</h3>
         <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Korte titel" required />
         <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Wat merk je?" required />
+        <UrlPreview text={draft.omschrijving} />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as ReportCategory })}>
           {reportCategories.map((item) => <option key={item}>{item}</option>)}
         </select>

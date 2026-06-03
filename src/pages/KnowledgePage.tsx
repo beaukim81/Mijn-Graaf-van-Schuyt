@@ -4,6 +4,7 @@ import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
 import { KnowledgeDocumentCard } from "../components/KnowledgeDocumentCard";
 import { SearchBar } from "../components/SearchBar";
+import { UrlPreview } from "../components/UrlPreview";
 import { knowledgeCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
@@ -180,18 +181,21 @@ export function KnowledgePage() {
           {documentTypes.map((item) => <option key={item}>{item}</option>)}
         </select>
         <input value={draft.korte_samenvatting} onChange={(event) => setDraft({ ...draft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
+        <UrlPreview text={draft.korte_samenvatting} />
         <textarea
           value={draft.uitgebreide_uitleg}
           onChange={(event) => setDraft({ ...draft, uitgebreide_uitleg: event.target.value })}
           placeholder={draft.documenttype === "Bewonerstip" ? "Typ hier je praktische tip, stappenplan of uitleg..." : "Extra uitleg optioneel"}
           required={draft.documenttype === "Bewonerstip" || draft.documenttype === "Veelgestelde vraag"}
         />
+        <UrlPreview text={draft.uitgebreide_uitleg} />
         <input
           value={draft.pdf_url}
           onChange={(event) => setDraft({ ...draft, pdf_url: event.target.value, pdf_bestandsnaam: "", pdf_file: undefined })}
           placeholder={draft.documenttype === "Officiële handleiding" ? "Link naar PDF" : "Link naar PDF optioneel"}
           required={draft.documenttype === "Officiële handleiding"}
         />
+        <UrlPreview text={draft.pdf_url} />
         <label className="upload-field">
           <span>{draft.documenttype === "Officiële handleiding" ? "Of kies een PDF-bestand" : "PDF-bestand optioneel"}</span>
           <input
@@ -243,6 +247,7 @@ export function KnowledgePage() {
         </div>
         <input value={draft.tags} onChange={(event) => setDraft({ ...draft, tags: event.target.value })} placeholder="Zoekwoorden, gescheiden door komma's" />
         <input value={draft.leverancier_of_fabrikant} onChange={(event) => setDraft({ ...draft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
+        <UrlPreview text={draft.leverancier_of_fabrikant} />
         <input value={draft.faq_vraag} onChange={(event) => setDraft({ ...draft, faq_vraag: event.target.value })} placeholder="Eerste veelgestelde vraag optioneel" />
         {formError && <p className="form-message form-message--error">{formError}</p>}
         <button className="button" disabled={saving} type="submit">{saving ? "Bezig met insturen" : "Insturen"}</button>

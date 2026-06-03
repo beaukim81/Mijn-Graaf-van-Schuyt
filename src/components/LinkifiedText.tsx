@@ -3,6 +3,7 @@ interface LinkifiedTextProps {
 }
 
 const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+const urlOnlyPattern = /^(https?:\/\/[^\s<]+|www\.[^\s<]+)$/i;
 const trailingPunctuation = /[),.;:!?]+$/;
 
 function cleanUrl(rawUrl: string) {
@@ -18,7 +19,7 @@ export function LinkifiedText({ text }: LinkifiedTextProps) {
   return (
     <>
       {parts.map((part, index) => {
-        if (!part.match(urlPattern)) return part;
+        if (!urlOnlyPattern.test(part)) return part;
         const { href, trailing, url } = cleanUrl(part);
         return (
           <span key={`${part}-${index}`}>

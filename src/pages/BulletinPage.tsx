@@ -3,6 +3,7 @@ import { BulletinPostCard } from "../components/BulletinPostCard";
 import { CategoryFilter } from "../components/CategoryFilter";
 import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
+import { UrlPreview } from "../components/UrlPreview";
 import { bulletinCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
@@ -120,6 +121,7 @@ export function BulletinPage() {
           <h3>{editingId ? "Bericht bewerken" : "Bericht plaatsen"}</h3>
           <input value={draft.titel} onChange={(event) => setDraft({ ...draft, titel: event.target.value })} placeholder="Titel" required />
           <textarea value={draft.omschrijving} onChange={(event) => setDraft({ ...draft, omschrijving: event.target.value })} placeholder="Typ hier je bericht..." required />
+          <UrlPreview text={draft.omschrijving} />
           <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as BulletinCategory })}>
             {bulletinCategories.map((item) => <option key={item}>{item}</option>)}
           </select>

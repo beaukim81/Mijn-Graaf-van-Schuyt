@@ -181,6 +181,34 @@ button {
   color: var(--danger);
 }
 
+.url-preview {
+  background: #f2f7f4;
+  border: 1px solid rgba(31, 91, 80, 0.12);
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.url-preview span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.url-preview p {
+  color: var(--primary-dark);
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.url-preview a {
+  font-weight: 800;
+  text-decoration-color: rgba(31, 91, 80, 0.35);
+  text-underline-offset: 3px;
+}
+
 .app-header {
   align-items: center;
   background: rgba(255, 255, 255, 0.78);

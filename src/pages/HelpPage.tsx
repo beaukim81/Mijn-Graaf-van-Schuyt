@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { CategoryFilter } from "../components/CategoryFilter";
 import { EmptyState } from "../components/EmptyState";
 import { HelpRequestCard } from "../components/HelpRequestCard";
+import { UrlPreview } from "../components/UrlPreview";
 import { helpCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
@@ -164,6 +165,7 @@ export function HelpPage() {
           placeholder={socialCategories.includes(draft.categorie) ? "Wat organiseer je, wanneer en hoeveel plek is er?" : "Korte uitleg"}
           required
         />
+        <UrlPreview text={draft.omschrijving} />
         <select value={draft.categorie} onChange={(event) => setDraft({ ...draft, categorie: event.target.value as HelpCategory })}>
           {helpCategories.map((item) => <option key={item}>{item}</option>)}
         </select>

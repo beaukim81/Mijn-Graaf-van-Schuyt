@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { EmptyState } from "../components/EmptyState";
 import { LinkifiedText } from "../components/LinkifiedText";
 import { StatusBadge } from "../components/StatusBadge";
+import { UrlPreview } from "../components/UrlPreview";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
@@ -257,6 +258,7 @@ export function AdminPage() {
             <h3>{announcementDraft.id ? "Algemene melding aanpassen" : "Algemene melding plaatsen"}</h3>
             <input value={announcementDraft.titel} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, titel: event.target.value })} placeholder="Titel" required />
             <textarea value={announcementDraft.inhoud} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, inhoud: event.target.value })} placeholder="Praktische uitleg of tip" required />
+            <UrlPreview text={announcementDraft.inhoud} />
             <label className="field">
               <span>Datum</span>
               <input value={announcementDraft.event_date} onChange={(event) => setAnnouncementDraft({ ...announcementDraft, event_date: event.target.value })} type="date" />
@@ -312,10 +314,14 @@ export function AdminPage() {
               {documentStatuses.map((item) => <option key={item}>{item}</option>)}
             </select>
             <textarea value={documentDraft.korte_samenvatting} onChange={(event) => setDocumentDraft({ ...documentDraft, korte_samenvatting: event.target.value })} placeholder="Korte samenvatting" required />
+            <UrlPreview text={documentDraft.korte_samenvatting} />
             <textarea value={documentDraft.uitgebreide_uitleg} onChange={(event) => setDocumentDraft({ ...documentDraft, uitgebreide_uitleg: event.target.value })} placeholder="Vrije uitleg of bewonerstip" />
+            <UrlPreview text={documentDraft.uitgebreide_uitleg} />
             <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required={documentDraft.documenttype === "Officiële handleiding"} />
+            <UrlPreview text={documentDraft.pdf_url} />
             <input value={documentDraft.tags} onChange={(event) => setDocumentDraft({ ...documentDraft, tags: event.target.value })} placeholder="Tags, gescheiden door komma's" />
             <input value={documentDraft.leverancier_of_fabrikant} onChange={(event) => setDocumentDraft({ ...documentDraft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
+            <UrlPreview text={documentDraft.leverancier_of_fabrikant} />
             <button className="button" type="submit">{documentDraft.id ? "Wijzigingen opslaan" : "Toevoegen"}</button>
             {documentDraft.id && <button className="button button--soft" onClick={resetDocument} type="button">Annuleren</button>}
           </form>
@@ -356,10 +362,13 @@ export function AdminPage() {
               {contactCategories.map((item) => <option key={item}>{item}</option>)}
             </select>
             <textarea value={contactDraft.beschrijving} onChange={(event) => setContactDraft({ ...contactDraft, beschrijving: event.target.value })} placeholder="Korte beschrijving" required />
+            <UrlPreview text={contactDraft.beschrijving} />
             <input value={contactDraft.telefoonnummer} onChange={(event) => setContactDraft({ ...contactDraft, telefoonnummer: event.target.value })} placeholder="Telefoonnummer" />
             <input value={contactDraft.emailadres} onChange={(event) => setContactDraft({ ...contactDraft, emailadres: event.target.value })} placeholder="E-mailadres" />
             <input value={contactDraft.website} onChange={(event) => setContactDraft({ ...contactDraft, website: event.target.value })} placeholder="Website" />
+            <UrlPreview text={contactDraft.website} />
             <input value={contactDraft.whatsapp_url} onChange={(event) => setContactDraft({ ...contactDraft, whatsapp_url: event.target.value })} placeholder="WhatsApp-link" />
+            <UrlPreview text={contactDraft.whatsapp_url} />
             <button className="button" type="submit">Opslaan</button>
             {contactDraft.id && <button className="button button--soft" onClick={resetContact} type="button">Annuleren</button>}
           </form>
