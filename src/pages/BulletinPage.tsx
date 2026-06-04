@@ -102,7 +102,7 @@ export function BulletinPage() {
   return (
     <section className="page-stack">
       <div className="page-heading">
-        <h2>Prikbord & Spullen</h2>
+        <h2>Prikbord</h2>
         <p>Voor spullen, gevonden voorwerpen, korte tips en praktische berichten voor bewoners.</p>
       </div>
       {bulletinPosts.syncError && (

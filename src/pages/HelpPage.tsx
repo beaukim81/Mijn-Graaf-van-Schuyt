@@ -129,8 +129,8 @@ export function HelpPage() {
   return (
     <section className="page-stack">
       <div className="page-heading">
-        <h2>Hulp & Meedoen</h2>
-        <p>Voor hulpvragen, kleine verzoeken en uitnodigingen waar buren op kunnen reageren of aan kunnen meedoen.</p>
+        <h2>Oproepen</h2>
+        <p>Voor kleine verzoeken, hulpvragen en uitnodigingen waar buren op kunnen reageren.</p>
       </div>
       {helpRequests.syncError && (
         <div className="notice notice--warning">
@@ -145,7 +145,7 @@ export function HelpPage() {
         </div>
       )}
       {openCategoryFilters.length > 0 && (
-        <div className="suggestion-strip" aria-label="Snelle filters voor open hulpvragen">
+        <div className="suggestion-strip" aria-label="Snelle filters voor open oproepen">
           <button className={category === "Alle" ? "active" : ""} onClick={() => setCategory("Alle")} type="button">
             Alles
             <span>{helpRequests.items.filter((request) => request.status !== "Afgerond").length}</span>
