@@ -25,9 +25,29 @@ const contactGroups = [
   { label: "Alles", value: "Alle" },
   { label: "Spoed", value: "Spoed" },
   { label: "REBO", value: "REBO" },
-  { label: "Gemeente", value: "Gemeente" },
   { label: "Leveranciers", value: "Leveranciers" },
+  { label: "Gemeente", value: "Gemeente" },
 ] as const;
+
+function contactPriority(contact: Contact) {
+  const name = contact.naam.toLowerCase();
+  if (contact.categorie === "Spoed") return 0;
+  if (name.includes("rebo") || contact.categorie === "Verhuur") return 1;
+  if (contact.categorie === "Leveranciers") return 2;
+  if (contact.categorie === "Gemeente") return 3;
+  if (contact.categorie === "Veiligheid") return 4;
+  return 5;
+}
+
+function contactSecondaryPriority(contact: Contact) {
+  const name = contact.naam.toLowerCase();
+  if (name.includes("huurvragen")) return 0;
+  if (name.includes("portal")) return 1;
+  if (name.includes("schade")) return 2;
+  if (name.includes("storing")) return 3;
+  if (name.includes("klantenservice")) return 4;
+  return 5;
+}
 
 export function ContactsPage() {
   const { contacts, profile } = useAppData();
@@ -39,15 +59,23 @@ export function ContactsPage() {
   const isAdmin = profile.rol === "admin";
 
   const visibleContacts = useMemo(() => {
-    return contacts.items.filter((contact) => {
-      const matchesQuery = `${contact.naam} ${contact.categorie} ${contact.beschrijving}`.toLowerCase().includes(query.toLowerCase());
-      const matchesCategory = category === "Alle" || contact.categorie === category;
-      const matchesGroup =
-        group === "Alle" ||
-        contact.categorie === group ||
-        (group === "REBO" && contact.naam.toLowerCase().includes("rebo"));
-      return contact.zichtbaar && matchesQuery && matchesCategory && matchesGroup;
-    });
+    return contacts.items
+      .filter((contact) => {
+        const matchesQuery = `${contact.naam} ${contact.categorie} ${contact.beschrijving}`.toLowerCase().includes(query.toLowerCase());
+        const matchesCategory = category === "Alle" || contact.categorie === category;
+        const matchesGroup =
+          group === "Alle" ||
+          contact.categorie === group ||
+          (group === "REBO" && (contact.naam.toLowerCase().includes("rebo") || contact.categorie === "Verhuur"));
+        return contact.zichtbaar && matchesQuery && matchesCategory && matchesGroup;
+      })
+      .sort((first, second) => {
+        const priorityDifference = contactPriority(first) - contactPriority(second);
+        if (priorityDifference !== 0) return priorityDifference;
+        const secondaryDifference = contactSecondaryPriority(first) - contactSecondaryPriority(second);
+        if (secondaryDifference !== 0) return secondaryDifference;
+        return first.naam.localeCompare(second.naam, "nl");
+      });
   }, [contacts.items, query, category, group]);
 
   function saveContact() {
