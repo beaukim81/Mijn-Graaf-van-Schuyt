@@ -11,14 +11,14 @@ interface ContactCardProps {
 
 export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardProps) {
   return (
-    <article className="item-card">
+    <article className="item-card contact-card">
       <div className="item-card__header">
         <div>
           <p className="chip">{contact.categorie}</p>
           <h2>{contact.naam}</h2>
         </div>
       </div>
-      <p><LinkifiedText text={contact.beschrijving} /></p>
+      <p className="contact-card__description"><LinkifiedText text={contact.beschrijving} /></p>
       <div className="action-row">
         {contact.telefoonnummer && (
           <a className="button button--soft" href={`tel:${contact.telefoonnummer.replace(/\s/g, "")}`}>

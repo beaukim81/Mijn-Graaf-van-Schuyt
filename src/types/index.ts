@@ -59,7 +59,7 @@ export type HelpCategory =
 
 export type HelpStatus = "Open" | "Iemand helpt" | "Afgerond";
 
-export type BulletinCategory = "Gratis af te halen" | "Gezocht" | "Gevonden voorwerp" | "Mededeling" | "Activiteit" | "Tip" | "Overig";
+export type BulletinCategory = "Gratis af te halen" | "Gezocht" | "Gevonden voorwerp" | "Mededeling" | "Tip" | "Overig";
 export type BulletinStatus = "Actief" | "Afgerond" | "Verlopen";
 export type AnnouncementImportance = "normaal" | "belangrijk" | "urgent";
 

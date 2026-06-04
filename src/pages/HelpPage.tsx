@@ -11,6 +11,19 @@ import { residentLabel } from "../lib/residentDisplay";
 import type { HelpCategory, HelpRequest } from "../types";
 
 const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
+const neutralCategories: HelpCategory[] = ["Iets lenen", "Overig"];
+
+function helpActionText(category: HelpCategory) {
+  if (socialCategories.includes(category)) return "wil meedoen";
+  if (neutralCategories.includes(category)) return "heeft gereageerd";
+  return "wil helpen";
+}
+
+function withdrawnText(category: HelpCategory) {
+  if (socialCategories.includes(category)) return "Ik kan helaas niet meer meedoen.";
+  if (neutralCategories.includes(category)) return "Mijn reactie is niet meer actueel.";
+  return "Ik ben helaas niet meer beschikbaar.";
+}
 
 export function HelpPage() {
   const { helpRequests, profile } = useAppData();
@@ -80,8 +93,8 @@ export function HelpPage() {
         ],
       });
       void notifyUser(request.aangemaakt_door, {
-        title: "Nieuwe reactie op je hulpvraag",
-        body: `${residentLabel(profile.naam_of_bijnaam, profile.huisnummer)} wil ${socialCategories.includes(request.categorie) ? "meedoen" : "helpen"}.`,
+        title: socialCategories.includes(request.categorie) ? "Nieuwe reactie op je uitnodiging" : "Nieuwe reactie op je oproep",
+        body: `${residentLabel(profile.naam_of_bijnaam, profile.huisnummer)} ${helpActionText(request.categorie)}.`,
         url: `/hulp#hulp-${request.id}`,
         category: "help",
       });
@@ -106,7 +119,7 @@ export function HelpPage() {
           author_id: profile.user_id,
           author_name: profile.naam_of_bijnaam,
           author_house_number: profile.huisnummer,
-          message: "Ik ben helaas niet meer beschikbaar.",
+          message: withdrawnText(request.categorie),
           aangemaakt_op: new Date().toISOString(),
         },
       ],
@@ -116,8 +129,8 @@ export function HelpPage() {
   return (
     <section className="page-stack">
       <div className="page-heading">
-        <h2>Hulp & Buren</h2>
-        <p>Vraag iets kleins, bied hulp aan of organiseer iets gezelligs met buren.</p>
+        <h2>Hulp & Meedoen</h2>
+        <p>Voor hulpvragen, kleine verzoeken en uitnodigingen waar buren op kunnen reageren of aan kunnen meedoen.</p>
       </div>
       {helpRequests.syncError && (
         <div className="notice notice--warning">
@@ -147,12 +160,12 @@ export function HelpPage() {
       )}
       {!showForm && (
         <button className="button button--full" onClick={() => setShowForm(true)} type="button">
-          Hulpvraag of uitnodiging plaatsen
+          Oproep of uitnodiging plaatsen
         </button>
       )}
       {showForm && (
       <form className="form-panel" onSubmit={(event) => { event.preventDefault(); createRequest(); }}>
-        <h3>{socialCategories.includes(draft.categorie) ? "Uitnodiging plaatsen" : "Hulpvraag plaatsen"}</h3>
+        <h3>{socialCategories.includes(draft.categorie) ? "Uitnodiging plaatsen" : "Oproep plaatsen"}</h3>
         <input
           value={draft.titel}
           onChange={(event) => setDraft({ ...draft, titel: event.target.value })}
@@ -219,7 +232,7 @@ export function HelpPage() {
           />
         ))}
       </div>
-      {filteredRequests.length === 0 && <EmptyState title="Nog geen oproepen" description="Plaats een hulpvraag, uitnodiging of klein verzoek aan buren. Houd het kort en praktisch." />}
+      {filteredRequests.length === 0 && <EmptyState title="Nog geen oproepen" description="Plaats een klein verzoek, praktische hulpvraag of uitnodiging voor buren." />}
     </section>
   );
 }

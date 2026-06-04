@@ -1,11 +1,42 @@
 import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
-import type { HelpRequest } from "../types";
+import type { HelpCategory, HelpRequest } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { residentLabel } from "../lib/residentDisplay";
 import { StatusBadge } from "./StatusBadge";
 
-const socialCategories = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
+const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
+const neutralCategories: HelpCategory[] = ["Iets lenen", "Overig"];
+
+function copyForCategory(category: HelpCategory) {
+  if (socialCategories.includes(category)) {
+    return {
+      activeStatus: "Buren doen mee",
+      offerButton: "Ik wil meedoen",
+      offersTitle: "Buren die meedoen",
+      chatTitle: "Berichtjes over deze uitnodiging",
+      emptyMessage: "Nog geen bericht. Handig voor korte afstemming.",
+    };
+  }
+
+  if (neutralCategories.includes(category)) {
+    return {
+      activeStatus: "Reactie ontvangen",
+      offerButton: "Ik reageer",
+      offersTitle: "Buren die reageren",
+      chatTitle: "Berichtjes over deze vraag",
+      emptyMessage: "Nog geen bericht. Houd het kort en praktisch.",
+    };
+  }
+
+  return {
+    activeStatus: "Iemand helpt",
+    offerButton: "Ik kan helpen",
+    offersTitle: "Hulp aangeboden",
+    chatTitle: "Berichtjes over deze hulpvraag",
+    emptyMessage: "Nog geen bericht. Houd het kort en praktisch.",
+  };
+}
 
 interface HelpRequestCardProps {
   request: HelpRequest;
@@ -24,10 +55,10 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
-  const isSocial = socialCategories.includes(request.categorie);
+  const copy = copyForCategory(request.categorie);
   const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
   const canOfferHelp = request.aangemaakt_door !== currentUserId && !currentUserOffer;
-  const displayStatus = request.status === "Open" && request.offers.length > 0 ? "Iemand helpt" : request.status;
+  const displayStatus = request.status === "Open" && request.offers.length > 0 ? copy.activeStatus : request.status;
 
   function sendMessage() {
     const trimmed = message.trim();
@@ -51,7 +82,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
       <div className="action-row">
         {canOfferHelp && (
         <button className="button button--soft" onClick={() => onOffer?.(request.id)} type="button">
-          <HandHeart aria-hidden="true" size={18} /> {isSocial ? "Ik wil meedoen" : "Ik kan helpen"}
+          <HandHeart aria-hidden="true" size={18} /> {copy.offerButton}
         </button>
         )}
         {currentUserOffer && (
@@ -67,7 +98,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
       </div>
       {request.offers.length > 0 && (
         <div className="neighbor-box">
-          <strong>{isSocial ? "Buren die willen meedoen" : "Hulp aangeboden"}</strong>
+          <strong>{copy.offersTitle}</strong>
           {request.offers.map((offer) => (
             <div className="neighbor-offer" key={offer.id}>
               <Home aria-hidden="true" size={18} />
@@ -83,10 +114,10 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
       )}
       <div className="chat-box">
         <strong>
-          <MessageCircle aria-hidden="true" size={18} /> {isSocial ? "Berichtjes over deze uitnodiging" : "Berichtjes over deze hulpvraag"}
+          <MessageCircle aria-hidden="true" size={18} /> {copy.chatTitle}
         </strong>
         {request.messages.length === 0 ? (
-          <p className="muted">Nog geen bericht. Houd het kort en praktisch.</p>
+          <p className="muted">{copy.emptyMessage}</p>
         ) : (
           request.messages.map((item) => (
             <div className="chat-message" key={item.id}>

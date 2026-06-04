@@ -10,8 +10,8 @@ const navItems = [
   { to: paths.contacts, label: "Contacten", icon: Phone },
   { to: paths.reports, label: "Meldingen", icon: ClipboardList },
   { to: paths.knowledge, label: "Kennisbank", icon: BookOpen },
-  { to: paths.help, label: "Hulp", icon: HandHeart },
-  { to: paths.bulletin, label: "Prikbord", icon: Megaphone },
+  { to: paths.help, label: "Meedoen", icon: HandHeart },
+  { to: paths.bulletin, label: "Spullen", icon: Megaphone },
 ];
 
 type TextSize = "normal" | "large" | "xlarge";

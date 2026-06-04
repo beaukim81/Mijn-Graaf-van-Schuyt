@@ -68,7 +68,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
       )}
       <div className="chat-box">
         <strong>
-          <MessageCircle aria-hidden="true" size={18} /> Berichtjes over dit prikbordbericht
+          <MessageCircle aria-hidden="true" size={18} /> Berichtjes over dit bericht
         </strong>
         {messages.length === 0 ? (
           <p className="muted">Nog geen bericht. Houd het kort en praktisch.</p>

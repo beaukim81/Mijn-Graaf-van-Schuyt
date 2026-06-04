@@ -102,8 +102,8 @@ export function BulletinPage() {
   return (
     <section className="page-stack">
       <div className="page-heading">
-        <h2>Prikbord</h2>
-        <p>Plaats een kort bericht voor het gebouw, bijvoorbeeld iets dat weg mag, iets dat gevonden is of een praktische mededeling.</p>
+        <h2>Prikbord & Spullen</h2>
+        <p>Voor spullen, gevonden voorwerpen, korte tips en praktische berichten voor bewoners.</p>
       </div>
       {bulletinPosts.syncError && (
         <div className="notice notice--warning">
@@ -235,7 +235,7 @@ export function BulletinPage() {
           />
         ))}
       </div>
-      {filteredPosts.length === 0 && <EmptyState title="Nog niets op het prikbord" description="Plaats hier een praktisch bericht, bijvoorbeeld iets dat je aanbiedt, zoekt of gevonden hebt." />}
+      {filteredPosts.length === 0 && <EmptyState title="Nog geen berichten" description="Plaats hier iets dat je aanbiedt, zoekt, gevonden hebt of kort wilt delen met buren." />}
     </section>
   );
 }

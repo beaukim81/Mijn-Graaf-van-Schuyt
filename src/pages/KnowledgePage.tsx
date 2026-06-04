@@ -154,7 +154,6 @@ export function KnowledgePage() {
     <section className="page-stack">
       <div className="page-heading page-heading--search">
         <h2>Kennisbank</h2>
-        <p>Zoek rustig in handleidingen, onderdeleninformatie en praktische tips.</p>
         <SearchBar value={query} onChange={setQuery} placeholder="Zoek op onderwerp, trefwoord, leverancier of onderdeel" />
       </div>
       <div className="suggestion-strip" aria-label="Kennisbankcategorieen">

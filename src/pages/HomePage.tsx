@@ -84,9 +84,9 @@ export function HomePage() {
           <p className="eyebrow">Bewonersapp</p>
           <h2>Welkom</h2>
           <div className="notice">
-            Deze app is in test. Gebruik hem voor praktische meldingen, hulpvragen en informatie. Spoed of persoonlijke reparaties blijven via REBO.
+            Deze app is in test. Gebruik hem voor praktische meldingen, oproepen en informatie. Spoed of persoonlijke reparaties blijven via REBO.
           </div>
-          <p>Alles wat handig is voor bewoners van Graaf van Schuyt: contacten, meldingen, handleidingen, hulpvragen en korte berichten.</p>
+          <p>Alles wat handig is voor bewoners van Graaf van Schuyt: contacten, meldingen, handleidingen, oproepen en korte berichten.</p>
           <p>Onderaan vind je de vaste onderdelen van de app.</p>
           <button className="button button--soft" onClick={() => setShowFeedback((current) => !current)} type="button">
             Feedback doorgeven

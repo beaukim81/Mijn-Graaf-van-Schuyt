@@ -47,4 +47,4 @@ export const helpCategories: HelpCategory[] = [
   "Overig",
 ];
 
-export const bulletinCategories: BulletinCategory[] = ["Gratis af te halen", "Gezocht", "Gevonden voorwerp", "Mededeling", "Activiteit", "Tip", "Overig"];
+export const bulletinCategories: BulletinCategory[] = ["Gratis af te halen", "Gezocht", "Gevonden voorwerp", "Mededeling", "Tip", "Overig"];
