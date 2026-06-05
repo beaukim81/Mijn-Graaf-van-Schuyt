@@ -5,7 +5,7 @@ import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { isValidHouseNumber } from "../lib/floorForHouseNumber";
 
 export function AuthPage() {
-  const { resetPassword, signIn, signUp } = useAuth();
+  const { requestAccess, resetPassword, signIn } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +37,7 @@ export function AuthPage() {
           setError("Dit huisnummer bestaat niet in Graaf van Schuyt. Vul een bestaand oneven huisnummer in.");
           return;
         }
-        const response = await signUp({ email, password, firstName, lastName, houseNumber });
+        const response = await requestAccess({ email, firstName, lastName, houseNumber });
         setMessage(response);
       }
     } catch (caught) {
@@ -73,7 +73,7 @@ export function AuthPage() {
       <section className="auth-card">
         <div className="auth-card__header">
           <p className="eyebrow">Graaf van Schuyt</p>
-          <h1>Inloggen of account maken</h1>
+          <h1>Inloggen of toegang aanvragen</h1>
         </div>
 
         <div className="auth-tabs" role="tablist" aria-label="Account">
@@ -81,7 +81,7 @@ export function AuthPage() {
             <LogIn aria-hidden="true" size={18} /> Inloggen
           </button>
           <button className={mode === "signup" ? "active" : ""} onClick={() => switchMode("signup")} type="button">
-            <UserPlus aria-hidden="true" size={18} /> Account maken
+            <UserPlus aria-hidden="true" size={18} /> Toegang aanvragen
           </button>
         </div>
 
@@ -95,19 +95,21 @@ export function AuthPage() {
             </>
           )}
           <input autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="E-mailadres" required type="email" />
-          <input
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            minLength={8}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Wachtwoord"
-            required
-            type="password"
-          />
+          {mode === "login" && (
+            <input
+              autoComplete="current-password"
+              minLength={8}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Wachtwoord"
+              required
+              type="password"
+            />
+          )}
           {mode === "signup" ? (
             <p className="muted">
-              Kies een wachtwoord van minimaal 8 tekens. Na het aanmaken krijg je een bevestigingsmail van Graaf van
-              Schuyt. Kijk ook in spam of ongewenste mail.
+              Na je aanvraag controleert beheer of je bewoner bent. Daarna krijg je een e-mail van Graaf van Schuyt om
+              je account te activeren en zelf een wachtwoord in te stellen. Kijk ook in spam of ongewenste mail.
             </p>
           ) : (
             <p className="muted">
@@ -118,7 +120,7 @@ export function AuthPage() {
           {error && <p className="form-message form-message--error">{error}</p>}
           {message && <p className="form-message">{message}</p>}
           <button className="button button--full" disabled={busy} type="submit">
-            <KeyRound aria-hidden="true" size={18} /> {busy ? "Even geduld" : mode === "login" ? "Inloggen" : "Account maken"}
+            <KeyRound aria-hidden="true" size={18} /> {busy ? "Even geduld" : mode === "login" ? "Inloggen" : "Toegang aanvragen"}
           </button>
           {mode === "login" && (
             <button className="button button--soft button--full" disabled={busy} onClick={requestPasswordReset} type="button">

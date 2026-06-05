@@ -806,6 +806,20 @@ button {
   box-shadow: 0 10px 24px rgba(22, 35, 33, 0.06);
 }
 
+.profile-button {
+  overflow: hidden;
+  padding: 0;
+}
+
+.header-profile-photo {
+  aspect-ratio: 1;
+  border-radius: 999px;
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
 .notification-menu {
   position: relative;
 }
@@ -3753,6 +3767,17 @@ select {
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.resident-avatar {
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(19, 90, 69, 0.12);
+  flex: 0 0 auto;
+  height: 36px;
+  object-fit: cover;
+  width: 36px;
 }
 
 .resident-identity--compact .resident-avatar {

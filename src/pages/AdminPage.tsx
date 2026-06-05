@@ -12,7 +12,9 @@ import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
 import { residentLabel } from "../lib/residentDisplay";
+import { supabase } from "../lib/supabase";
 import type {
+  AccessRequest,
   AnnouncementImportance,
   BuildingAnnouncement,
   BulletinPost,
@@ -28,7 +30,7 @@ import type {
   ReportStatus,
 } from "../types";
 
-type AdminTab = "algemeen" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
+type AdminTab = "algemeen" | "aanvragen" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
 
 const documentTypes: KnowledgeDocumentType[] = ["Officiële handleiding", "Bewonerstip", "Onderdeleninformatie", "Veelgestelde vraag"];
 const documentStatuses: KnowledgeDocumentStatus[] = ["Concept", "Gepubliceerd", "Te controleren"];
@@ -77,13 +79,15 @@ const blankAnnouncement = {
 };
 
 export function AdminPage() {
-  const { buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
+  const { accessRequests, buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
+  const [accessRequestBusyId, setAccessRequestBusyId] = useState("");
+  const [accessRequestError, setAccessRequestError] = useState("");
   const [documentFormError, setDocumentFormError] = useState("");
   const [documentSaving, setDocumentSaving] = useState(false);
 
@@ -98,6 +102,7 @@ export function AdminPage() {
   const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
   const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
+  const pendingAccessRequests = useMemo(() => accessRequests.items.filter((item) => item.status === "Nieuw").length, [accessRequests.items]);
 
   useEffect(() => {
     const hash = location.hash.replace("#", "");
@@ -105,6 +110,7 @@ export function AdminPage() {
     if (hash.startsWith("feedback-")) setActiveTab("feedback");
     if (hash.startsWith("kennisbank-")) setActiveTab("kennisbank");
     if (hash.startsWith("melding-")) setActiveTab("meldingen");
+    if (hash.startsWith("aanvraag-")) setActiveTab("aanvragen");
 
     window.setTimeout(() => {
       document.getElementById(hash)?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -264,6 +270,48 @@ export function AdminPage() {
     }
   }
 
+  async function approveAccessRequest(request: AccessRequest) {
+    if (!supabase) {
+      setAccessRequestError("Supabase is nog niet gekoppeld.");
+      return;
+    }
+
+    try {
+      setAccessRequestBusyId(request.id);
+      setAccessRequestError("");
+      const { data, error } = await supabase.functions.invoke("approve-access-request", {
+        body: { request_id: request.id },
+      });
+      if (error) throw error;
+      await accessRequests.updateAsync(request.id, {
+        status: "Goedgekeurd",
+        approved_by: profile.user_id,
+        approved_at: new Date().toISOString(),
+        invited_user_id: data?.user_id,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      setAccessRequestError(friendlyErrorMessage(error, "Goedkeuren lukt nu niet. Controleer de Supabase-functie en probeer het opnieuw."));
+    } finally {
+      setAccessRequestBusyId("");
+    }
+  }
+
+  async function rejectAccessRequest(request: AccessRequest) {
+    try {
+      setAccessRequestBusyId(request.id);
+      setAccessRequestError("");
+      await accessRequests.updateAsync(request.id, {
+        status: "Geweigerd",
+        updated_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      setAccessRequestError(friendlyErrorMessage(error, "Weigeren lukt nu niet. Probeer het later opnieuw."));
+    } finally {
+      setAccessRequestBusyId("");
+    }
+  }
+
   return (
     <section className="page-stack admin-page">
       <div className="page-heading">
@@ -272,6 +320,7 @@ export function AdminPage() {
 
       <div className="admin-overview" aria-label="Beheeronderdelen">
         <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
+        <AdminMetric active={activeTab === "aanvragen"} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
         <AdminMetric active={activeTab === "feedback"} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
         <AdminMetric active={activeTab === "kennisbank"} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
         <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
@@ -279,6 +328,93 @@ export function AdminPage() {
         <AdminMetric active={activeTab === "prikbord"} label="Prikbord" onClick={() => setActiveTab("prikbord")} value={activePosts} />
         <AdminMetric active={activeTab === "bewoners"} label="Bewoners" onClick={() => setActiveTab("bewoners")} value={residentsCount} />
       </div>
+
+      {activeTab === "aanvragen" && (
+        <section className="admin-section card-list compact-list">
+          {accessRequests.syncError && (
+            <div className="notice notice--warning">
+              <p>{accessRequests.syncError}</p>
+              <button className="text-button" onClick={accessRequests.clearSyncError} type="button">Melding sluiten</button>
+            </div>
+          )}
+          {accessRequestError && (
+            <div className="notice notice--warning">
+              <p>{accessRequestError}</p>
+              <button className="text-button" onClick={() => setAccessRequestError("")} type="button">Melding sluiten</button>
+            </div>
+          )}
+          {accessRequests.items.map((request) => (
+            <details className="item-card collapsible-card admin-list-card" id={`aanvraag-${request.id}`} key={request.id}>
+              <summary className="item-card__header collapsible-card__summary">
+                <div>
+                  <p className="chip">{request.huisnummer ? `Huisnummer ${request.huisnummer}` : "Aanvraag"}</p>
+                  <h3>{residentLabel(request.naam_of_bijnaam, request.huisnummer)}</h3>
+                </div>
+                <StatusBadge tone={request.status === "Nieuw" ? "warning" : request.status === "Goedgekeurd" ? "good" : "soft"}>{request.status}</StatusBadge>
+              </summary>
+              <div className="collapsible-card__body">
+                <dl className="meta-list">
+                  <div>
+                    <dt>E-mailadres</dt>
+                    <dd>{request.email}</dd>
+                  </div>
+                  {request.achternaam && (
+                    <div>
+                      <dt>Achternaam</dt>
+                      <dd>{request.achternaam}</dd>
+                    </div>
+                  )}
+                  {request.verdieping_of_gebouwdeel && (
+                    <div>
+                      <dt>Etage</dt>
+                      <dd>{request.verdieping_of_gebouwdeel}</dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt>Aangevraagd op</dt>
+                    <dd>{new Date(request.created_at).toLocaleDateString("nl-NL")}</dd>
+                  </div>
+                </dl>
+                {request.status === "Nieuw" ? (
+                  <div className="admin-row">
+                    <button className="button" disabled={accessRequestBusyId === request.id} onClick={() => void approveAccessRequest(request)} type="button">
+                      {accessRequestBusyId === request.id ? "Even geduld" : "Goedkeuren en mail sturen"}
+                    </button>
+                    <button className="button button--soft" disabled={accessRequestBusyId === request.id} onClick={() => void rejectAccessRequest(request)} type="button">
+                      Weigeren
+                    </button>
+                    <button
+                      className="button button--danger"
+                      disabled={accessRequestBusyId === request.id}
+                      onClick={() => {
+                        const confirmed = window.confirm(`Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?`);
+                        if (confirmed) accessRequests.remove(request.id);
+                      }}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={18} /> Verwijderen
+                    </button>
+                  </div>
+                ) : (
+                  <div className="admin-row">
+                    <button
+                      className="button button--danger"
+                      onClick={() => {
+                        const confirmed = window.confirm(`Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?`);
+                        if (confirmed) accessRequests.remove(request.id);
+                      }}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={18} /> Verwijderen
+                    </button>
+                  </div>
+                )}
+              </div>
+            </details>
+          ))}
+          {accessRequests.items.length === 0 && <EmptyState title="Geen toegangsaanvragen" description="Nieuwe bewonersaanvragen verschijnen hier. Na goedkeuring krijgt de bewoner een activatiemail." />}
+        </section>
+      )}
 
       {activeTab === "feedback" && (
         <section className="admin-section card-list compact-list">

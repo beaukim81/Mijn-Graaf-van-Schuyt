@@ -1,4 +1,6 @@
 import type {
+  AccessRequest,
+  AccessRequestStatus,
   AnnouncementImportance,
   BuildingAnnouncement,
   BulletinCategory,
@@ -72,6 +74,40 @@ export function profileToRow(profile: Profile) {
     rol: profile.rol,
     email: profile.email ?? null,
     telefoon: profile.telefoon ?? null,
+  };
+}
+
+export function mapAccessRequest(row: Row): AccessRequest {
+  return {
+    id: text(row.id),
+    email: text(row.email),
+    naam_of_bijnaam: text(row.naam_of_bijnaam),
+    achternaam: optionalText(row.achternaam),
+    huisnummer: text(row.huisnummer),
+    verdieping_of_gebouwdeel: optionalText(row.verdieping_of_gebouwdeel),
+    status: text(row.status, "Nieuw") as AccessRequestStatus,
+    beheer_notitie: optionalText(row.beheer_notitie),
+    approved_by: optionalText(row.approved_by),
+    approved_at: optionalText(row.approved_at),
+    invited_user_id: optionalText(row.invited_user_id),
+    created_at: text(row.created_at),
+    updated_at: text(row.updated_at ?? row.created_at),
+  };
+}
+
+export function accessRequestToRow(request: AccessRequest) {
+  return {
+    id: request.id,
+    email: request.email,
+    naam_of_bijnaam: request.naam_of_bijnaam,
+    achternaam: request.achternaam ?? null,
+    huisnummer: request.huisnummer,
+    verdieping_of_gebouwdeel: request.verdieping_of_gebouwdeel ?? null,
+    status: request.status,
+    beheer_notitie: request.beheer_notitie ?? null,
+    approved_by: request.approved_by ?? null,
+    approved_at: request.approved_at ?? null,
+    invited_user_id: request.invited_user_id ?? null,
   };
 }
 

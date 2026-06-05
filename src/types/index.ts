@@ -1,4 +1,5 @@
 export type Role = "bewoner" | "admin";
+export type AccessRequestStatus = "Nieuw" | "Goedgekeurd" | "Geweigerd";
 
 export type ContactCategory =
   | "Verhuur"
@@ -172,6 +173,22 @@ export interface HelpRequest {
   aangemaakt_op: string;
   offers: HelpOffer[];
   messages: HelpMessage[];
+}
+
+export interface AccessRequest {
+  id: string;
+  email: string;
+  naam_of_bijnaam: string;
+  achternaam?: string;
+  huisnummer: string;
+  verdieping_of_gebouwdeel?: string;
+  status: AccessRequestStatus;
+  beheer_notitie?: string;
+  approved_by?: string;
+  approved_at?: string;
+  invited_user_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface BulletinMessage {

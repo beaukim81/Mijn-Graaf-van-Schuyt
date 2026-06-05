@@ -1,4 +1,4 @@
-import type { BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+import type { AccessRequest, BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 const now = new Date().toISOString();
 
@@ -12,6 +12,8 @@ export const activeProfile: Profile = {
   rol: "bewoner",
   email: "bewoner@example.nl",
 };
+
+export const accessRequests: AccessRequest[] = [];
 
 export const contacts: Contact[] = [
   {

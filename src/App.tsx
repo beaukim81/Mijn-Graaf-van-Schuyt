@@ -7,6 +7,7 @@ import { useSupabaseCollection } from "./hooks/useSupabaseCollection";
 import { AppDataContext, type AppDataContextValue } from "./lib/AppDataContext";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import {
+  accessRequestToRow,
   buildingAnnouncementToRow,
   bulletinMessageToRow,
   bulletinPostToRow,
@@ -16,6 +17,7 @@ import {
   helpOfferToRow,
   helpRequestToRow,
   knowledgeDocumentToRow,
+  mapAccessRequest,
   mapBuildingAnnouncement,
   mapBulletinMessage,
   mapBulletinPost,
@@ -44,7 +46,7 @@ import { KnowledgePage } from "./pages/KnowledgePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
-import type { BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
+import type { AccessRequest, BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
 
 function requireSupabase() {
   if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -183,6 +185,29 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     },
   }), [useDatabase]);
   const profiles = useSupabaseCollection(profile ? [profile] : [mock.activeProfile], profilesOptions);
+
+  const accessRequestsOptions = useMemo(() => ({
+    storageKey: "mijn-graaf-van-schuyt:access-requests",
+    enabled: useDatabase && profile?.rol === "admin",
+    fetchItems: async () => {
+      const { data, error } = await requireSupabase().from("access_requests").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(mapAccessRequest);
+    },
+    insertItem: async (item: AccessRequest) => {
+      const { error } = await requireSupabase().from("access_requests").upsert(accessRequestToRow(item));
+      if (error) throw error;
+    },
+    updateItem: async (_id: string, _changes: Partial<AccessRequest>, nextItem: AccessRequest) => {
+      const { error } = await requireSupabase().from("access_requests").update(accessRequestToRow(nextItem)).eq("id", nextItem.id);
+      if (error) throw error;
+    },
+    deleteItem: async (id: string) => {
+      const { error } = await requireSupabase().from("access_requests").delete().eq("id", id);
+      if (error) throw error;
+    },
+  }), [profile?.rol, useDatabase]);
+  const accessRequests = useSupabaseCollection(mock.accessRequests, accessRequestsOptions);
 
   const contactsOptions = useMemo(() => ({
     storageKey: "mijn-graaf-van-schuyt:contacts",
@@ -529,6 +554,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value: AppDataContextValue = {
     profile: profile ?? mock.activeProfile,
+    accessRequests,
     profiles,
     contacts,
     reports,

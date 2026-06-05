@@ -45,7 +45,7 @@ function readStringSet(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
+  const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -186,13 +186,22 @@ export function AppLayout() {
               description: `${report.categorie}${report.locatie_in_gebouw ? ` - ${report.locatie_in_gebouw}` : ""}`,
               to: `${paths.admin}#melding-${report.id}`,
             })),
+          ...accessRequests.items
+            .filter((request) => request.status === "Nieuw")
+            .map((request) => ({
+              id: `admin-access-${request.id}-${request.created_at}`,
+              date: Date.parse(request.created_at) || 0,
+              title: `Nieuwe toegangsaanvraag: ${residentLabel(request.naam_of_bijnaam, request.huisnummer)}`,
+              description: request.email,
+              to: `${paths.admin}#aanvraag-${request.id}`,
+            })),
         ]
       : [];
 
     return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications, ...adminNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items]);
+  }, [accessRequests.items, buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items]);
 
   const unreadNotifications = useMemo(
     () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),
@@ -338,8 +347,8 @@ export function AppLayout() {
               {unreadAdminNotifications.length > 0 && <span className="notification-dot" />}
             </NavLink>
           )}
-          <NavLink aria-label="Profiel" className="icon-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.profile}>
-            <UserRound aria-hidden="true" />
+          <NavLink aria-label="Profiel" className="icon-button profile-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.profile}>
+            {profile.profielfoto_url ? <img alt="" className="header-profile-photo" src={profile.profielfoto_url} /> : <UserRound aria-hidden="true" />}
           </NavLink>
         </div>
       </header>

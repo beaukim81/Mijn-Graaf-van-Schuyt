@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+import type { AccessRequest, BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
 
 export interface DataCollection<T extends { id: string }> {
   items: T[];
@@ -16,6 +16,7 @@ export interface DataCollection<T extends { id: string }> {
 
 export interface AppDataContextValue {
   profile: Profile;
+  accessRequests: DataCollection<AccessRequest>;
   profiles: DataCollection<Profile>;
   contacts: DataCollection<Contact>;
   reports: DataCollection<Report>;

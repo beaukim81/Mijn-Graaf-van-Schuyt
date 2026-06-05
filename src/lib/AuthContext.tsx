@@ -13,7 +13,7 @@ interface AuthContextValue {
   profile: Profile | null;
   passwordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (input: SignUpInput) => Promise<string>;
+  requestAccess: (input: AccessRequestInput) => Promise<string>;
   resetPassword: (email: string) => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -22,9 +22,8 @@ interface AuthContextValue {
   refreshProfile: () => Promise<void>;
 }
 
-interface SignUpInput {
+interface AccessRequestInput {
   email: string;
-  password: string;
   firstName: string;
   lastName?: string;
   houseNumber: string;
@@ -147,24 +146,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
-      signUp: async ({ email, password, firstName, lastName, houseNumber }) => {
+      requestAccess: async ({ email, firstName, lastName, houseNumber }) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              naam_of_bijnaam: firstName,
-              achternaam: lastName ?? "",
-              huisnummer: houseNumber,
-            },
-          },
+        const { error } = await supabase.from("access_requests").insert({
+          email: email.trim().toLowerCase(),
+          naam_of_bijnaam: firstName.trim(),
+          achternaam: lastName?.trim() || null,
+          huisnummer: houseNumber.trim(),
+          verdieping_of_gebouwdeel: floorForHouseNumber(houseNumber),
+          status: "Nieuw",
         });
-        if (error) throw error;
-        return data.session
-          ? "Je account is aangemaakt. Je kunt de app nu gebruiken."
-          : "Je account is bijna klaar. We hebben je een bevestigingsmail gestuurd. Open de link in die mail om je account te activeren. Kijk ook even in spam of ongewenste mail als je niets ziet.";
+        if (error) {
+          const message = String(error.message ?? "").toLowerCase();
+          if (message.includes("duplicate") || message.includes("access_requests_email_active_key")) {
+            throw new Error("Er staat al een toegangsaanvraag voor dit e-mailadres open. Wacht op goedkeuring door beheer.");
+          }
+          throw error;
+        }
+        return "Je aanvraag is verstuurd. Beheer controleert je aanvraag. Na goedkeuring krijg je een e-mail om je account te activeren en zelf een wachtwoord in te stellen. Kijk ook in spam of ongewenste mail.";
       },
       resetPassword: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
