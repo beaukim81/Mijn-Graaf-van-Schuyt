@@ -547,35 +547,46 @@ export function AdminPage() {
             </div>
           )}
           {profiles.items.map((resident) => (
-            <article className="item-card admin-list-card" key={resident.id}>
-              <div className="item-card__header">
+            <details className="item-card collapsible-card admin-list-card admin-resident-card" key={resident.id}>
+              <summary className="item-card__header collapsible-card__summary">
                 <div>
                   <p className="chip">{resident.huisnummer ? `Huisnummer ${resident.huisnummer}` : "Bewoner"}</p>
                   <h3>{residentLabel(resident.naam_of_bijnaam, resident.huisnummer)}</h3>
                 </div>
                 <StatusBadge tone={resident.rol === "admin" ? "good" : "soft"}>{resident.rol}</StatusBadge>
+              </summary>
+              <div className="collapsible-card__body">
+                <dl className="meta-list">
+                  <div>
+                    <dt>E-mailadres</dt>
+                    <dd>{resident.email ?? "Geen e-mailadres in profiel opgeslagen."}</dd>
+                  </div>
+                  <div>
+                    <dt>Huisnummer</dt>
+                    <dd>{resident.huisnummer ?? "Niet ingevuld"}</dd>
+                  </div>
+                </dl>
+                <label className="field">
+                  <span>Rol</span>
+                  <select value={resident.rol} onChange={(event) => profiles.update(resident.id, { rol: event.target.value as Role })}>
+                    <option value="bewoner">bewoner</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
+                {resident.user_id !== profile.user_id && (
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
+                      if (confirmed) profiles.remove(resident.id);
+                    }}
+                    type="button"
+                  >
+                    <Trash2 aria-hidden="true" size={18} /> Bewoner verwijderen
+                  </button>
+                )}
               </div>
-              <p className="muted">{resident.email ?? "Geen e-mailadres in profiel opgeslagen."}</p>
-              <label className="field">
-                <span>Rol</span>
-                <select value={resident.rol} onChange={(event) => profiles.update(resident.id, { rol: event.target.value as Role })}>
-                  <option value="bewoner">bewoner</option>
-                  <option value="admin">admin</option>
-                </select>
-              </label>
-              {resident.user_id !== profile.user_id && (
-                <button
-                  className="button button--danger"
-                  onClick={() => {
-                    const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
-                    if (confirmed) profiles.remove(resident.id);
-                  }}
-                  type="button"
-                >
-                  <Trash2 aria-hidden="true" size={18} /> Bewoner verwijderen
-                </button>
-              )}
-            </article>
+            </details>
           ))}
           {profiles.items.length === 0 && <EmptyState title="Nog geen bewonersprofielen" description="Zodra bewoners hun account bevestigen of inloggen, verschijnt hun profiel hier." />}
         </section>

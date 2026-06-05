@@ -3523,3 +3523,98 @@ select {
   color: #63362d !important;
   stroke: currentColor !important;
 }
+
+/* Admin readability: keep management cards compact and text-safe */
+.admin-page,
+.admin-page * {
+  min-width: 0;
+}
+
+.admin-section,
+.admin-list-card,
+.admin-list-card * {
+  max-width: 100%;
+}
+
+.admin-list-card {
+  overflow: hidden;
+}
+
+.admin-list-card > p,
+.admin-list-card > .muted,
+.admin-list-card > .filter-row,
+.admin-list-card > .admin-row {
+  margin: 0;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.admin-list-card > p,
+.admin-list-card > .muted,
+.admin-list-card > .filter-row {
+  padding-top: 14px;
+}
+
+.admin-list-card > .admin-row {
+  padding-bottom: 18px;
+  padding-top: 12px;
+}
+
+.admin-list-card h3,
+.admin-list-card p,
+.admin-list-card span,
+.admin-list-card small,
+.admin-list-card dd,
+.admin-list-card dt,
+.admin-list-card button,
+.admin-list-card select,
+.admin-overview button,
+.admin-overview span {
+  hyphens: auto;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.admin-list-card .collapsible-card__body {
+  padding-top: 16px;
+}
+
+.admin-list-card .status-badge {
+  max-width: min(100%, 180px);
+  white-space: normal;
+}
+
+.admin-list-card .admin-row {
+  align-items: stretch;
+}
+
+.admin-list-card .admin-row .button,
+.admin-list-card .admin-row .text-button {
+  min-width: min(100%, 138px);
+  white-space: normal;
+}
+
+.admin-resident-card .meta-list {
+  grid-template-columns: 1fr;
+}
+
+.admin-resident-card .button--danger {
+  justify-self: stretch;
+  width: 100%;
+}
+
+@media (max-width: 430px) {
+  .admin-list-card > p,
+  .admin-list-card > .muted,
+  .admin-list-card > .filter-row,
+  .admin-list-card > .admin-row {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .admin-list-card .admin-row .button,
+  .admin-list-card .admin-row .text-button {
+    min-width: 0;
+    width: 100%;
+  }
+}
