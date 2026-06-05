@@ -11,14 +11,16 @@ interface ReportCardProps {
   report: Report;
   documents: KnowledgeDocument[];
   canResolve?: boolean;
+  canRetractRebo?: boolean;
   onConfirm?: (id: string) => void;
   onForwardToRebo?: (id: string) => void;
+  onRetractRebo?: (id: string) => void;
   onEdit?: (report: Report) => void;
   onDelete?: (id: string) => void;
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, canResolve, onConfirm, onForwardToRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
   const relatedDocuments =
     report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
   const [resolution, setResolution] = useState("");
@@ -73,12 +75,16 @@ export function ReportCard({ report, documents, canResolve, onConfirm, onForward
       {report.status !== "Opgelost" && (
         <div className="action-row report-actions">
           <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
-            <Check aria-hidden="true" size={18} /> Ik heb dit ook
+            <Check aria-hidden="true" size={18} /> {report.current_user_response === "confirmed" ? "Herkenning intrekken" : "Ik heb dit ook"}
           </button>
           <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
             <Send aria-hidden="true" size={18} /> {forwardedToRebo ? "Zelf ook melden bij REBO" : "Melding bij REBO doen"}
           </a>
-          {!forwardedToRebo && (
+          {forwardedToRebo && canRetractRebo ? (
+            <button className="button button--soft" onClick={() => onRetractRebo?.(report.id)} type="button">
+              Doorgeven aan REBO intrekken
+            </button>
+          ) : !forwardedToRebo && (
             <button className="button button--soft" onClick={() => onForwardToRebo?.(report.id)} type="button">
               <Check aria-hidden="true" size={18} /> Doorgegeven aan REBO
             </button>

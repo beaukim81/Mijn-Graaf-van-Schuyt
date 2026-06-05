@@ -116,7 +116,13 @@ export function ReportsPage() {
   function confirmReport(id: string) {
     const report = reports.items.find((item) => item.id === id);
     if (!report) return;
-    if (report.current_user_response === "confirmed") return;
+    if (report.current_user_response === "confirmed") {
+      reports.update(id, {
+        confirmations: Math.max(0, report.confirmations - 1),
+        current_user_response: undefined,
+      });
+      return;
+    }
     const confirmations = report.confirmations + 1;
     const declined = report.current_user_response === "declined" ? Math.max(0, report.declined - 1) : report.declined;
     reports.update(id, {
@@ -134,6 +140,19 @@ export function ReportsPage() {
       rebo_melding_op: new Date().toISOString(),
       rebo_melding_door: profile.user_id,
       rebo_melding_door_naam: residentLabel(profile.naam_of_bijnaam, profile.huisnummer),
+      bijgewerkt_op: new Date().toISOString(),
+    });
+  }
+
+  function retractRebo(id: string) {
+    const report = reports.items.find((item) => item.id === id);
+    if (!report) return;
+    const nextStatus = report.confirmations >= 3 ? "Herkend door meerdere bewoners" : "Nieuw";
+    reports.update(id, {
+      status: nextStatus,
+      rebo_melding_op: undefined,
+      rebo_melding_door: undefined,
+      rebo_melding_door_naam: undefined,
       bijgewerkt_op: new Date().toISOString(),
     });
   }
@@ -259,8 +278,10 @@ export function ReportsPage() {
             report={report}
             documents={documents.items}
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
+            canRetractRebo={profile.rol === "admin" || report.rebo_melding_door === profile.user_id}
             onConfirm={confirmReport}
             onForwardToRebo={forwardToRebo}
+            onRetractRebo={retractRebo}
             onEdit={(item) => {
               setEditingId(item.id);
               setDraft({

@@ -1,12 +1,15 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
 import { LinkifiedText } from "../components/LinkifiedText";
 import { StatusBadge } from "../components/StatusBadge";
 import { UrlPreview } from "../components/UrlPreview";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
+import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
 import { residentLabel } from "../lib/residentDisplay";
 import type {
@@ -31,6 +34,7 @@ const documentTypes: KnowledgeDocumentType[] = ["Officiële handleiding", "Bewon
 const documentStatuses: KnowledgeDocumentStatus[] = ["Concept", "Gepubliceerd", "Te controleren"];
 const reportStatuses: ReportStatus[] = ["Nieuw", "Herkend door meerdere bewoners", "Doorgezet naar REBO", "In behandeling", "Opgelost"];
 const announcementImportance: AnnouncementImportance[] = ["normaal", "belangrijk", "urgent"];
+const maxDocumentImages = 10;
 
 const blankContact: Contact = {
   id: "",
@@ -54,7 +58,10 @@ const blankDocument = {
   korte_samenvatting: "",
   uitgebreide_uitleg: "",
   pdf_url: "",
+  pdf_bestandsnaam: "",
+  pdf_file: undefined as File | undefined,
   image_urls: [] as string[],
+  image_files: [] as File[],
   tags: "",
   leverancier_of_fabrikant: "",
   status: "Concept" as KnowledgeDocumentStatus,
@@ -77,6 +84,8 @@ export function AdminPage() {
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
+  const [documentFormError, setDocumentFormError] = useState("");
+  const [documentSaving, setDocumentSaving] = useState(false);
 
   const documentCount = useMemo(() => documents.items.length, [documents.items]);
   const openReports = useMemo(() => reports.items.filter((report) => report.status !== "Opgelost").length, [reports.items]);
@@ -129,7 +138,10 @@ export function AdminPage() {
       korte_samenvatting: document.korte_samenvatting,
       uitgebreide_uitleg: document.uitgebreide_uitleg ?? "",
       pdf_url: document.pdf_url,
+      pdf_bestandsnaam: "",
+      pdf_file: undefined,
       image_urls: document.image_urls ?? [],
+      image_files: [],
       tags: document.tags.join(", "),
       leverancier_of_fabrikant: document.leverancier_of_fabrikant ?? "",
       status: document.status,
@@ -140,36 +152,54 @@ export function AdminPage() {
 
   function resetDocument() {
     setDocumentDraft(blankDocument);
+    setDocumentFormError("");
   }
 
-  function saveDocument() {
-    const timestamp = new Date().toISOString();
-    const changes = {
-      titel: documentDraft.titel,
-      categorie: documentDraft.categorie,
-      documenttype: documentDraft.documenttype,
-      korte_samenvatting: documentDraft.korte_samenvatting,
-      uitgebreide_uitleg: documentDraft.uitgebreide_uitleg,
-      pdf_url: documentDraft.pdf_url,
-      image_urls: documentDraft.image_urls,
-      tags: documentDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-      leverancier_of_fabrikant: documentDraft.leverancier_of_fabrikant,
-      status: documentDraft.status,
-      bijgewerkt_op: timestamp,
-    };
+  async function saveDocument() {
+    try {
+      setDocumentSaving(true);
+      setDocumentFormError("");
+      const timestamp = new Date().toISOString();
+      const uploadedImageUrls = documentDraft.image_files.length > 0 ? await uploadBulletinImages(documentDraft.image_files, profile.user_id) : [];
+      const imageUrls = [...documentDraft.image_urls.filter((url) => !url.startsWith("blob:")), ...uploadedImageUrls].slice(0, maxDocumentImages);
+      const pdfUrl = documentDraft.pdf_file ? await uploadKnowledgePdf(documentDraft.pdf_file, profile.user_id) : documentDraft.pdf_url;
 
-    if (documentDraft.id) {
-      documents.update(documentDraft.id, changes);
-    } else {
-      documents.add({
-        ...changes,
-        id: crypto.randomUUID(),
-        faq: [],
-        toegevoegd_door: profile.user_id,
-        aangemaakt_op: timestamp,
-      });
+      if (documentDraft.documenttype === "Officiële handleiding" && !pdfUrl) {
+        setDocumentFormError("Voeg een PDF-bestand toe voor een officiële handleiding.");
+        return;
+      }
+
+      const changes = {
+        titel: documentDraft.titel,
+        categorie: documentDraft.categorie,
+        documenttype: documentDraft.documenttype,
+        korte_samenvatting: documentDraft.korte_samenvatting,
+        uitgebreide_uitleg: documentDraft.uitgebreide_uitleg,
+        pdf_url: pdfUrl,
+        image_urls: imageUrls,
+        tags: documentDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+        leverancier_of_fabrikant: documentDraft.leverancier_of_fabrikant,
+        status: documentDraft.status,
+        bijgewerkt_op: timestamp,
+      };
+
+      if (documentDraft.id) {
+        await documents.updateAsync(documentDraft.id, changes);
+      } else {
+        await documents.addAsync({
+          ...changes,
+          id: crypto.randomUUID(),
+          faq: [],
+          toegevoegd_door: profile.user_id,
+          aangemaakt_op: timestamp,
+        });
+      }
+      resetDocument();
+    } catch (error) {
+      setDocumentFormError(friendlyErrorMessage(error, "Document opslaan lukt nu niet. Controleer de bestanden en probeer het opnieuw."));
+    } finally {
+      setDocumentSaving(false);
     }
-    resetDocument();
   }
 
   function editAnnouncement(announcement: BuildingAnnouncement) {
@@ -366,8 +396,8 @@ export function AdminPage() {
 
           <div className="card-list compact-list">
             {buildingAnnouncements.items.map((announcement) => (
-              <article className="item-card admin-list-card" key={announcement.id}>
-                <div className="item-card__header">
+              <details className="item-card collapsible-card admin-list-card" key={announcement.id}>
+                <summary className="item-card__header collapsible-card__summary">
                   <div>
                     <p className="chip">{announcement.importance}</p>
                     <h3>{announcement.titel}</h3>
@@ -375,14 +405,23 @@ export function AdminPage() {
                   <StatusBadge tone={announcement.importance === "urgent" ? "warning" : "soft"}>
                     {announcement.notify_all ? "notificatie aan" : "geen push"}
                   </StatusBadge>
+                </summary>
+                <div className="collapsible-card__body">
+                  <p><LinkifiedText text={announcement.inhoud} /></p>
+                  {announcement.event_date && (
+                    <dl className="meta-list">
+                      <div>
+                        <dt>Datum</dt>
+                        <dd>{new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</dd>
+                      </div>
+                    </dl>
+                  )}
+                  <div className="admin-row">
+                    <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                    <button className="button button--danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                  </div>
                 </div>
-                <p><LinkifiedText text={announcement.inhoud} /></p>
-                {announcement.event_date && <p className="muted">Datum: {new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(announcement.event_date))}</p>}
-                <div className="admin-row">
-                  <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                  <button className="button button--danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
-                </div>
-              </article>
+              </details>
             ))}
           </div>
         </section>
@@ -390,7 +429,7 @@ export function AdminPage() {
 
       {activeTab === "kennisbank" && (
         <section className="admin-section">
-          <form className="form-panel" onSubmit={(event) => { event.preventDefault(); saveDocument(); }}>
+          <form className="form-panel" onSubmit={(event) => { event.preventDefault(); void saveDocument(); }}>
             <h3>{documentDraft.id ? "Document aanpassen" : "Document toevoegen"}</h3>
             <input value={documentDraft.titel} onChange={(event) => setDocumentDraft({ ...documentDraft, titel: event.target.value })} placeholder="Titel" required />
             <select value={documentDraft.categorie} onChange={(event) => setDocumentDraft({ ...documentDraft, categorie: event.target.value as KnowledgeCategory })}>
@@ -406,37 +445,100 @@ export function AdminPage() {
             <UrlPreview text={documentDraft.korte_samenvatting} />
             <textarea value={documentDraft.uitgebreide_uitleg} onChange={(event) => setDocumentDraft({ ...documentDraft, uitgebreide_uitleg: event.target.value })} placeholder="Vrije uitleg of bewonerstip" />
             <UrlPreview text={documentDraft.uitgebreide_uitleg} />
-            <input value={documentDraft.pdf_url} onChange={(event) => setDocumentDraft({ ...documentDraft, pdf_url: event.target.value })} placeholder="PDF-link" required={documentDraft.documenttype === "Officiële handleiding"} />
-            <UrlPreview text={documentDraft.pdf_url} />
+            <label className="upload-field">
+              <span>{documentDraft.documenttype === "Officiële handleiding" ? "PDF-bestand uploaden" : "PDF-bestand optioneel uploaden"}</span>
+              <input
+                accept="application/pdf"
+                type="file"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  setDocumentDraft({ ...documentDraft, pdf_bestandsnaam: file.name, pdf_file: file });
+                }}
+              />
+              {documentDraft.pdf_bestandsnaam && <small>Gekozen bestand: {documentDraft.pdf_bestandsnaam}</small>}
+              {!documentDraft.pdf_bestandsnaam && documentDraft.pdf_url && <small>Er is al een PDF gekoppeld. Upload een nieuw bestand als je deze wilt vervangen.</small>}
+            </label>
+            <div className="upload-field">
+              <label className="field">
+                <span>Afbeeldingen uploaden</span>
+                <input
+                  accept="image/*"
+                  multiple
+                  type="file"
+                  onChange={(event) => {
+                    const files = Array.from(event.target.files ?? []).slice(0, Math.max(0, maxDocumentImages - documentDraft.image_urls.length));
+                    if (files.length === 0) return;
+                    const previewUrls = files.map((file) => URL.createObjectURL(file));
+                    setDocumentDraft({
+                      ...documentDraft,
+                      image_urls: [...documentDraft.image_urls, ...previewUrls].slice(0, maxDocumentImages),
+                      image_files: [...documentDraft.image_files, ...files].slice(0, maxDocumentImages),
+                    });
+                  }}
+                />
+              </label>
+              <EditablePhotoGrid
+                images={documentDraft.image_urls}
+                alt="Voorbeeld van gekozen afbeeldingen"
+                onRemove={(index) => {
+                  const removedUrl = documentDraft.image_urls[index];
+                  const blobIndex = documentDraft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+                  setDocumentDraft({
+                    ...documentDraft,
+                    image_urls: documentDraft.image_urls.filter((_, itemIndex) => itemIndex !== index),
+                    image_files: removedUrl?.startsWith("blob:")
+                      ? documentDraft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
+                      : documentDraft.image_files,
+                  });
+                }}
+              />
+              <small>Maximaal {maxDocumentImages} afbeeldingen. Handig bij bewonerstips of onderdeleninformatie.</small>
+            </div>
             <input value={documentDraft.tags} onChange={(event) => setDocumentDraft({ ...documentDraft, tags: event.target.value })} placeholder="Tags, gescheiden door komma's" />
             <input value={documentDraft.leverancier_of_fabrikant} onChange={(event) => setDocumentDraft({ ...documentDraft, leverancier_of_fabrikant: event.target.value })} placeholder="Leverancier of fabrikant optioneel" />
             <UrlPreview text={documentDraft.leverancier_of_fabrikant} />
-            <button className="button" type="submit">{documentDraft.id ? "Wijzigingen opslaan" : "Toevoegen"}</button>
-            {documentDraft.id && <button className="button button--soft" onClick={resetDocument} type="button">Annuleren</button>}
+            {documentFormError && <p className="form-message form-message--error">{documentFormError}</p>}
+            <button className="button" disabled={documentSaving} type="submit">{documentSaving ? "Bezig met opslaan" : documentDraft.id ? "Wijzigingen opslaan" : "Toevoegen"}</button>
+            {documentDraft.id && <button className="button button--soft" disabled={documentSaving} onClick={resetDocument} type="button">Annuleren</button>}
           </form>
 
           <div className="card-list compact-list">
             {documents.items.map((document) => (
-              <article className="item-card admin-list-card" id={`kennisbank-${document.id}`} key={document.id}>
-                <div className="item-card__header">
+              <details className="item-card collapsible-card admin-list-card" id={`kennisbank-${document.id}`} key={document.id}>
+                <summary className="item-card__header collapsible-card__summary">
                   <div>
                     <p className="chip">{document.categorie}</p>
                     <h3>{document.titel}</h3>
                   </div>
                   <StatusBadge tone={document.status === "Gepubliceerd" ? "good" : "warning"}>{document.status}</StatusBadge>
+                </summary>
+                <div className="collapsible-card__body">
+                  <dl className="meta-list">
+                    <div>
+                      <dt>Type</dt>
+                      <dd>{document.documenttype}</dd>
+                    </div>
+                    {document.leverancier_of_fabrikant && (
+                      <div>
+                        <dt>Leverancier</dt>
+                        <dd>{document.leverancier_of_fabrikant}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <p><LinkifiedText text={document.korte_samenvatting} /></p>
+                  {document.uitgebreide_uitleg && <p className="muted"><LinkifiedText text={document.uitgebreide_uitleg} /></p>}
+                  <div className="admin-row">
+                    {document.status !== "Gepubliceerd" && (
+                      <button className="text-button" onClick={() => publishDocument(document)} type="button">
+                        Publiceren
+                      </button>
+                    )}
+                    <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                    <button className="button button--danger" onClick={() => documents.remove(document.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                  </div>
                 </div>
-                <p className="muted">{document.documenttype}</p>
-                <p><LinkifiedText text={document.korte_samenvatting} /></p>
-                <div className="admin-row">
-                  {document.status !== "Gepubliceerd" && (
-                    <button className="text-button" onClick={() => publishDocument(document)} type="button">
-                      Publiceren
-                    </button>
-                  )}
-                  <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                  <button className="button button--danger" onClick={() => documents.remove(document.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
-                </div>
-              </article>
+              </details>
             ))}
           </div>
         </section>
@@ -464,19 +566,47 @@ export function AdminPage() {
 
           <div className="card-list compact-list">
             {contacts.items.map((contact) => (
-              <article className="item-card admin-list-card" key={contact.id}>
-                <div className="item-card__header">
+              <details className="item-card collapsible-card admin-list-card" key={contact.id}>
+                <summary className="item-card__header collapsible-card__summary">
                   <div>
                     <p className="chip">{contact.categorie}</p>
                     <h3>{contact.naam}</h3>
                   </div>
+                </summary>
+                <div className="collapsible-card__body">
+                  <p><LinkifiedText text={contact.beschrijving} /></p>
+                  <dl className="meta-list">
+                    {contact.telefoonnummer && (
+                      <div>
+                        <dt>Telefoon</dt>
+                        <dd>{contact.telefoonnummer}</dd>
+                      </div>
+                    )}
+                    {contact.emailadres && (
+                      <div>
+                        <dt>E-mail</dt>
+                        <dd>{contact.emailadres}</dd>
+                      </div>
+                    )}
+                    {contact.website && (
+                      <div>
+                        <dt>Website</dt>
+                        <dd>{contact.website}</dd>
+                      </div>
+                    )}
+                    {contact.whatsapp_url && (
+                      <div>
+                        <dt>WhatsApp</dt>
+                        <dd>{contact.whatsapp_url}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <div className="admin-row">
+                    <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
+                    <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                  </div>
                 </div>
-                <p><LinkifiedText text={contact.beschrijving} /></p>
-                <div className="admin-row">
-                  <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                  <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
-                </div>
-              </article>
+              </details>
             ))}
           </div>
         </section>
@@ -485,33 +615,47 @@ export function AdminPage() {
       {activeTab === "meldingen" && (
         <section className="admin-section card-list compact-list">
           {reports.items.map((report) => (
-            <article className="item-card admin-list-card" id={`melding-${report.id}`} key={report.id}>
-              <div className="item-card__header">
+            <details className="item-card collapsible-card admin-list-card" id={`melding-${report.id}`} key={report.id}>
+              <summary className="item-card__header collapsible-card__summary">
                 <div>
                   <p className="chip">{report.categorie}</p>
                   <h3>{report.titel}</h3>
                 </div>
                 <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
+              </summary>
+              <div className="collapsible-card__body">
+                <p><LinkifiedText text={report.omschrijving} /></p>
+                <dl className="meta-list">
+                  <div>
+                    <dt>Geplaatst door</dt>
+                    <dd>{residentLabel(report.aangemaakt_door_naam, report.aangemaakt_door_huisnummer)}</dd>
+                  </div>
+                  {report.locatie_in_gebouw && (
+                    <div>
+                      <dt>Locatie</dt>
+                      <dd>{report.locatie_in_gebouw}</dd>
+                    </div>
+                  )}
+                </dl>
+                <div className="filter-row">
+                  <label className="field">
+                    <span>Status</span>
+                    <select value={report.status} onChange={(event) => updateReportStatus(report.id, event.target.value as ReportStatus)}>
+                      {reportStatuses.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Categorie</span>
+                    <select value={report.categorie} onChange={(event) => reports.update(report.id, { categorie: event.target.value as ReportCategory, bijgewerkt_op: new Date().toISOString() })}>
+                      {reportCategories.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <div className="admin-row">
+                  <button className="button button--danger" onClick={() => reports.remove(report.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                </div>
               </div>
-              <p><LinkifiedText text={report.omschrijving} /></p>
-              <div className="filter-row">
-                <label className="field">
-                  <span>Status</span>
-                  <select value={report.status} onChange={(event) => updateReportStatus(report.id, event.target.value as ReportStatus)}>
-                    {reportStatuses.map((item) => <option key={item}>{item}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Categorie</span>
-                  <select value={report.categorie} onChange={(event) => reports.update(report.id, { categorie: event.target.value as ReportCategory, bijgewerkt_op: new Date().toISOString() })}>
-                    {reportCategories.map((item) => <option key={item}>{item}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div className="admin-row">
-                <button className="button button--danger" onClick={() => reports.remove(report.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
-              </div>
-            </article>
+            </details>
           ))}
         </section>
       )}
@@ -519,20 +663,34 @@ export function AdminPage() {
       {activeTab === "prikbord" && (
         <section className="admin-section card-list compact-list">
           {activeBulletinPosts.map((post: BulletinPost) => (
-            <article className="item-card admin-list-card" key={post.id}>
-              <div className="item-card__header">
+            <details className="item-card collapsible-card admin-list-card" key={post.id}>
+              <summary className="item-card__header collapsible-card__summary">
                 <div>
                   <p className="chip">{post.categorie}</p>
                   <h3>{post.titel}</h3>
                 </div>
                 <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
+              </summary>
+              <div className="collapsible-card__body">
+                <p><LinkifiedText text={post.omschrijving} /></p>
+                <dl className="meta-list">
+                  <div>
+                    <dt>Geplaatst door</dt>
+                    <dd>{residentLabel(post.aangemaakt_door_naam, post.aangemaakt_door_huisnummer)}</dd>
+                  </div>
+                  {post.contactpersoon && (
+                    <div>
+                      <dt>Contactpersoon</dt>
+                      <dd>{post.contactpersoon}</dd>
+                    </div>
+                  )}
+                </dl>
+                <div className="admin-row">
+                  <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
+                  <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                </div>
               </div>
-              <p><LinkifiedText text={post.omschrijving} /></p>
-              <div className="admin-row">
-                <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
-                <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
-              </div>
-            </article>
+            </details>
           ))}
           {activeBulletinPosts.length === 0 && <EmptyState title="Geen actieve prikbordberichten" description="Wanneer bewoners iets plaatsen op het prikbord, kun je het hier beheren of verwijderen." />}
         </section>

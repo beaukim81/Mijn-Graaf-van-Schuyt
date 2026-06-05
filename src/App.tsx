@@ -269,7 +269,13 @@ function AppDataProvider({ children }: { children: ReactNode }) {
         const previousRow: Record<string, unknown> = previousItem ? reportToRow(previousItem) : {};
         const nextRow = reportToRow(nextItem);
         const changedRow = Object.fromEntries(Object.entries(nextRow).filter(([key, value]) => value !== previousRow[key]));
-        const row = { ...changedRow, id: nextItem.id };
+        const row: Record<string, unknown> = { ...changedRow, id: nextItem.id };
+        optionalColumns.forEach((key) => {
+          const value = changes[key as keyof Report];
+          if (Object.prototype.hasOwnProperty.call(changes, key) && (value == null || value === "")) {
+            row[key] = null;
+          }
+        });
         const { error } = await client.from("reports").update(row).eq("id", nextItem.id);
         if (error && isMissingSchemaColumnError(error, optionalColumns)) {
           const { error: retryError } = await client.from("reports").update(omitColumns(row, optionalColumns)).eq("id", nextItem.id);
@@ -278,11 +284,20 @@ function AppDataProvider({ children }: { children: ReactNode }) {
           throw error;
         }
       }
-      if (changes.current_user_response && user?.id) {
-        const { error: confirmationError } = await client
-          .from("report_confirmations")
-          .upsert({ report_id: nextItem.id, user_id: user.id, herkent_probleem: changes.current_user_response === "confirmed" }, { onConflict: "report_id,user_id" });
-        if (confirmationError) throw confirmationError;
+      if (Object.prototype.hasOwnProperty.call(changes, "current_user_response") && user?.id) {
+        if (changes.current_user_response) {
+          const { error: confirmationError } = await client
+            .from("report_confirmations")
+            .upsert({ report_id: nextItem.id, user_id: user.id, herkent_probleem: changes.current_user_response === "confirmed" }, { onConflict: "report_id,user_id" });
+          if (confirmationError) throw confirmationError;
+        } else {
+          const { error: confirmationError } = await client
+            .from("report_confirmations")
+            .delete()
+            .eq("report_id", nextItem.id)
+            .eq("user_id", user.id);
+          if (confirmationError) throw confirmationError;
+        }
       }
     },
     deleteItem: async (id: string) => {
