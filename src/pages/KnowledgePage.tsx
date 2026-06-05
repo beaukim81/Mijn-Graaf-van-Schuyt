@@ -41,8 +41,15 @@ export function KnowledgePage() {
 
   const filteredDocuments = useMemo(() => {
     const trimmedQuery = query.trim().toLowerCase();
+    const queryCategory = trimmedQuery
+      ? knowledgeCategories.find((item) => {
+          const normalizedCategory = item.toLowerCase();
+          return normalizedCategory === trimmedQuery || normalizedCategory.includes(trimmedQuery) || trimmedQuery.includes(normalizedCategory);
+        })
+      : undefined;
     return documents.items.filter((document) => {
       const canView = document.status === "Gepubliceerd" || document.toegevoegd_door === profile.user_id || profile.rol === "admin";
+      if (queryCategory) return canView && document.categorie === queryCategory;
       const searchableText = [
         document.titel,
         document.categorie,
