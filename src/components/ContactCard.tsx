@@ -10,8 +10,19 @@ interface ContactCardProps {
   onDelete?: (id: string) => void;
 }
 
+function cleanContactDescription(description: string) {
+  return description
+    .replace(/\b(?:bel|whatsapp(?: kan)?(?: via)?|telefoon(?:nummer)?|tel\.?)\s*(?:kan\s*)?(?:via\s*)?(?:\+31|0)\s?(?:\d[\d\s-]{6,}\d)\.?/gi, "")
+    .replace(/\b(?:\+31|0)\s?(?:\d[\d\s-]{6,}\d)\b/g, "")
+    .replace(/\s+([,.])/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\.\s*\./g, ".")
+    .trim();
+}
+
 export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardProps) {
   const confirm = useConfirm();
+  const description = cleanContactDescription(contact.beschrijving);
   return (
     <article className="item-card contact-card">
       <div className="item-card__header">
@@ -20,7 +31,7 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
           <h2>{contact.naam}</h2>
         </div>
       </div>
-      <p className="contact-card__description"><LinkifiedText text={contact.beschrijving} /></p>
+      {description && <p className="contact-card__description"><LinkifiedText text={description} /></p>}
       <div className="action-row">
         {contact.telefoonnummer && (
           <a className="button button--soft" href={`tel:${contact.telefoonnummer.replace(/\s/g, "")}`}>
