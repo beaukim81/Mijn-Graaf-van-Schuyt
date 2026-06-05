@@ -163,8 +163,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       passwordRecovery,
       signIn: async (email, password) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (data.user) await loadProfile(data.user);
       },
       requestAccess: async ({ email, firstName, lastName, houseNumber }) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -221,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       refreshProfile,
     }),
-    [loading, passwordRecovery, profile, refreshProfile, session],
+    [loadProfile, loading, passwordRecovery, profile, refreshProfile, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

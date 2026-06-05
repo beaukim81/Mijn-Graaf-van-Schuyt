@@ -3,6 +3,10 @@ export function friendlyErrorMessage(error: unknown, fallback = "Er ging iets mi
 
   if (!message) return fallback;
 
+  if (message.includes("tijdelijk geblokkeerd") || message.includes("account is tijdelijk geblokkeerd")) {
+    return "Dit account is tijdelijk geblokkeerd. Neem contact op met beheer.";
+  }
+
   if (
     message.includes("aanvraag is al ontvangen") ||
     message.includes("access_requests_email_active_key") ||
