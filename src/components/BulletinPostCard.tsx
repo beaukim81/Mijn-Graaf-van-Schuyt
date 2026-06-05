@@ -40,7 +40,10 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
         <div>
           <p className="chip">{post.categorie}</p>
           <h2>{post.titel}</h2>
-          <p className="muted">Geplaatst door <ResidentIdentity compact houseNumber={post.aangemaakt_door_huisnummer} name={post.aangemaakt_door_naam} profile={profilesByUserId.get(post.aangemaakt_door)} /></p>
+          <div className="resident-byline">
+            <span>Geplaatst door</span>
+            <ResidentIdentity compact houseNumber={post.aangemaakt_door_huisnummer} name={post.aangemaakt_door_naam} profile={profilesByUserId.get(post.aangemaakt_door)} />
+          </div>
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </summary>

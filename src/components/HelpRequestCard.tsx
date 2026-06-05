@@ -75,7 +75,10 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
         <div>
           <p className="chip">{request.categorie}</p>
           <h2>{request.titel}</h2>
-          <p className="muted">Geplaatst door <ResidentIdentity compact houseNumber={request.aanmaker_huisnummer} name={request.aanmaker_naam} profile={profilesByUserId.get(request.aangemaakt_door)} /></p>
+          <div className="resident-byline">
+            <span>Geplaatst door</span>
+            <ResidentIdentity compact houseNumber={request.aanmaker_huisnummer} name={request.aanmaker_naam} profile={profilesByUserId.get(request.aangemaakt_door)} />
+          </div>
         </div>
         <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
       </summary>

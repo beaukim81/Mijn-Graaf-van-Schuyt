@@ -3778,6 +3778,34 @@ select {
   font-weight: 750;
 }
 
+.resident-byline {
+  align-items: flex-start;
+  display: inline-grid;
+  gap: 5px;
+  justify-items: start;
+  margin-top: 8px;
+  max-width: 100%;
+}
+
+.resident-byline > span:first-child {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.01em;
+}
+
+.item-card__header .resident-byline {
+  color: var(--text);
+}
+
+.item-card__header .resident-byline .resident-identity__name {
+  color: var(--primary-dark);
+}
+
+.item-card__header .resident-byline small {
+  color: var(--muted);
+}
+
 .optional-settings {
   background: rgba(248, 252, 249, 0.82);
   border: 1px solid var(--line);

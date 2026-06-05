@@ -11,14 +11,14 @@ import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { residentLabel } from "../lib/residentDisplay";
-import type { KnowledgeDocument, Report, ReportCategory, ReportType } from "../types";
+import type { KnowledgeDocument, Profile, Report, ReportCategory, ReportType } from "../types";
 import { isLikelyRentalMaintenance, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 
 const reportTypes: ReportType[] = ["Alleen mijn woning", "Mogelijk meerdere woningen", "Appartementencomplex"];
 const maxImages = 10;
 
 export function ReportsPage() {
-  const { reports, documents, profile } = useAppData();
+  const { reports, documents, profile, profiles } = useAppData();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<ReportCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
@@ -277,6 +277,7 @@ export function ReportsPage() {
             key={report.id}
             report={report}
             documents={documents.items}
+            profiles={profiles.items}
             canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
             canRetractRebo={profile.rol === "admin" || report.rebo_melding_door === profile.user_id}
             onConfirm={confirmReport}
@@ -317,7 +318,7 @@ export function ReportsPage() {
           </div>
           <div className="resolved-report-list">
             {resolvedReports.map((report) => (
-              <ResolvedReportItem key={report.id} report={report} documents={documents.items} />
+              <ResolvedReportItem key={report.id} report={report} documents={documents.items} profiles={profiles.items} />
             ))}
           </div>
         </section>
@@ -326,7 +327,7 @@ export function ReportsPage() {
   );
 }
 
-function ResolvedReportItem({ report, documents }: { report: Report; documents: KnowledgeDocument[] }) {
+function ResolvedReportItem({ report, documents, profiles }: { report: Report; documents: KnowledgeDocument[]; profiles: Profile[] }) {
   const solvedBy = report.opgelost_door_naam ? `Opgelost door ${residentLabel(report.opgelost_door_naam)}` : "Opgelost";
   const solution = report.oplossing_omschrijving || "Er is geen extra toelichting toegevoegd.";
 
@@ -343,7 +344,7 @@ function ResolvedReportItem({ report, documents }: { report: Report; documents: 
           <small>{solvedBy}</small>
         </span>
       </summary>
-      <ReportCard report={report} documents={documents} />
+      <ReportCard report={report} documents={documents} profiles={profiles} />
     </details>
   );
 }

@@ -1,15 +1,17 @@
 import { Check, ClipboardCopy, Pencil, Send, Trash2 } from "lucide-react";
-import { useState } from "react";
-import type { KnowledgeDocument, Report } from "../types";
+import { useMemo, useState } from "react";
+import type { KnowledgeDocument, Profile, Report } from "../types";
 import { PhotoGrid } from "./PhotoGrid";
 import { adviceForReport, collectiveMessage, isLikelyRentalMaintenance, reboSummary, relevantDocuments, rentalMaintenancePdfUrl } from "../lib/reportLogic";
 import { residentLabel } from "../lib/residentDisplay";
 import { LinkifiedText } from "./LinkifiedText";
+import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
 
 interface ReportCardProps {
   report: Report;
   documents: KnowledgeDocument[];
+  profiles?: Profile[];
   canResolve?: boolean;
   canRetractRebo?: boolean;
   onConfirm?: (id: string) => void;
@@ -20,9 +22,10 @@ interface ReportCardProps {
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, profiles = [], canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
   const relatedDocuments =
     report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
+  const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
   const showRentalMaintenanceLink = isLikelyRentalMaintenance(report);
@@ -37,7 +40,10 @@ export function ReportCard({ report, documents, canResolve, canRetractRebo, onCo
         <div>
           <p className="chip">{report.categorie}</p>
           <h2>{report.titel}</h2>
-          <p className="muted">Geplaatst door {residentLabel(report.aangemaakt_door_naam, report.aangemaakt_door_huisnummer)}</p>
+          <div className="resident-byline">
+            <span>Geplaatst door</span>
+            <ResidentIdentity compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+          </div>
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
       </summary>
