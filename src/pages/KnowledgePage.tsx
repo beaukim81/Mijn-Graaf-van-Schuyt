@@ -7,7 +7,7 @@ import { SearchBar } from "../components/SearchBar";
 import { UrlPreview } from "../components/UrlPreview";
 import { knowledgeCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
-import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
+import { isPreviewUrl, revokePreviewUrl, revokePreviewUrls, uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import type { KnowledgeCategory, KnowledgeDocument, KnowledgeDocumentType } from "../types";
 
@@ -118,6 +118,7 @@ export function KnowledgePage() {
   }
 
   function resetDraft() {
+    revokePreviewUrls(draft.image_urls);
     setDraft({
       titel: "",
       categorie: "Mechanische ventilatie",
@@ -260,6 +261,7 @@ export function KnowledgePage() {
                   image_urls: [...draft.image_urls, ...previewUrls].slice(0, maxImages),
                   image_files: [...draft.image_files, ...files].slice(0, maxImages),
                 });
+                event.currentTarget.value = "";
               }}
             />
           </label>
@@ -268,11 +270,12 @@ export function KnowledgePage() {
             alt="Voorbeeld van gekozen foto's"
             onRemove={(index) => {
               const removedUrl = draft.image_urls[index];
-              const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+              const blobIndex = draft.image_urls.slice(0, index).filter(isPreviewUrl).length;
+              revokePreviewUrl(removedUrl);
               setDraft({
                 ...draft,
                 image_urls: draft.image_urls.filter((_, itemIndex) => itemIndex !== index),
-                image_files: removedUrl?.startsWith("blob:")
+                image_files: isPreviewUrl(removedUrl)
                   ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
                   : draft.image_files,
               });

@@ -6,7 +6,7 @@ import { EmptyState } from "../components/EmptyState";
 import { UrlPreview } from "../components/UrlPreview";
 import { bulletinCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
-import { uploadBulletinImages } from "../lib/fileUploads";
+import { isPreviewUrl, revokePreviewUrl, revokePreviewUrls, uploadBulletinImages } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import type { BulletinCategory, BulletinPost } from "../types";
 
@@ -48,6 +48,7 @@ export function BulletinPage() {
   const canAddImage = true;
 
   function resetDraft() {
+    revokePreviewUrls(draft.image_urls);
     setDraft({ titel: "", omschrijving: "", categorie: "Mededeling", contactpersoon: "", image_url: "", image_urls: [], image_name: "", image_files: [] });
     setEditingId(null);
     setShowForm(false);
@@ -145,6 +146,7 @@ export function BulletinPage() {
                     image_name: files.map((file) => file.name).join(", "),
                     image_files: [...draft.image_files, ...files].slice(0, maxImages),
                   });
+                  event.currentTarget.value = "";
                 }}
               />
               </label>
@@ -153,13 +155,14 @@ export function BulletinPage() {
                 alt="Voorbeeld van gekozen foto's"
                 onRemove={(index) => {
                   const removedUrl = draft.image_urls[index];
-                  const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+                  const blobIndex = draft.image_urls.slice(0, index).filter(isPreviewUrl).length;
                   const nextUrls = draft.image_urls.filter((_, itemIndex) => itemIndex !== index);
+                  revokePreviewUrl(removedUrl);
                   setDraft({
                     ...draft,
                     image_url: nextUrls[0] ?? "",
                     image_urls: nextUrls,
-                    image_files: removedUrl?.startsWith("blob:")
+                    image_files: isPreviewUrl(removedUrl)
                       ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
                       : draft.image_files,
                   });

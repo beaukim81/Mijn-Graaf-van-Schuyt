@@ -9,7 +9,7 @@ import { UrlPreview } from "../components/UrlPreview";
 import { StorageLink } from "../components/StorageLink";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
-import { uploadBulletinImages } from "../lib/fileUploads";
+import { isPreviewUrl, revokePreviewUrl, revokePreviewUrls, uploadBulletinImages } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { residentLabel } from "../lib/residentDisplay";
 import type { KnowledgeDocument, Profile, Report, ReportCategory, ReportType } from "../types";
@@ -48,6 +48,13 @@ export function ReportsPage() {
   const draftRelevantDocuments =
     draft.type_melding === "Appartementencomplex" ? [] : relevantDocuments(draft.categorie, documents.items);
 
+  function resetDraft() {
+    revokePreviewUrls(draft.image_urls);
+    setEditingId(null);
+    setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
+    setShowForm(false);
+  }
+
   const resolvedReports = useMemo(() => {
     return reports.items.filter((report) => {
       const matchesQuery = `${report.titel} ${report.omschrijving} ${report.locatie_in_gebouw}`.toLowerCase().includes(query.toLowerCase());
@@ -82,8 +89,7 @@ export function ReportsPage() {
         setEditingId(null);
         setCategory(draft.categorie);
         setQuery("");
-        setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
-        setShowForm(false);
+        resetDraft();
         return;
       }
 
@@ -105,8 +111,7 @@ export function ReportsPage() {
       await reports.addAsync(report);
       setCategory(draft.categorie);
       setQuery("");
-      setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
-      setShowForm(false);
+      resetDraft();
     } catch (error) {
       setFormError(friendlyErrorMessage(error, "Melding opslaan lukt nu niet. Controleer je foto's en probeer het opnieuw."));
     } finally {
@@ -212,6 +217,7 @@ export function ReportsPage() {
                 image_urls: [...draft.image_urls, ...previewUrls].slice(0, maxImages),
                 image_files: [...draft.image_files, ...files].slice(0, maxImages),
               });
+              event.currentTarget.value = "";
             }}
           />
           </label>
@@ -220,11 +226,12 @@ export function ReportsPage() {
             alt="Voorbeeld van gekozen foto's"
             onRemove={(index) => {
               const removedUrl = draft.image_urls[index];
-              const blobIndex = draft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+              const blobIndex = draft.image_urls.slice(0, index).filter(isPreviewUrl).length;
+              revokePreviewUrl(removedUrl);
               setDraft({
                 ...draft,
                 image_urls: draft.image_urls.filter((_, itemIndex) => itemIndex !== index),
-                image_files: removedUrl?.startsWith("blob:")
+                image_files: isPreviewUrl(removedUrl)
                   ? draft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
                   : draft.image_files,
               });
@@ -257,11 +264,7 @@ export function ReportsPage() {
         <button
           className="button button--soft"
           disabled={saving}
-          onClick={() => {
-            setEditingId(null);
-            setDraft({ titel: "", omschrijving: "", categorie: "Mechanische ventilatie", locatie_in_gebouw: "", type_melding: "Alleen mijn woning", image_urls: [], image_files: [] });
-            setShowForm(false);
-          }}
+          onClick={resetDraft}
           type="button"
         >
           Annuleren

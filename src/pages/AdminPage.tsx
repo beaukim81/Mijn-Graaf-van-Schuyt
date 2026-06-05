@@ -10,7 +10,7 @@ import { UrlPreview } from "../components/UrlPreview";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { useConfirm } from "../lib/ConfirmContext";
-import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
+import { isPreviewUrl, revokePreviewUrl, revokePreviewUrls, uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
 import { residentLabel } from "../lib/residentDisplay";
@@ -161,6 +161,7 @@ export function AdminPage() {
   }
 
   function editDocument(document: KnowledgeDocument) {
+    revokePreviewUrls(documentDraft.image_urls);
     setDocumentDraft({
       id: document.id,
       titel: document.titel,
@@ -182,6 +183,7 @@ export function AdminPage() {
   }
 
   function resetDocument() {
+    revokePreviewUrls(documentDraft.image_urls);
     setDocumentDraft(blankDocument);
     setDocumentFormError("");
   }
@@ -779,6 +781,7 @@ export function AdminPage() {
                       image_urls: [...documentDraft.image_urls, ...previewUrls].slice(0, maxDocumentImages),
                       image_files: [...documentDraft.image_files, ...files].slice(0, maxDocumentImages),
                     });
+                    event.currentTarget.value = "";
                   }}
                 />
               </label>
@@ -787,11 +790,12 @@ export function AdminPage() {
                 alt="Voorbeeld van gekozen afbeeldingen"
                 onRemove={(index) => {
                   const removedUrl = documentDraft.image_urls[index];
-                  const blobIndex = documentDraft.image_urls.slice(0, index).filter((url) => url.startsWith("blob:")).length;
+                  const blobIndex = documentDraft.image_urls.slice(0, index).filter(isPreviewUrl).length;
+                  revokePreviewUrl(removedUrl);
                   setDocumentDraft({
                     ...documentDraft,
                     image_urls: documentDraft.image_urls.filter((_, itemIndex) => itemIndex !== index),
-                    image_files: removedUrl?.startsWith("blob:")
+                    image_files: isPreviewUrl(removedUrl)
                       ? documentDraft.image_files.filter((_, itemIndex) => itemIndex !== blobIndex)
                       : documentDraft.image_files,
                   });

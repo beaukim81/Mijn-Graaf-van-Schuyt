@@ -86,6 +86,18 @@ export async function uploadBulletinImages(files: File[], userId: string) {
   return urls.filter(Boolean);
 }
 
+export function isPreviewUrl(url?: string) {
+  return Boolean(url?.startsWith("blob:"));
+}
+
+export function revokePreviewUrl(url?: string) {
+  if (url && isPreviewUrl(url)) URL.revokeObjectURL(url);
+}
+
+export function revokePreviewUrls(urls: string[]) {
+  urls.forEach(revokePreviewUrl);
+}
+
 export async function uploadKnowledgePdf(file: File, userId: string) {
   if (file.size > maxPdfBytes) {
     throw new Error("Dit PDF-bestand is te groot. Kies een bestand kleiner dan 25 MB.");

@@ -5,7 +5,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { LinkifiedText } from "../components/LinkifiedText";
 import { ResidentIdentity } from "../components/ResidentIdentity";
 import { useAuth } from "../lib/AuthContext";
-import { uploadBulletinImages } from "../lib/fileUploads";
+import { isPreviewUrl, revokePreviewUrl, uploadBulletinImages } from "../lib/fileUploads";
 import { floorForHouseNumber, isValidHouseNumber } from "../lib/floorForHouseNumber";
 import { disablePushNotifications, enablePushNotifications, getPushStatus, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import { useSignedUrl } from "../lib/storageUrls";
@@ -69,7 +69,7 @@ export function ProfilePage() {
 
   useEffect(() => {
     return () => {
-      if (photoPreview.startsWith("blob:")) URL.revokeObjectURL(photoPreview);
+      revokePreviewUrl(photoPreview);
     };
   }, [photoPreview]);
 
@@ -283,6 +283,7 @@ export function ProfilePage() {
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file) setPhotoFile(file);
+                    event.currentTarget.value = "";
                   }}
                   type="file"
                 />
@@ -293,6 +294,7 @@ export function ProfilePage() {
                   onClick={async () => {
                     const confirmed = await confirm({ confirmLabel: "Foto verwijderen", message: "Weet je zeker dat je je profielfoto wilt verwijderen?" });
                     if (!confirmed) return;
+                    if (isPreviewUrl(photoPreview)) revokePreviewUrl(photoPreview);
                     setPhotoFile(null);
                     setProfileDraft({ ...profileDraft, profielfoto_url: "" });
                   }}
