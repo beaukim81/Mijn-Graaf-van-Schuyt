@@ -41,6 +41,22 @@ const reportStatuses: ReportStatus[] = ["Nieuw", "Herkend door meerdere bewoners
 const announcementImportance: AnnouncementImportance[] = ["normaal", "belangrijk", "urgent"];
 const maxDocumentImages = 10;
 
+async function friendlyFunctionError(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "context" in error) {
+    const context = (error as { context?: unknown }).context;
+    if (context instanceof Response) {
+      const text = await context.text();
+      try {
+        const parsed = JSON.parse(text) as { error?: string; message?: string };
+        return friendlyErrorMessage(new Error(parsed.error ?? parsed.message ?? text), fallback);
+      } catch {
+        return friendlyErrorMessage(new Error(text), fallback);
+      }
+    }
+  }
+  return friendlyErrorMessage(error, fallback);
+}
+
 const blankContact: Contact = {
   id: "",
   naam: "",
@@ -301,7 +317,7 @@ export function AdminPage() {
         updated_at: new Date().toISOString(),
       });
     } catch (error) {
-      setAccessRequestError(friendlyErrorMessage(error, "Goedkeuren lukt nu niet. Controleer de Supabase-functie en probeer het opnieuw."));
+      setAccessRequestError(await friendlyFunctionError(error, "Goedkeuren lukt nu niet. Controleer of de Supabase-functie is gedeployed en probeer het opnieuw."));
     } finally {
       setAccessRequestBusyId("");
     }
@@ -343,7 +359,7 @@ export function AdminPage() {
       });
       setAccessRequestMessage(`Activatiemail opnieuw verstuurd naar ${request.email}.`);
     } catch (error) {
-      setAccessRequestError(friendlyErrorMessage(error, "Activatiemail opnieuw versturen lukt nu niet. Controleer de Supabase-functie en probeer het opnieuw."));
+      setAccessRequestError(await friendlyFunctionError(error, "Activatiemail opnieuw versturen lukt nu niet. Controleer of de Supabase-functie is gedeployed en probeer het opnieuw."));
     } finally {
       setAccessRequestBusyId("");
     }

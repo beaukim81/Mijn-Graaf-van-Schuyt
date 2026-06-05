@@ -12,6 +12,11 @@ const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const siteUrl = Deno.env.get("PUBLIC_SITE_URL") ?? "https://mijn-graaf-van-schuyt.vercel.app";
 
+function isExistingUserError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("already registered") || normalized.includes("already exists") || normalized.includes("user already");
+}
+
 serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
@@ -74,7 +79,14 @@ serve(async (request) => {
       redirectTo,
     });
 
-    if (inviteError) {
+    if (inviteError && isExistingUserError(inviteError.message)) {
+      const { error: recoveryError } = await adminClient.auth.resetPasswordForEmail(accessRequest.email, {
+        redirectTo: `${origin.replace(/\/$/, "")}/?type=recovery`,
+      });
+      if (recoveryError) {
+        return new Response(JSON.stringify({ error: recoveryError.message }), { status: 400, headers: corsHeaders });
+      }
+    } else if (inviteError) {
       return new Response(JSON.stringify({ error: inviteError.message }), { status: 400, headers: corsHeaders });
     }
 
@@ -82,13 +94,13 @@ serve(async (request) => {
     await adminClient
       .from("access_requests")
       .update({
-        invited_user_id: inviteData.user?.id ?? accessRequest.invited_user_id ?? null,
+        invited_user_id: inviteData?.user?.id ?? accessRequest.invited_user_id ?? null,
         updated_at: timestamp,
         beheer_notitie: `Activatiemail opnieuw verstuurd op ${new Date(timestamp).toLocaleString("nl-NL")}`,
       })
       .eq("id", requestId);
 
-    return new Response(JSON.stringify({ ok: true, user_id: inviteData.user?.id ?? null }), { headers: corsHeaders });
+    return new Response(JSON.stringify({ ok: true, user_id: inviteData?.user?.id ?? null }), { headers: corsHeaders });
   } catch (error) {
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Onbekende fout." }), {
       status: 500,
