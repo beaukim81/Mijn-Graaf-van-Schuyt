@@ -40,6 +40,7 @@ export function KnowledgePage() {
   const [saving, setSaving] = useState(false);
 
   const filteredDocuments = useMemo(() => {
+    const trimmedQuery = query.trim().toLowerCase();
     return documents.items.filter((document) => {
       const canView = document.status === "Gepubliceerd" || document.toegevoegd_door === profile.user_id || profile.rol === "admin";
       const searchableText = [
@@ -54,10 +55,11 @@ export function KnowledgePage() {
       ]
         .join(" ")
         .toLowerCase();
-      const matchesQuery = searchableText.includes(query.toLowerCase());
+      const matchesQuery = searchableText.includes(trimmedQuery);
+      if (trimmedQuery) return canView && matchesQuery;
       const matchesCategory = category === "Alle" || document.categorie === category;
       const matchesType = type === "Alle" || document.documenttype === type;
-      return canView && matchesQuery && matchesCategory && matchesType;
+      return canView && matchesCategory && matchesType;
     });
   }, [category, documents.items, profile.rol, profile.user_id, query, type]);
 
@@ -154,7 +156,17 @@ export function KnowledgePage() {
     <section className="page-stack">
       <div className="page-heading page-heading--search">
         <h2>Kennisbank</h2>
-        <SearchBar value={query} onChange={setQuery} placeholder="Zoek op onderwerp, trefwoord, leverancier of onderdeel" />
+        <SearchBar
+          value={query}
+          onChange={(value) => {
+            setQuery(value);
+            if (value.trim()) {
+              setCategory("Alle");
+              setType("Alle");
+            }
+          }}
+          placeholder="Zoek op onderwerp, trefwoord, leverancier of onderdeel"
+        />
       </div>
       <div className="suggestion-strip" aria-label="Kennisbankcategorieen">
         <button className={category === "Alle" ? "active" : ""} onClick={() => setCategory("Alle")} type="button">Alles</button>
