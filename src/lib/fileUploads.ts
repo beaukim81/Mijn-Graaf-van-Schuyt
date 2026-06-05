@@ -72,7 +72,7 @@ export async function uploadBulletinImage(file: File, userId: string) {
 
   if (error) {
     console.error(error);
-    return fileToDataUrl(preparedFile);
+    throw new Error("De foto uploaden lukt nu niet. Controleer je verbinding en probeer het opnieuw.");
   }
 
   return toStorageReference(bulletinImageBucket, path);

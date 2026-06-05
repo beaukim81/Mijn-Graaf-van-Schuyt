@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 const signedUrlTtlSeconds = 60 * 60;
+const signedUrlCache = new Map<string, { expiresAt: number; url: string }>();
 
 interface StorageReference {
   bucket: string;
@@ -47,11 +48,18 @@ export async function resolveStorageUrl(value: string) {
   const reference = parseStorageReference(value);
   if (!reference || !isSupabaseConfigured || !supabase) return value;
 
+  const cached = signedUrlCache.get(value);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+
   const { data, error } = await supabase.storage
     .from(reference.bucket)
     .createSignedUrl(reference.path, signedUrlTtlSeconds);
 
   if (error || !data?.signedUrl) return value;
+  signedUrlCache.set(value, {
+    expiresAt: Date.now() + (signedUrlTtlSeconds - 60) * 1000,
+    url: data.signedUrl,
+  });
   return data.signedUrl;
 }
 
@@ -78,18 +86,21 @@ export function useSignedUrl(value?: string) {
 }
 
 export function useSignedUrls(values: string[]) {
-  const stableValues = useMemo(() => values.filter(Boolean), [values]);
+  const valuesKey = values.filter(Boolean).join("\n");
+  const stableValues = useMemo(() => valuesKey.split("\n").filter(Boolean), [valuesKey]);
   const [resolvedUrls, setResolvedUrls] = useState(stableValues);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all(stableValues.map(resolveStorageUrl)).then((urls) => {
-      if (!cancelled) setResolvedUrls(urls);
+      if (!cancelled) {
+        setResolvedUrls((current) => (current.join("\n") === urls.join("\n") ? current : urls));
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [stableValues]);
+  }, [stableValues, valuesKey]);
 
   return resolvedUrls;
 }
