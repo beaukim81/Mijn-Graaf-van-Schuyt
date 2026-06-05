@@ -24,7 +24,7 @@ interface BulletinDraft {
 const maxImages = 10;
 
 export function BulletinPage() {
-  const { bulletinPosts, profile } = useAppData();
+  const { bulletinPosts, profile, profiles } = useAppData();
   const [category, setCategory] = useState<BulletinCategory | "Alle">("Alle");
   const [draft, setDraft] = useState<BulletinDraft>({
     titel: "",
@@ -184,6 +184,7 @@ export function BulletinPage() {
             isOwner={post.aangemaakt_door === profile.user_id}
             isAdmin={profile.rol === "admin"}
             currentUserId={profile.user_id}
+            profiles={profiles.items}
             onComplete={bulletinPosts.remove}
             onDelete={bulletinPosts.remove}
             onEdit={(item) => {

@@ -5,9 +5,9 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 export const defaultNotificationPreferences: Omit<NotificationPreference, "id" | "user_id" | "updated_at"> = {
   personal_notifications: true,
   building_notifications: true,
-  help_notifications: true,
-  report_notifications: true,
-  knowledge_notifications: true,
+  help_notifications: false,
+  report_notifications: false,
+  knowledge_notifications: false,
   bulletin_notifications: false,
 };
 

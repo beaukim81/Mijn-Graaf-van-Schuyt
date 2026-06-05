@@ -1,9 +1,9 @@
 import { MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
-import { useState } from "react";
-import type { BulletinPost } from "../types";
+import { useMemo, useState } from "react";
+import type { BulletinPost, Profile } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
-import { residentLabel } from "../lib/residentDisplay";
+import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
 
 interface BulletinPostCardProps {
@@ -11,6 +11,7 @@ interface BulletinPostCardProps {
   isOwner?: boolean;
   isAdmin?: boolean;
   currentUserId: string;
+  profiles?: Profile[];
   onComplete?: (id: string) => void;
   onDelete?: (id: string) => void;
   onEdit?: (post: BulletinPost) => void;
@@ -19,10 +20,11 @@ interface BulletinPostCardProps {
   onDeleteMessage?: (postId: string, messageId: string) => void;
 }
 
-export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComplete, onDelete, onEdit, onSendMessage, onUpdateMessage, onDeleteMessage }: BulletinPostCardProps) {
+export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profiles = [], onComplete, onDelete, onEdit, onSendMessage, onUpdateMessage, onDeleteMessage }: BulletinPostCardProps) {
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
+  const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
   const messages = post.messages ?? [];
 
   function sendMessage() {
@@ -38,7 +40,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
         <div>
           <p className="chip">{post.categorie}</p>
           <h2>{post.titel}</h2>
-          <p className="muted">Geplaatst door {residentLabel(post.aangemaakt_door_naam, post.aangemaakt_door_huisnummer)}</p>
+          <p className="muted">Geplaatst door <ResidentIdentity compact houseNumber={post.aangemaakt_door_huisnummer} name={post.aangemaakt_door_naam} profile={profilesByUserId.get(post.aangemaakt_door)} /></p>
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
       </summary>
@@ -61,7 +63,14 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
           >
             <Trash2 aria-hidden="true" size={18} /> Verwijderen
           </button>
-          <button className="button button--soft" onClick={() => onComplete?.(post.id)} type="button">
+          <button
+            className="button button--soft"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt afronden en verwijderen?");
+              if (confirmed) onComplete?.(post.id);
+            }}
+            type="button"
+          >
             Afronden
           </button>
         </div>
@@ -75,9 +84,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
         ) : (
           messages.map((item) => (
             <div className="chat-message" key={item.id}>
-              <span>
-                {residentLabel(item.author_name, item.author_house_number)}
-              </span>
+              <ResidentIdentity compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
@@ -124,7 +131,14 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, onComp
                       <Pencil aria-hidden="true" size={15} /> Bewerken
                     </button>
                   )}
-                  <button className="button button--danger" onClick={() => onDeleteMessage?.(post.id, item.id)} type="button">
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt verwijderen?");
+                      if (confirmed) onDeleteMessage?.(post.id, item.id);
+                    }}
+                    type="button"
+                  >
                     <Trash2 aria-hidden="true" size={15} /> Verwijderen
                   </button>
                 </div>

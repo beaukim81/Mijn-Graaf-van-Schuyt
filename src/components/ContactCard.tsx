@@ -46,7 +46,14 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
           <button className="button button--soft" onClick={() => onEdit?.(contact)} type="button">
             <Pencil aria-hidden="true" size={18} /> Bewerken
           </button>
-          <button className="button button--danger" onClick={() => onDelete?.(contact.id)} type="button">
+          <button
+            className="button button--danger"
+            onClick={() => {
+              const confirmed = window.confirm(`Weet je zeker dat je ${contact.naam} wilt verwijderen?`);
+              if (confirmed) onDelete?.(contact.id);
+            }}
+            type="button"
+          >
             <Trash2 aria-hidden="true" size={18} /> Verwijderen
           </button>
         </div>

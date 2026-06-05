@@ -360,7 +360,14 @@ export function AdminPage() {
                   >
                     Markeer als opgelost
                   </button>
-                  <button className="button button--danger" onClick={() => feedbackItems.remove(item.id)} type="button">
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm(`Weet je zeker dat je feedback "${item.onderwerp}" wilt verwijderen?`);
+                      if (confirmed) feedbackItems.remove(item.id);
+                    }}
+                    type="button"
+                  >
                     <Trash2 aria-hidden="true" size={18} /> Verwijderen
                   </button>
                 </div>
@@ -418,7 +425,14 @@ export function AdminPage() {
                   )}
                   <div className="admin-row">
                     <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                    <button className="button button--danger" onClick={() => buildingAnnouncements.remove(announcement.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                    <button
+                      className="button button--danger"
+                      onClick={() => {
+                        const confirmed = window.confirm(`Weet je zeker dat je algemene melding "${announcement.titel}" wilt verwijderen?`);
+                        if (confirmed) buildingAnnouncements.remove(announcement.id);
+                      }}
+                      type="button"
+                    ><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                   </div>
                 </div>
               </details>
@@ -535,7 +549,14 @@ export function AdminPage() {
                       </button>
                     )}
                     <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                    <button className="button button--danger" onClick={() => documents.remove(document.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                    <button
+                      className="button button--danger"
+                      onClick={() => {
+                        const confirmed = window.confirm(`Weet je zeker dat je document "${document.titel}" wilt verwijderen?`);
+                        if (confirmed) documents.remove(document.id);
+                      }}
+                      type="button"
+                    ><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                   </div>
                 </div>
               </details>
@@ -603,7 +624,14 @@ export function AdminPage() {
                   </dl>
                   <div className="admin-row">
                     <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
-                    <button className="button button--danger" onClick={() => contacts.remove(contact.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                    <button
+                      className="button button--danger"
+                      onClick={() => {
+                        const confirmed = window.confirm(`Weet je zeker dat je contact "${contact.naam}" wilt verwijderen?`);
+                        if (confirmed) contacts.remove(contact.id);
+                      }}
+                      type="button"
+                    ><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                   </div>
                 </div>
               </details>
@@ -652,7 +680,14 @@ export function AdminPage() {
                   </label>
                 </div>
                 <div className="admin-row">
-                  <button className="button button--danger" onClick={() => reports.remove(report.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm(`Weet je zeker dat je melding "${report.titel}" wilt verwijderen?`);
+                      if (confirmed) reports.remove(report.id);
+                    }}
+                    type="button"
+                  ><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </div>
             </details>
@@ -686,8 +721,22 @@ export function AdminPage() {
                   )}
                 </dl>
                 <div className="admin-row">
-                  <button className="button button--soft" onClick={() => bulletinPosts.remove(post.id)} type="button">Afronden</button>
-                  <button className="button button--danger" onClick={() => bulletinPosts.remove(post.id)} type="button"><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
+                  <button
+                    className="button button--soft"
+                    onClick={() => {
+                      const confirmed = window.confirm(`Weet je zeker dat je bericht "${post.titel}" wilt afronden en verwijderen?`);
+                      if (confirmed) bulletinPosts.remove(post.id);
+                    }}
+                    type="button"
+                  >Afronden</button>
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm(`Weet je zeker dat je prikbordbericht "${post.titel}" wilt verwijderen?`);
+                      if (confirmed) bulletinPosts.remove(post.id);
+                    }}
+                    type="button"
+                  ><Trash2 aria-hidden="true" size={18} /> Verwijderen</button>
                 </div>
               </div>
             </details>

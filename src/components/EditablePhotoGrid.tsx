@@ -15,7 +15,15 @@ export function EditablePhotoGrid({ images, alt, onRemove }: EditablePhotoGridPr
       {visibleImages.map((image, index) => (
         <div className="editable-photo-grid__item" key={`${image}-${index}`}>
           <img src={image} alt={`${alt} foto ${index + 1}`} />
-          <button className="editable-photo-grid__remove" onClick={() => onRemove(index)} type="button" aria-label={`Foto ${index + 1} verwijderen`}>
+          <button
+            className="editable-photo-grid__remove"
+            onClick={() => {
+              const confirmed = window.confirm(`Weet je zeker dat je foto ${index + 1} wilt verwijderen?`);
+              if (confirmed) onRemove(index);
+            }}
+            type="button"
+            aria-label={`Foto ${index + 1} verwijderen`}
+          >
             <Trash2 aria-hidden="true" size={18} />
           </button>
         </div>

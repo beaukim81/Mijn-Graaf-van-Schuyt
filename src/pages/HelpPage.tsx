@@ -26,7 +26,7 @@ function withdrawnText(category: HelpCategory) {
 }
 
 export function HelpPage() {
-  const { helpRequests, profile } = useAppData();
+  const { helpRequests, profile, profiles } = useAppData();
   const [category, setCategory] = useState<HelpCategory | "Alle">("Alle");
   const [showForm, setShowForm] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
@@ -195,6 +195,7 @@ export function HelpPage() {
             isOwner={request.aangemaakt_door === profile.user_id || profile.rol === "admin"}
             currentUserId={profile.user_id}
             isAdmin={profile.rol === "admin"}
+            profiles={profiles.items}
             onOffer={offerHelp}
             onWithdrawOffer={withdrawOffer}
             onComplete={helpRequests.remove}

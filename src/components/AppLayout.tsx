@@ -306,7 +306,15 @@ export function AppLayout() {
                         <span>{notification.title}</span>
                         <small>{notification.description}</small>
                       </button>
-                      <button aria-label="Notificatie verwijderen" className="text-button danger" onClick={() => dismissNotification(notification.id)} type="button">
+                      <button
+                        aria-label="Notificatie verwijderen"
+                        className="text-button danger"
+                        onClick={() => {
+                          const confirmed = window.confirm("Weet je zeker dat je deze notificatie wilt verwijderen?");
+                          if (confirmed) dismissNotification(notification.id);
+                        }}
+                        type="button"
+                      >
                         <Trash2 aria-hidden="true" size={16} />
                       </button>
                     </div>

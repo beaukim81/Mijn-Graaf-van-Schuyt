@@ -169,9 +169,26 @@ export function KnowledgePage() {
         />
       </div>
       <div className="suggestion-strip" aria-label="Kennisbankcategorieen">
-        <button className={category === "Alle" ? "active" : ""} onClick={() => setCategory("Alle")} type="button">Alles</button>
+        <button
+          className={category === "Alle" ? "active" : ""}
+          onClick={() => {
+            setQuery("");
+            setCategory("Alle");
+          }}
+          type="button"
+        >
+          Alles
+        </button>
         {knowledgeCategories.map((item) => (
-          <button className={category === item ? "active" : ""} key={item} onClick={() => setCategory(item)} type="button">
+          <button
+            className={category === item ? "active" : ""}
+            key={item}
+            onClick={() => {
+              setQuery("");
+              setCategory(item);
+            }}
+            type="button"
+          >
             {item}
           </button>
         ))}

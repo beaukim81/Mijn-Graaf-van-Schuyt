@@ -1,20 +1,51 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Camera, LogOut, Trash2 } from "lucide-react";
 import { useAppData } from "../lib/AppDataContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { LinkifiedText } from "../components/LinkifiedText";
+import { ResidentIdentity } from "../components/ResidentIdentity";
 import { useAuth } from "../lib/AuthContext";
+import { uploadBulletinImages } from "../lib/fileUploads";
+import { floorForHouseNumber, isValidHouseNumber } from "../lib/floorForHouseNumber";
 import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 
 export function ProfilePage() {
-  const { feedbackItems, notificationPreferences, profile } = useAppData();
-  const { configured, deleteAccount, signOut, updateEmail } = useAuth();
+  const { feedbackItems, notificationPreferences, profile, profiles } = useAppData();
+  const { configured, deleteAccount, refreshProfile, signOut, updateEmail, updatePassword } = useAuth();
   const [pushMessage, setPushMessage] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
   const [email, setEmail] = useState(profile.email ?? "");
   const [emailMessage, setEmailMessage] = useState("");
   const [emailBusy, setEmailBusy] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [profileDraft, setProfileDraft] = useState({
+    naam_of_bijnaam: profile.naam_of_bijnaam ?? "",
+    achternaam: profile.achternaam ?? "",
+    huisnummer: profile.huisnummer ?? "",
+    verdieping_of_gebouwdeel: profile.verdieping_of_gebouwdeel ?? "",
+    profielfoto_url: profile.profielfoto_url ?? "",
+  });
+  const [passwordDraft, setPasswordDraft] = useState({ password: "", repeatPassword: "" });
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const inferredFloor = floorForHouseNumber(profileDraft.huisnummer);
+
+  useEffect(() => {
+    setEmail(profile.email ?? "");
+    setPhotoFile(null);
+    setProfileDraft({
+      naam_of_bijnaam: profile.naam_of_bijnaam ?? "",
+      achternaam: profile.achternaam ?? "",
+      huisnummer: profile.huisnummer ?? "",
+      verdieping_of_gebouwdeel: profile.verdieping_of_gebouwdeel ?? "",
+      profielfoto_url: profile.profielfoto_url ?? "",
+    });
+  }, [profile.achternaam, profile.email, profile.huisnummer, profile.naam_of_bijnaam, profile.profielfoto_url, profile.verdieping_of_gebouwdeel]);
+
   const storedPreference = useMemo(
     () => notificationPreferences.items.find((item) => item.user_id === profile.user_id),
     [notificationPreferences.items, profile.user_id],
@@ -24,6 +55,13 @@ export function ProfilePage() {
     () => feedbackItems.items.filter((item) => item.aangemaakt_door === profile.user_id),
     [feedbackItems.items, profile.user_id],
   );
+  const photoPreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : profileDraft.profielfoto_url), [photoFile, profileDraft.profielfoto_url]);
+
+  useEffect(() => {
+    return () => {
+      if (photoPreview.startsWith("blob:")) URL.revokeObjectURL(photoPreview);
+    };
+  }, [photoPreview]);
 
   async function updatePreference(changes: Partial<NotificationPreference>) {
     const next = { ...preference, ...changes, updated_at: new Date().toISOString() };
@@ -33,6 +71,42 @@ export function ProfilePage() {
       notificationPreferences.add(next);
     }
     await saveNotificationPreference(next);
+  }
+
+  async function handleProfileUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const firstName = profileDraft.naam_of_bijnaam.trim();
+    const houseNumber = profileDraft.huisnummer.trim();
+    if (!firstName || !houseNumber) {
+      setProfileMessage("Vul minimaal je voornaam en huisnummer in.");
+      return;
+    }
+    if (!isValidHouseNumber(houseNumber)) {
+      setProfileMessage("Vul een bestaand oneven huisnummer in van Graaf van Schuyt.");
+      return;
+    }
+
+    try {
+      setProfileBusy(true);
+      setProfileMessage("");
+      const uploadedPhoto = photoFile ? (await uploadBulletinImages([photoFile], profile.user_id))[0] : undefined;
+      const nextPhotoUrl = uploadedPhoto ?? profileDraft.profielfoto_url.trim();
+      await profiles.updateAsync(profile.id, {
+        naam_of_bijnaam: firstName,
+        achternaam: profileDraft.achternaam.trim() || undefined,
+        huisnummer: houseNumber,
+        verdieping_of_gebouwdeel: floorForHouseNumber(houseNumber) || undefined,
+        profielfoto_url: nextPhotoUrl || undefined,
+      });
+      await refreshProfile();
+      setPhotoFile(null);
+      setProfileDraft((current) => ({ ...current, profielfoto_url: nextPhotoUrl }));
+      setProfileMessage("Je profiel is opgeslagen.");
+    } catch (error) {
+      setProfileMessage(friendlyErrorMessage(error, "Profiel opslaan lukt nu niet. Controleer je gegevens en probeer het opnieuw."));
+    } finally {
+      setProfileBusy(false);
+    }
   }
 
   async function enablePush() {
@@ -102,38 +176,119 @@ export function ProfilePage() {
     }
   }
 
+  async function handlePasswordUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (passwordDraft.password.length < 8) {
+      setPasswordMessage("Kies een wachtwoord van minimaal 8 tekens.");
+      return;
+    }
+    if (passwordDraft.password !== passwordDraft.repeatPassword) {
+      setPasswordMessage("De twee wachtwoorden zijn niet gelijk.");
+      return;
+    }
+
+    try {
+      setPasswordBusy(true);
+      setPasswordMessage("");
+      await updatePassword(passwordDraft.password);
+      setPasswordDraft({ password: "", repeatPassword: "" });
+      window.alert("Je wachtwoord is gewijzigd. Log daarna opnieuw in met je nieuwe wachtwoord.");
+      await signOut();
+    } catch (error) {
+      setPasswordMessage(friendlyErrorMessage(error, "Wachtwoord wijzigen lukt nu niet. Probeer het later opnieuw."));
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
   return (
-    <section className="page-stack">
+    <section className="page-stack profile-page">
       <div className="page-heading">
         <h2>Bewonersprofiel</h2>
-        <p>Je profiel gebruikt straks je e-mailadres, naam en huisnummer. Achternaam mag, maar hoeft niet.</p>
+        <p>Beheer hier je naam, huisnummer, foto en accountgegevens.</p>
       </div>
+
+      <article className="item-card profile-summary-card">
+        <div className="profile-summary">
+          {photoPreview ? <img alt="" className="profile-avatar" src={photoPreview} /> : null}
+          <div>
+            <p className="chip">{profile.rol}</p>
+            <h2>
+              <ResidentIdentity profile={{ ...profile, ...profileDraft, profielfoto_url: "" }} />
+            </h2>
+            <p className="muted">{profile.email ?? "Nog geen e-mailadres gekoppeld"}</p>
+          </div>
+        </div>
+      </article>
+
+      {configured ? (
+        <article className="item-card profile-signout-card">
+          <button className="button button--soft button--full" onClick={() => void signOut()} type="button">
+            <LogOut aria-hidden="true" size={18} /> Uitloggen
+          </button>
+        </article>
+      ) : null}
+
       <article className="item-card">
         <div className="item-card__header">
           <div>
-            <p className="chip">{profile.verdieping_of_gebouwdeel}</p>
-            <h2>{profile.naam_of_bijnaam}</h2>
+            <p className="chip">Profiel</p>
+            <h2>Gegevens aanpassen</h2>
           </div>
-          <StatusBadge tone="soft">{profile.rol}</StatusBadge>
         </div>
-        <dl className="meta-list">
-          <div>
-            <dt>E-mailadres</dt>
-            <dd>{profile.email ?? "Nog niet gekoppeld"}</dd>
+        <form className="form-panel form-panel--nested" onSubmit={handleProfileUpdate}>
+          <label className="field">
+            <span>Voornaam of bijnaam</span>
+            <input value={profileDraft.naam_of_bijnaam} onChange={(event) => setProfileDraft({ ...profileDraft, naam_of_bijnaam: event.target.value })} required />
+          </label>
+          <label className="field">
+            <span>Achternaam optioneel</span>
+            <input value={profileDraft.achternaam} onChange={(event) => setProfileDraft({ ...profileDraft, achternaam: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>Huisnummer</span>
+            <input inputMode="numeric" value={profileDraft.huisnummer} onChange={(event) => setProfileDraft({ ...profileDraft, huisnummer: event.target.value })} required />
+            <small>Alleen bestaande oneven huisnummers zijn mogelijk.</small>
+          </label>
+          <label className="field">
+            <span>Etage</span>
+            <input readOnly value={inferredFloor || "Wordt bepaald op basis van je huisnummer"} />
+          </label>
+          <div className="profile-photo-editor">
+            {photoPreview ? <img alt="Gekozen profielfoto" className="profile-avatar profile-avatar--large" src={photoPreview} /> : <div className="profile-photo-placeholder">Geen foto</div>}
+            <div className="action-row">
+              <label className="button button--soft file-button">
+                <Camera aria-hidden="true" size={18} /> Foto kiezen
+                <input
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) setPhotoFile(file);
+                  }}
+                  type="file"
+                />
+              </label>
+              {photoPreview && (
+                <button
+                  className="button button--danger"
+                  onClick={() => {
+                    const confirmed = window.confirm("Weet je zeker dat je je profielfoto wilt verwijderen?");
+                    if (!confirmed) return;
+                    setPhotoFile(null);
+                    setProfileDraft({ ...profileDraft, profielfoto_url: "" });
+                  }}
+                  type="button"
+                >
+                  <Trash2 aria-hidden="true" size={18} /> Foto verwijderen
+                </button>
+              )}
+            </div>
           </div>
-          <div>
-            <dt>Huisnummer</dt>
-            <dd>{profile.huisnummer ?? "Nog niet ingevuld"}</dd>
-          </div>
-        </dl>
-        {profile.achternaam && <p className="muted">Naam: {profile.naam_of_bijnaam} {profile.achternaam}</p>}
-        {configured ? (
-          <button className="button button--soft" onClick={() => void signOut()} type="button">
-            Uitloggen
+          <button className="button" disabled={profileBusy} type="submit">
+            {profileBusy ? "Bezig met opslaan" : "Profiel opslaan"}
           </button>
-        ) : (
-          <p className="muted">Zodra Supabase is gekoppeld, beheer je dit profiel na inloggen met je eigen account.</p>
-        )}
+        </form>
+        {profileMessage && <p className="muted">{profileMessage}</p>}
       </article>
 
       <article className="item-card">
@@ -143,7 +298,7 @@ export function ProfilePage() {
             <h2>Wat zien andere bewoners?</h2>
           </div>
         </div>
-        <p>Je voornaam of bijnaam, huisnummer en geplaatste berichten zijn zichtbaar voor ingelogde bewoners.</p>
+        <p>Je naam, huisnummer, profielfoto en geplaatste berichten zijn zichtbaar voor ingelogde bewoners.</p>
         <p className="muted">Je e-mailadres is niet openbaar zichtbaar. Dat gebruiken we alleen voor je account, inloggen en belangrijke accountmails.</p>
       </article>
 
@@ -156,19 +311,9 @@ export function ProfilePage() {
             </div>
           </div>
           <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
-          <p className="muted">
-            Na het wijzigen krijg je een bevestigingsmail. Tot je de wijziging bevestigt, log je nog in met je oude
-            e-mailadres. Kijk ook in spam of ongewenste mail.
-          </p>
-          <form className="form-panel" onSubmit={handleEmailUpdate}>
-            <input
-              autoComplete="email"
-              inputMode="email"
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="Nieuw e-mailadres"
-              type="email"
-              value={email}
-            />
+          <p className="muted">Na het wijzigen krijg je een bevestigingsmail. Tot je de wijziging bevestigt, log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.</p>
+          <form className="form-panel form-panel--nested" onSubmit={handleEmailUpdate}>
+            <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="Nieuw e-mailadres" type="email" value={email} />
             <button className="button button--soft" disabled={emailBusy} type="submit">
               {emailBusy ? "Even geduld" : "E-mailadres wijzigen"}
             </button>
@@ -182,16 +327,18 @@ export function ProfilePage() {
           <div className="item-card__header">
             <div>
               <p className="chip">Account</p>
-              <h2>Account verwijderen</h2>
+              <h2>Wachtwoord wijzigen</h2>
             </div>
-            <StatusBadge tone="warning">Let op</StatusBadge>
           </div>
-          <p>Wil je de app niet meer gebruiken, dan kun je je account volledig verwijderen.</p>
-          <p className="muted">Je profiel en gekoppelde gegevens worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
-          <button className="button button--soft" onClick={handleDeleteAccount} type="button">
-            Account verwijderen
-          </button>
-          {accountMessage && <p className="muted">{accountMessage}</p>}
+          <p>Kies een nieuw wachtwoord. Na het opslaan log je opnieuw in met je nieuwe wachtwoord.</p>
+          <form className="form-panel form-panel--nested" onSubmit={handlePasswordUpdate}>
+            <input autoComplete="new-password" onChange={(event) => setPasswordDraft({ ...passwordDraft, password: event.target.value })} placeholder="Nieuw wachtwoord" type="password" value={passwordDraft.password} />
+            <input autoComplete="new-password" onChange={(event) => setPasswordDraft({ ...passwordDraft, repeatPassword: event.target.value })} placeholder="Herhaal nieuw wachtwoord" type="password" value={passwordDraft.repeatPassword} />
+            <button className="button button--soft" disabled={passwordBusy} type="submit">
+              {passwordBusy ? "Even geduld" : "Wachtwoord wijzigen"}
+            </button>
+          </form>
+          {passwordMessage && <p className="muted">{passwordMessage}</p>}
         </article>
       )}
 
@@ -245,24 +392,44 @@ export function ProfilePage() {
         <div className="settings-list">
           <PreferenceToggle label="Persoonlijke meldingen" checked={preference.personal_notifications} onChange={(checked) => updatePreference({ personal_notifications: checked })} />
           <PreferenceToggle label="Algemene mededelingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
-          <PreferenceToggle label="Hulpvragen" checked={preference.help_notifications} onChange={(checked) => updatePreference({ help_notifications: checked })} />
-          <PreferenceToggle label="Mijn meldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
-          <PreferenceToggle label="Kennisbank" checked={preference.knowledge_notifications} onChange={(checked) => updatePreference({ knowledge_notifications: checked })} />
-          <PreferenceToggle label="Prikbord" checked={preference.bulletin_notifications} onChange={(checked) => updatePreference({ bulletin_notifications: checked })} />
         </div>
+        <details className="optional-settings">
+          <summary>
+            <span>Meer notificatie-opties</span>
+            <small>Kies zelf of je extra meldingen wilt ontvangen.</small>
+          </summary>
+          <div className="settings-list">
+            <PreferenceToggle label="Oproepen" checked={preference.help_notifications} onChange={(checked) => updatePreference({ help_notifications: checked })} />
+            <PreferenceToggle label="Mijn meldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
+            <PreferenceToggle label="Kennisbank" checked={preference.knowledge_notifications} onChange={(checked) => updatePreference({ knowledge_notifications: checked })} />
+            <PreferenceToggle label="Prikbord" checked={preference.bulletin_notifications} onChange={(checked) => updatePreference({ bulletin_notifications: checked })} />
+          </div>
+        </details>
         <div className="action-row">
-          <button className="button button--soft" onClick={enablePush} type="button">
-            Pushmeldingen toestaan
-          </button>
-          <button className="button button--soft" onClick={disablePush} type="button">
-            Uitzetten op dit apparaat
-          </button>
-          <button className="button button--soft" onClick={sendTestPush} type="button">
-            Testmelding sturen
-          </button>
+          <button className="button button--soft" onClick={enablePush} type="button">Pushmeldingen toestaan</button>
+          <button className="button button--soft" onClick={disablePush} type="button">Uitzetten op dit apparaat</button>
+          <button className="button button--soft" onClick={sendTestPush} type="button">Testmelding sturen</button>
         </div>
         {pushMessage && <p className="muted">{pushMessage}</p>}
       </article>
+
+      {configured && (
+        <article className="item-card account-delete-card">
+          <div className="item-card__header">
+            <div>
+              <p className="chip">Account</p>
+              <h2>Account verwijderen</h2>
+            </div>
+            <StatusBadge tone="warning">Let op</StatusBadge>
+          </div>
+          <p>Wil je de app niet meer gebruiken, dan kun je je account volledig verwijderen.</p>
+          <p className="muted">Je profiel en gekoppelde gegevens worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+          <button className="button button--danger" onClick={handleDeleteAccount} type="button">
+            <Trash2 aria-hidden="true" size={18} /> Account verwijderen
+          </button>
+          {accountMessage && <p className="muted">{accountMessage}</p>}
+        </article>
+      )}
     </section>
   );
 }

@@ -1,8 +1,8 @@
 import { HandHeart, Home, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
-import { useState } from "react";
-import type { HelpCategory, HelpRequest } from "../types";
+import { useMemo, useState } from "react";
+import type { HelpCategory, HelpRequest, Profile } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
-import { residentLabel } from "../lib/residentDisplay";
+import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
 
 const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
@@ -43,6 +43,7 @@ interface HelpRequestCardProps {
   isOwner?: boolean;
   currentUserId: string;
   isAdmin?: boolean;
+  profiles?: Profile[];
   onOffer?: (id: string) => void;
   onWithdrawOffer?: (id: string) => void;
   onComplete?: (id: string) => void;
@@ -51,10 +52,11 @@ interface HelpRequestCardProps {
   onDeleteMessage?: (requestId: string, messageId: string) => void;
 }
 
-export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOffer, onWithdrawOffer, onComplete, onSendMessage, onUpdateMessage, onDeleteMessage }: HelpRequestCardProps) {
+export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, profiles = [], onOffer, onWithdrawOffer, onComplete, onSendMessage, onUpdateMessage, onDeleteMessage }: HelpRequestCardProps) {
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
+  const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
   const copy = copyForCategory(request.categorie);
   const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
   const canOfferHelp = request.aangemaakt_door !== currentUserId && !currentUserOffer;
@@ -73,7 +75,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         <div>
           <p className="chip">{request.categorie}</p>
           <h2>{request.titel}</h2>
-          <p className="muted">Geplaatst door {residentLabel(request.aanmaker_naam, request.aanmaker_huisnummer)}</p>
+          <p className="muted">Geplaatst door <ResidentIdentity compact houseNumber={request.aanmaker_huisnummer} name={request.aanmaker_naam} profile={profilesByUserId.get(request.aangemaakt_door)} /></p>
         </div>
         <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
       </summary>
@@ -91,7 +93,14 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           </button>
         )}
         {isOwner && (
-          <button className="button button--soft" onClick={() => onComplete?.(request.id)} type="button">
+          <button
+            className="button button--soft"
+            onClick={() => {
+              const confirmed = window.confirm("Weet je zeker dat je deze oproep wilt afronden en verwijderen?");
+              if (confirmed) onComplete?.(request.id);
+            }}
+            type="button"
+          >
             Afronden en verwijderen
           </button>
         )}
@@ -102,9 +111,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
           {request.offers.map((offer) => (
             <div className="neighbor-offer" key={offer.id}>
               <Home aria-hidden="true" size={18} />
-              <span>
-                {residentLabel(offer.helper_name, offer.helper_house_number)}
-              </span>
+              <ResidentIdentity compact houseNumber={offer.helper_house_number} name={offer.helper_name} profile={profilesByUserId.get(offer.helper_id)} />
               {offer.contact_allowed && offer.contact_info && offer.contact_info !== `Huisnummer ${offer.helper_house_number}` ? (
                 <small>{offer.contact_info}</small>
               ) : null}
@@ -121,9 +128,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
         ) : (
           request.messages.map((item) => (
             <div className="chat-message" key={item.id}>
-              <span>
-                {residentLabel(item.author_name, item.author_house_number)}
-              </span>
+              <ResidentIdentity compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
@@ -170,7 +175,14 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, onOf
                       <Pencil aria-hidden="true" size={15} /> Bewerken
                     </button>
                   )}
-                  <button className="button button--danger" onClick={() => onDeleteMessage?.(request.id, item.id)} type="button">
+                  <button
+                    className="button button--danger"
+                    onClick={() => {
+                      const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt verwijderen?");
+                      if (confirmed) onDeleteMessage?.(request.id, item.id);
+                    }}
+                    type="button"
+                  >
                     <Trash2 aria-hidden="true" size={15} /> Verwijderen
                   </button>
                 </div>

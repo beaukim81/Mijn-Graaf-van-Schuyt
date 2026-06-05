@@ -163,7 +163,10 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       const editableChanges: Partial<Profile> = {};
       if (changes.rol) editableChanges.rol = changes.rol;
       if (changes.naam_of_bijnaam) editableChanges.naam_of_bijnaam = changes.naam_of_bijnaam;
+      if ("achternaam" in changes) editableChanges.achternaam = nextItem.achternaam;
       if ("huisnummer" in changes) editableChanges.huisnummer = nextItem.huisnummer;
+      if ("verdieping_of_gebouwdeel" in changes) editableChanges.verdieping_of_gebouwdeel = nextItem.verdieping_of_gebouwdeel;
+      if ("profielfoto_url" in changes) editableChanges.profielfoto_url = nextItem.profielfoto_url;
       if ("email" in changes) editableChanges.email = nextItem.email;
       const row = profileToRow({ ...nextItem, ...editableChanges });
       const { error } = await requireSupabase().from("profiles").update(row).eq("id", nextItem.id);

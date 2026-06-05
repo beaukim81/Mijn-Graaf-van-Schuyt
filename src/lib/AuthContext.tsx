@@ -2,6 +2,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "./supabase";
+import { floorForHouseNumber } from "./floorForHouseNumber";
 import type { Profile } from "../types";
 
 interface AuthContextValue {
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         naam_of_bijnaam: metadata.naam_of_bijnaam ?? currentUser.email?.split("@")[0] ?? "Bewoner",
         achternaam: metadata.achternaam ?? null,
         huisnummer: metadata.huisnummer ?? null,
+        verdieping_of_gebouwdeel: floorForHouseNumber(String(metadata.huisnummer ?? "")) || null,
         email: currentUser.email,
       })
       .select("*")

@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { KeyRound, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
+import { isValidHouseNumber } from "../lib/floorForHouseNumber";
 
 export function AuthPage() {
   const { resetPassword, signIn, signUp } = useAuth();
@@ -32,6 +33,10 @@ export function AuthPage() {
         await signIn(email, password);
         window.location.replace("/");
       } else {
+        if (!isValidHouseNumber(houseNumber)) {
+          setError("Vul een bestaand oneven huisnummer in van Graaf van Schuyt.");
+          return;
+        }
         const response = await signUp({ email, password, firstName, lastName, houseNumber });
         setMessage(response);
       }
@@ -85,7 +90,8 @@ export function AuthPage() {
             <>
               <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Voornaam" required />
               <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Achternaam optioneel" />
-              <input value={houseNumber} onChange={(event) => setHouseNumber(event.target.value)} placeholder="Huisnummer" required />
+              <input inputMode="numeric" value={houseNumber} onChange={(event) => setHouseNumber(event.target.value)} placeholder="Huisnummer" required />
+              <p className="muted">Gebruik je oneven huisnummer, bijvoorbeeld 24 kan niet en 25 wel.</p>
             </>
           )}
           <input autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="E-mailadres" required type="email" />
