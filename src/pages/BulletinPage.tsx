@@ -182,7 +182,7 @@ export function BulletinPage() {
             key={post.id}
             post={post}
             isOwner={post.aangemaakt_door === profile.user_id}
-            isAdmin={profile.rol === "admin"}
+            isAdmin={false}
             currentUserId={profile.user_id}
             profiles={profiles.items}
             onComplete={bulletinPosts.remove}
@@ -230,7 +230,7 @@ export function BulletinPage() {
               const post = bulletinPosts.items.find((item) => item.id === id);
               if (!post) return;
               bulletinPosts.update(id, {
-                messages: (post.messages ?? []).filter((item) => item.id !== messageId || (item.author_id !== profile.user_id && profile.rol !== "admin")),
+                messages: (post.messages ?? []).filter((item) => item.id !== messageId || item.author_id !== profile.user_id),
               });
             }}
           />

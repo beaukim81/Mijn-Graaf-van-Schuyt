@@ -48,7 +48,7 @@ export function KnowledgePage() {
         })
       : undefined;
     return documents.items.filter((document) => {
-      const canView = document.status === "Gepubliceerd" || document.toegevoegd_door === profile.user_id || profile.rol === "admin";
+      const canView = document.status === "Gepubliceerd" || document.toegevoegd_door === profile.user_id;
       if (queryCategory) return canView && document.categorie === queryCategory;
       const searchableText = [
         document.titel,
@@ -68,7 +68,7 @@ export function KnowledgePage() {
       const matchesType = type === "Alle" || document.documenttype === type;
       return canView && matchesCategory && matchesType;
     });
-  }, [category, documents.items, profile.rol, profile.user_id, query, type]);
+  }, [category, documents.items, profile.user_id, query, type]);
 
   async function proposeDocument() {
     try {
@@ -97,7 +97,7 @@ export function KnowledgePage() {
         leverancier_of_fabrikant: draft.leverancier_of_fabrikant,
         faq: draft.faq_vraag ? [{ id: existingDocument?.faq[0]?.id ?? crypto.randomUUID(), vraag: draft.faq_vraag, antwoord: existingDocument?.faq[0]?.antwoord }] : (existingDocument?.faq ?? []),
         toegevoegd_door: existingDocument?.toegevoegd_door ?? profile.user_id,
-        status: profile.rol === "admin" ? "Gepubliceerd" : existingDocument?.status === "Gepubliceerd" ? "Te controleren" : "Concept",
+        status: existingDocument?.status === "Gepubliceerd" ? "Te controleren" : "Concept",
         aangemaakt_op: existingDocument?.aangemaakt_op ?? timestamp,
         bijgewerkt_op: timestamp,
       };
@@ -297,7 +297,7 @@ export function KnowledgePage() {
           <KnowledgeDocumentCard
             key={document.id}
             document={document}
-            canManage={profile.rol === "admin" || (document.toegevoegd_door === profile.user_id && document.documenttype === "Bewonerstip")}
+            canManage={document.toegevoegd_door === profile.user_id && document.documenttype === "Bewonerstip"}
             onDelete={documents.removeAsync}
             onEdit={editDocument}
           />

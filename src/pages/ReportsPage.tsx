@@ -278,8 +278,8 @@ export function ReportsPage() {
             report={report}
             documents={documents.items}
             profiles={profiles.items}
-            canResolve={profile.rol === "admin" || report.aangemaakt_door === profile.user_id}
-            canRetractRebo={profile.rol === "admin" || report.rebo_melding_door === profile.user_id}
+            canResolve={report.aangemaakt_door === profile.user_id}
+            canRetractRebo={report.rebo_melding_door === profile.user_id}
             onConfirm={confirmReport}
             onForwardToRebo={forwardToRebo}
             onRetractRebo={retractRebo}

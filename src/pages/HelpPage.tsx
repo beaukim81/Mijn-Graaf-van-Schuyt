@@ -192,9 +192,9 @@ export function HelpPage() {
           <HelpRequestCard
             key={request.id}
             request={request}
-            isOwner={request.aangemaakt_door === profile.user_id || profile.rol === "admin"}
+            isOwner={request.aangemaakt_door === profile.user_id}
             currentUserId={profile.user_id}
-            isAdmin={profile.rol === "admin"}
+            isAdmin={false}
             profiles={profiles.items}
             onOffer={offerHelp}
             onWithdrawOffer={withdrawOffer}
@@ -227,7 +227,7 @@ export function HelpPage() {
               const request = helpRequests.items.find((item) => item.id === id);
               if (!request) return;
               helpRequests.update(id, {
-                messages: request.messages.filter((item) => item.id !== messageId || (item.author_id !== profile.user_id && profile.rol !== "admin")),
+                messages: request.messages.filter((item) => item.id !== messageId || item.author_id !== profile.user_id),
               });
             }}
           />
