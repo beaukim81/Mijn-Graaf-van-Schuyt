@@ -15,11 +15,13 @@ export function AuthPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [accessRequested, setAccessRequested] = useState(false);
 
   function switchMode(nextMode: "login" | "signup") {
     setMode(nextMode);
     setError("");
     setMessage("");
+    setAccessRequested(false);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -39,6 +41,7 @@ export function AuthPage() {
         }
         const response = await requestAccess({ email, firstName, lastName, houseNumber });
         setMessage(response);
+        setAccessRequested(true);
       }
     } catch (caught) {
       setError(friendlyErrorMessage(caught, "Inloggen of account maken lukt nu niet. Controleer je gegevens en probeer het opnieuw."));
@@ -119,8 +122,15 @@ export function AuthPage() {
           )}
           {error && <p className="form-message form-message--error">{error}</p>}
           {message && <p className="form-message">{message}</p>}
-          <button className="button button--full" disabled={busy} type="submit">
-            <KeyRound aria-hidden="true" size={18} /> {busy ? "Even geduld" : mode === "login" ? "Inloggen" : "Toegang aanvragen"}
+          <button className="button button--full" disabled={busy || (mode === "signup" && accessRequested)} type="submit">
+            <KeyRound aria-hidden="true" size={18} />{" "}
+            {busy
+              ? "Even geduld"
+              : mode === "login"
+                ? "Inloggen"
+                : accessRequested
+                  ? "Aanvraag verstuurd"
+                  : "Toegang aanvragen"}
           </button>
           {mode === "login" && (
             <button className="button button--soft button--full" disabled={busy} onClick={requestPasswordReset} type="button">
