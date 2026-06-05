@@ -172,7 +172,7 @@ export function ProfilePage() {
       setEmailMessage("");
       await updateEmail(nextEmail);
       setEmailMessage(
-        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Tot je die mail bevestigt, log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.",
+        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.",
       );
     } catch (error) {
       setEmailMessage(friendlyErrorMessage(error, "E-mailadres wijzigen lukt nu niet. Controleer het adres en probeer het opnieuw."));
@@ -316,7 +316,7 @@ export function ProfilePage() {
             </div>
           </div>
           <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
-          <p className="muted">Na het wijzigen krijg je een bevestigingsmail. Tot je de wijziging bevestigt, log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.</p>
+          <p className="muted">Na het wijzigen krijg je op je nieuwe e-mailadres een bevestigingsmail. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres.</p>
           <form className="form-panel form-panel--nested" onSubmit={handleEmailUpdate}>
             <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="Nieuw e-mailadres" type="email" value={email} />
             <button className="button button--soft" disabled={emailBusy} type="submit">
