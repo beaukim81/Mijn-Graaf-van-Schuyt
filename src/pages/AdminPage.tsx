@@ -311,13 +311,19 @@ export function AdminPage() {
         body: { request_id: request.id },
       });
       if (error) throw error;
-      await accessRequests.updateAsync(request.id, {
-        status: "Goedgekeurd",
-        approved_by: profile.user_id,
-        approved_at: new Date().toISOString(),
-        invited_user_id: data?.user_id,
-        updated_at: new Date().toISOString(),
-      });
+      const timestamp = new Date().toISOString();
+      accessRequests.replace(accessRequests.items.map((item) => (
+        item.id === request.id
+          ? {
+              ...item,
+              status: "Goedgekeurd",
+              approved_by: profile.user_id,
+              approved_at: timestamp,
+              invited_user_id: data?.user_id,
+              updated_at: timestamp,
+            }
+          : item
+      )));
     } catch (error) {
       setAccessRequestError(await friendlyFunctionError(error, "Goedkeuren lukt nu niet. Controleer of de Supabase-functie is gedeployed en probeer het opnieuw."));
     } finally {
