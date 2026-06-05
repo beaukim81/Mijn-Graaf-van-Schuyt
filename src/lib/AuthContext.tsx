@@ -31,6 +31,12 @@ interface AccessRequestInput {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function hasPasswordSetupIntent() {
+  if (typeof window === "undefined") return false;
+  const combinedUrlState = `${window.location.search} ${window.location.hash}`.toLowerCase();
+  return combinedUrlState.includes("type=invite") || combinedUrlState.includes("type=recovery");
+}
+
 function mapProfile(row: Record<string, unknown>): Profile {
   return {
     id: String(row.id),
@@ -105,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     client.auth.getSession()
       .then(async ({ data }) => {
         if (!mounted) return;
+        if (hasPasswordSetupIntent()) setPasswordRecovery(true);
         setSession(data.session);
         if (data.session?.user) await loadProfile(data.session.user);
         if (mounted) setLoading(false);
@@ -118,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
     const { data: listener } = client.auth.onAuthStateChange((event, nextSession) => {
-      if (event === "PASSWORD_RECOVERY") setPasswordRecovery(true);
+      if (event === "PASSWORD_RECOVERY" || hasPasswordSetupIntent()) setPasswordRecovery(true);
       setSession(nextSession);
       if (nextSession?.user) {
         loadProfile(nextSession.user).catch(() => setProfile(null));
@@ -180,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
         setPasswordRecovery(false);
+        window.history.replaceState({}, document.title, window.location.pathname);
       },
       deleteAccount: async () => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
