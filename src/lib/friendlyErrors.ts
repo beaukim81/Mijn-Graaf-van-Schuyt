@@ -3,6 +3,14 @@ export function friendlyErrorMessage(error: unknown, fallback = "Er ging iets mi
 
   if (!message) return fallback;
 
+  if (
+    message.includes("aanvraag is al ontvangen") ||
+    message.includes("access_requests_email_active_key") ||
+    message.includes("access_requests") && (message.includes("duplicate") || message.includes("23505") || message.includes("unique constraint"))
+  ) {
+    return "Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.";
+  }
+
   if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
     return "E-mailadres of wachtwoord klopt niet. Controleer je gegevens of kies Wachtwoord vergeten.";
   }
@@ -46,7 +54,7 @@ export function friendlyErrorMessage(error: unknown, fallback = "Er ging iets mi
     return "Deze functie is nog niet helemaal goed gekoppeld. Geef dit door aan de beheerder.";
   }
 
-  if (message.includes("duplicate key")) {
+  if (message.includes("duplicate key") || message.includes("23505")) {
     return "Dit lijkt al te bestaan. Vernieuw de pagina en controleer of het al is opgeslagen.";
   }
 
@@ -67,7 +75,7 @@ export function friendlyErrorMessage(error: unknown, fallback = "Er ging iets mi
 
 export function rawErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error && "message" in error) return String(error.message);
+  if (typeof error === "object" && error && "message" in error) return `${String(error.message)} ${JSON.stringify(error)}`;
   if (typeof error === "string") return error;
   return "";
 }

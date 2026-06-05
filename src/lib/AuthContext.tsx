@@ -29,6 +29,8 @@ interface AccessRequestInput {
   houseNumber: string;
 }
 
+const pendingAccessRequestMessage = "Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.";
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function hasPasswordSetupIntent() {
@@ -168,9 +170,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           status: "Nieuw",
         });
         if (error) {
-          const message = String(error.message ?? "").toLowerCase();
-          if (message.includes("duplicate") || message.includes("access_requests_email_active_key")) {
-            throw new Error("Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.");
+          const errorText = JSON.stringify(error).toLowerCase();
+          if (
+            error.code === "23505" ||
+            errorText.includes("duplicate") ||
+            errorText.includes("unique constraint") ||
+            errorText.includes("access_requests_email_active_key")
+          ) {
+            throw new Error(pendingAccessRequestMessage);
           }
           throw error;
         }
