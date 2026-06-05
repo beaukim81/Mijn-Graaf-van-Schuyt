@@ -82,7 +82,7 @@ export function ProfilePage() {
       return;
     }
     if (!isValidHouseNumber(houseNumber)) {
-      setProfileMessage("Vul een bestaand oneven huisnummer in van Graaf van Schuyt.");
+      setProfileMessage("Dit huisnummer bestaat niet in Graaf van Schuyt. Vul een bestaand oneven huisnummer in.");
       return;
     }
 
@@ -390,8 +390,18 @@ export function ProfilePage() {
         <p>Ontvang alleen relevante meldingen: persoonlijk voor jou, of belangrijke gebouwmeldingen van beheer.</p>
         <p className="muted">Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat.</p>
         <div className="settings-list">
-          <PreferenceToggle label="Persoonlijke meldingen" checked={preference.personal_notifications} onChange={(checked) => updatePreference({ personal_notifications: checked })} />
-          <PreferenceToggle label="Algemene mededelingen" checked={preference.building_notifications} onChange={(checked) => updatePreference({ building_notifications: checked })} />
+          <PreferenceToggle
+            label="Persoonlijk voor mij"
+            description="Bijvoorbeeld als iemand reageert op iets dat jij hebt geplaatst, of als beheer iets aan jouw item terugkoppelt."
+            checked={preference.personal_notifications}
+            onChange={(checked) => updatePreference({ personal_notifications: checked })}
+          />
+          <PreferenceToggle
+            label="Algemene gebouwmeldingen"
+            description="Belangrijke mededelingen voor alle bewoners, zoals schoonmaak, controles of urgente gebouwinformatie."
+            checked={preference.building_notifications}
+            onChange={(checked) => updatePreference({ building_notifications: checked })}
+          />
         </div>
         <details className="optional-settings">
           <summary>
@@ -399,10 +409,30 @@ export function ProfilePage() {
             <small>Kies zelf of je extra meldingen wilt ontvangen.</small>
           </summary>
           <div className="settings-list">
-            <PreferenceToggle label="Oproepen" checked={preference.help_notifications} onChange={(checked) => updatePreference({ help_notifications: checked })} />
-            <PreferenceToggle label="Mijn meldingen" checked={preference.report_notifications} onChange={(checked) => updatePreference({ report_notifications: checked })} />
-            <PreferenceToggle label="Kennisbank" checked={preference.knowledge_notifications} onChange={(checked) => updatePreference({ knowledge_notifications: checked })} />
-            <PreferenceToggle label="Prikbord" checked={preference.bulletin_notifications} onChange={(checked) => updatePreference({ bulletin_notifications: checked })} />
+            <PreferenceToggle
+              label="Oproepen"
+              description="Extra meldingen rond hulpvragen, uitnodigingen en korte afstemming met buren."
+              checked={preference.help_notifications}
+              onChange={(checked) => updatePreference({ help_notifications: checked })}
+            />
+            <PreferenceToggle
+              label="Gebouwmeldingen die ik heb geplaatst"
+              description="Statuswijzigingen of terugkoppeling over een melding die jij zelf hebt aangemaakt."
+              checked={preference.report_notifications}
+              onChange={(checked) => updatePreference({ report_notifications: checked })}
+            />
+            <PreferenceToggle
+              label="Kennisbank"
+              description="Bericht als een door jou gedeelde tip of handleiding is verwerkt."
+              checked={preference.knowledge_notifications}
+              onChange={(checked) => updatePreference({ knowledge_notifications: checked })}
+            />
+            <PreferenceToggle
+              label="Prikbord"
+              description="Extra meldingen over prikbordberichten, zoals spullen, gevonden voorwerpen of praktische berichten."
+              checked={preference.bulletin_notifications}
+              onChange={(checked) => updatePreference({ bulletin_notifications: checked })}
+            />
           </div>
         </details>
         <div className="action-row">
@@ -434,10 +464,13 @@ export function ProfilePage() {
   );
 }
 
-function PreferenceToggle({ checked, label, onChange }: { checked: boolean; label: string; onChange: (checked: boolean) => void }) {
+function PreferenceToggle({ checked, description, label, onChange }: { checked: boolean; description: string; label: string; onChange: (checked: boolean) => void }) {
   return (
     <label className="toggle-row">
-      <span>{label}</span>
+      <span className="toggle-row__copy">
+        <strong>{label}</strong>
+        <small>{description}</small>
+      </span>
       <input checked={checked} onChange={(event) => onChange(event.target.checked)} type="checkbox" />
     </label>
   );

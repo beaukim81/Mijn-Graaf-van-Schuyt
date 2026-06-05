@@ -1012,6 +1012,23 @@ button {
   font-weight: 750;
 }
 
+.toggle-row__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.toggle-row__copy strong {
+  color: var(--primary-dark);
+  font-weight: 900;
+}
+
+.toggle-row__copy small {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .toggle-row input {
   accent-color: var(--primary);
   flex: 0 0 22px;

@@ -34,7 +34,7 @@ export function AuthPage() {
         window.location.replace("/");
       } else {
         if (!isValidHouseNumber(houseNumber)) {
-          setError("Vul een bestaand oneven huisnummer in van Graaf van Schuyt.");
+          setError("Dit huisnummer bestaat niet in Graaf van Schuyt. Vul een bestaand oneven huisnummer in.");
           return;
         }
         const response = await signUp({ email, password, firstName, lastName, houseNumber });
