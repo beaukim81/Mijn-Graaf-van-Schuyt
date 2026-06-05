@@ -202,7 +202,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       updateEmail: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
-        const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: window.location.origin });
+        const normalizedEmail = email.trim().toLowerCase();
+        const currentUserId = session?.user.id;
+        const { data: existingProfiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("user_id,email")
+          .ilike("email", normalizedEmail)
+          .limit(1);
+        if (profileError) throw profileError;
+        if (existingProfiles?.some((existingProfile) => existingProfile.user_id !== currentUserId)) {
+          throw new Error(existingAccountMessage);
+        }
+
+        const { error } = await supabase.auth.updateUser({ email: normalizedEmail }, { emailRedirectTo: window.location.origin });
         if (error) throw error;
       },
       updatePassword: async (password) => {

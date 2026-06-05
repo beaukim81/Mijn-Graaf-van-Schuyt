@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { LoadingState } from "./components/LoadingState";
@@ -39,18 +39,23 @@ import {
 } from "./lib/dataMappers";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { paths } from "./routes/paths";
-import { AdminPage } from "./pages/AdminPage";
 import { AuthPage } from "./pages/AuthPage";
-import { BulletinPage } from "./pages/BulletinPage";
-import { ContactsPage } from "./pages/ContactsPage";
-import { HelpPage } from "./pages/HelpPage";
-import { HomePage } from "./pages/HomePage";
-import { KnowledgePage } from "./pages/KnowledgePage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { ReportsPage } from "./pages/ReportsPage";
 import { SecurityReportPage } from "./pages/SecurityReportPage";
 import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
 import type { AccessRequest, BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report, SecurityEvent } from "./types";
+
+const AdminPage = lazy(() => import("./pages/AdminPage").then((module) => ({ default: module.AdminPage })));
+const BulletinPage = lazy(() => import("./pages/BulletinPage").then((module) => ({ default: module.BulletinPage })));
+const ContactsPage = lazy(() => import("./pages/ContactsPage").then((module) => ({ default: module.ContactsPage })));
+const HelpPage = lazy(() => import("./pages/HelpPage").then((module) => ({ default: module.HelpPage })));
+const HomePage = lazy(() => import("./pages/HomePage").then((module) => ({ default: module.HomePage })));
+const KnowledgePage = lazy(() => import("./pages/KnowledgePage").then((module) => ({ default: module.KnowledgePage })));
+const ProfilePage = lazy(() => import("./pages/ProfilePage").then((module) => ({ default: module.ProfilePage })));
+const ReportsPage = lazy(() => import("./pages/ReportsPage").then((module) => ({ default: module.ReportsPage })));
+
+function LazyPage({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<LoadingState />}>{children}</Suspense>;
+}
 
 function requireSupabase() {
   if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -610,14 +615,14 @@ const router = createBrowserRouter([
     path: paths.home,
     element: <AppLayout />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: paths.contacts, element: <ContactsPage /> },
-      { path: paths.reports, element: <ReportsPage /> },
-      { path: paths.knowledge, element: <KnowledgePage /> },
-      { path: paths.help, element: <HelpPage /> },
-      { path: paths.bulletin, element: <BulletinPage /> },
-      { path: paths.profile, element: <ProfilePage /> },
-      { path: paths.admin, element: <AdminPage /> },
+      { index: true, element: <LazyPage><HomePage /></LazyPage> },
+      { path: paths.contacts, element: <LazyPage><ContactsPage /></LazyPage> },
+      { path: paths.reports, element: <LazyPage><ReportsPage /></LazyPage> },
+      { path: paths.knowledge, element: <LazyPage><KnowledgePage /></LazyPage> },
+      { path: paths.help, element: <LazyPage><HelpPage /></LazyPage> },
+      { path: paths.bulletin, element: <LazyPage><BulletinPage /></LazyPage> },
+      { path: paths.profile, element: <LazyPage><ProfilePage /></LazyPage> },
+      { path: paths.admin, element: <LazyPage><AdminPage /></LazyPage> },
     ],
   },
 ]);

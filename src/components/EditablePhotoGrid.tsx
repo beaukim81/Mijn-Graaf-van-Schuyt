@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useConfirm } from "../lib/ConfirmContext";
+import { useSignedUrls } from "../lib/storageUrls";
 
 interface EditablePhotoGridProps {
   images: string[];
@@ -9,8 +10,8 @@ interface EditablePhotoGridProps {
 
 export function EditablePhotoGrid({ images, alt, onRemove }: EditablePhotoGridProps) {
   const confirm = useConfirm();
+  const visibleImages = useSignedUrls(images.slice(0, 10));
   if (images.length === 0) return null;
-  const visibleImages = images.slice(0, 10);
 
   return (
     <div className={`editable-photo-grid photo-grid photo-grid--${Math.min(visibleImages.length, 4)}`}>

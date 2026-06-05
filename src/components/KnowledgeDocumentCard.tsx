@@ -3,6 +3,7 @@ import type { KnowledgeDocument } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
 import { useConfirm } from "../lib/ConfirmContext";
+import { StorageLink } from "./StorageLink";
 
 interface KnowledgeDocumentCardProps {
   document: KnowledgeDocument;
@@ -57,12 +58,12 @@ export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }:
       <p className="muted">Laatst bijgewerkt: {new Date(document.bijgewerkt_op).toLocaleDateString("nl-NL")}</p>
       {document.pdf_url && (
         <div className="action-row">
-          <a className="button button--soft" href={document.pdf_url} target="_blank" rel="noreferrer">
+          <StorageLink className="button button--soft" href={document.pdf_url}>
             <FileText aria-hidden="true" size={18} /> Open PDF
-          </a>
-          <a className="button button--soft" href={document.pdf_url} download>
+          </StorageLink>
+          <StorageLink className="button button--soft" href={document.pdf_url} download>
             <Download aria-hidden="true" size={18} /> Download PDF
-          </a>
+          </StorageLink>
         </div>
       )}
       {canManage && (

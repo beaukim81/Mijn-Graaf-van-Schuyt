@@ -6,6 +6,7 @@ import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { UrlPreview } from "../components/UrlPreview";
+import { StorageLink } from "../components/StorageLink";
 import { reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
@@ -236,9 +237,9 @@ export function ReportsPage() {
             <strong>Bekijk eerst deze kennisbankdocumenten</strong>
             <span>Misschien vind je hier al een antwoord voordat je de melding verstuurt.</span>
             {draftRelevantDocuments.map((document) => (
-              <a href={document.pdf_url} key={document.id} target="_blank" rel="noreferrer">
+              <StorageLink href={document.pdf_url} key={document.id}>
                 {document.titel} · {document.documenttype}
-              </a>
+              </StorageLink>
             ))}
           </div>
         )}

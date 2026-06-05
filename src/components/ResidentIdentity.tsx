@@ -1,5 +1,6 @@
 import type { Profile } from "../types";
 import { residentName } from "../lib/residentDisplay";
+import { useSignedUrl } from "../lib/storageUrls";
 
 interface ResidentIdentityProps {
   name?: string;
@@ -9,6 +10,7 @@ interface ResidentIdentityProps {
 }
 
 export function ResidentIdentity({ compact, houseNumber, name, profile }: ResidentIdentityProps) {
+  const profilePhotoUrl = useSignedUrl(profile?.profielfoto_url);
   const displayName = residentName(
     profile?.naam_of_bijnaam ?? name,
     profile?.achternaam,
@@ -26,7 +28,7 @@ export function ResidentIdentity({ compact, houseNumber, name, profile }: Reside
 
   return (
     <span className={compact ? "resident-identity resident-identity--compact" : "resident-identity"}>
-      <img alt="" className="resident-avatar" src={profile.profielfoto_url} />
+      <img alt="" className="resident-avatar" src={profilePhotoUrl} />
       <span className="resident-identity__copy">
         <span className="resident-identity__name">{displayName}</span>
         {displayHouseNumber ? <small>huisnummer {displayHouseNumber}</small> : null}

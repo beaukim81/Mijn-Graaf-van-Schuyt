@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from "./supabase";
+import { toStorageReference } from "./storageUrls";
 
 const bulletinImageBucket = "bulletin-images";
 const knowledgeFileBucket = "knowledge-files";
@@ -74,8 +75,7 @@ export async function uploadBulletinImage(file: File, userId: string) {
     return fileToDataUrl(preparedFile);
   }
 
-  const { data } = supabase.storage.from(bulletinImageBucket).getPublicUrl(path);
-  return data.publicUrl;
+  return toStorageReference(bulletinImageBucket, path);
 }
 
 export async function uploadBulletinImages(files: File[], userId: string) {
@@ -108,6 +108,5 @@ export async function uploadKnowledgePdf(file: File, userId: string) {
     throw new Error("Het PDF-bestand uploaden lukt niet. Controleer je verbinding en probeer het opnieuw.");
   }
 
-  const { data } = supabase.storage.from(knowledgeFileBucket).getPublicUrl(path);
-  return data.publicUrl;
+  return toStorageReference(knowledgeFileBucket, path);
 }

@@ -6,8 +6,9 @@ import { isValidHouseNumber } from "../lib/floorForHouseNumber";
 
 export function AuthPage() {
   const { requestAccess, resetPassword, signIn } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -17,11 +18,12 @@ export function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [accessRequested, setAccessRequested] = useState(false);
 
-  function switchMode(nextMode: "login" | "signup") {
+  function switchMode(nextMode: "login" | "signup" | "forgot") {
     setMode(nextMode);
     setError("");
     setMessage("");
     setAccessRequested(false);
+    if (nextMode === "forgot" && !resetEmail) setResetEmail(email);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -53,7 +55,7 @@ export function AuthPage() {
   }
 
   async function requestPasswordReset() {
-    if (!email) {
+    if (!resetEmail) {
       setError("Vul eerst je e-mailadres in.");
       return;
     }
@@ -62,7 +64,7 @@ export function AuthPage() {
     setMessage("");
 
     try {
-      await resetPassword(email);
+      await resetPassword(resetEmail);
       setMessage(
         "We hebben een e-mail gestuurd waarmee je een nieuw wachtwoord kunt instellen. Kijk ook in spam of ongewenste mail als je niets ziet.",
       );
@@ -78,37 +80,74 @@ export function AuthPage() {
       <section className="auth-card">
         <div className="auth-card__header">
           <p className="eyebrow">Graaf van Schuyt</p>
-          <h1>Inloggen of toegang aanvragen</h1>
+          <h1>{mode === "forgot" ? "Wachtwoord vergeten" : "Inloggen of toegang aanvragen"}</h1>
         </div>
 
-        <div className="auth-tabs" role="tablist" aria-label="Account">
+        {mode !== "forgot" ? (
+          <div className="auth-tabs" role="tablist" aria-label="Account">
           <button className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")} type="button">
             <LogIn aria-hidden="true" size={18} /> Inloggen
           </button>
           <button className={mode === "signup" ? "active" : ""} onClick={() => switchMode("signup")} type="button">
             <UserPlus aria-hidden="true" size={18} /> Toegang aanvragen
           </button>
-        </div>
+          </div>
+        ) : null}
 
-        <form className="form-panel auth-form" onSubmit={submit}>
+        {mode === "forgot" ? (
+          <form className="form-panel auth-form" onSubmit={(event) => { event.preventDefault(); void requestPasswordReset(); }}>
+            <p className="muted">
+              Vul het e-mailadres van je account in. Je ontvangt een mail waarmee je een nieuw wachtwoord kunt instellen.
+              Kijk ook in spam of ongewenste mail.
+            </p>
+            <label className="field">
+              <span>E-mailadres</span>
+              <input autoComplete="email" inputMode="email" value={resetEmail} onChange={(event) => setResetEmail(event.target.value)} placeholder="naam@voorbeeld.nl" required type="email" />
+            </label>
+            {error && <p className="form-message form-message--error">{error}</p>}
+            {message && <p className="form-message">{message}</p>}
+            <button className="button button--full" disabled={busy} type="submit">
+              <KeyRound aria-hidden="true" size={18} /> {busy ? "Even geduld" : "Herstelmail versturen"}
+            </button>
+            <button className="button button--soft button--full" disabled={busy} onClick={() => switchMode("login")} type="button">
+              Terug naar inloggen
+            </button>
+          </form>
+        ) : (
+          <form className="form-panel auth-form" onSubmit={submit}>
           {mode === "signup" && (
             <>
-              <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Voornaam" required />
-              <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Achternaam optioneel" />
-              <input inputMode="numeric" value={houseNumber} onChange={(event) => setHouseNumber(event.target.value)} placeholder="Huisnummer" required />
+              <label className="field">
+                <span>Voornaam</span>
+                <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Voornaam" required />
+              </label>
+              <label className="field">
+                <span>Achternaam optioneel</span>
+                <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Achternaam" />
+              </label>
+              <label className="field">
+                <span>Huisnummer</span>
+                <input inputMode="numeric" value={houseNumber} onChange={(event) => setHouseNumber(event.target.value)} placeholder="Huisnummer" required />
+              </label>
             </>
           )}
-          <input autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="E-mailadres" required type="email" />
+          <label className="field">
+            <span>E-mailadres</span>
+            <input autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="naam@voorbeeld.nl" required type="email" />
+          </label>
           {mode === "login" && (
-            <input
-              autoComplete="current-password"
-              minLength={8}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Wachtwoord"
-              required
-              type="password"
-            />
+            <label className="field">
+              <span>Wachtwoord</span>
+              <input
+                autoComplete="current-password"
+                minLength={8}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Wachtwoord"
+                required
+                type="password"
+              />
+            </label>
           )}
           {mode === "signup" ? (
             <p className="muted">
@@ -116,10 +155,7 @@ export function AuthPage() {
               je account te activeren en zelf een wachtwoord in te stellen. Kijk ook in spam of ongewenste mail.
             </p>
           ) : (
-            <p className="muted">
-              Wachtwoord vergeten? Vul je e-mailadres in en gebruik de knop hieronder. De herstelmail kan soms in spam
-              of ongewenste mail terechtkomen.
-            </p>
+            <p className="muted">Log in met je e-mailadres en wachtwoord.</p>
           )}
           {error && <p className="form-message form-message--error">{error}</p>}
           {message && <p className="form-message">{message}</p>}
@@ -134,11 +170,12 @@ export function AuthPage() {
                   : "Toegang aanvragen"}
           </button>
           {mode === "login" && (
-            <button className="button button--soft button--full" disabled={busy} onClick={requestPasswordReset} type="button">
+            <button className="button button--soft button--full" disabled={busy} onClick={() => switchMode("forgot")} type="button">
               Wachtwoord vergeten?
             </button>
           )}
-        </form>
+          </form>
+        )}
       </section>
     </main>
   );

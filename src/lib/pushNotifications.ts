@@ -36,6 +36,16 @@ export function pushSupported() {
   return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
 }
 
+export async function getPushStatus() {
+  if (!pushSupported()) return "unsupported" as const;
+  if (Notification.permission === "denied") return "denied" as const;
+  if (Notification.permission !== "granted") return "not_enabled" as const;
+
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  return subscription ? ("enabled" as const) : ("not_enabled" as const);
+}
+
 export function localPreferenceKey(userId: string) {
   return `mijn-graaf-van-schuyt:${userId}:notification-preferences`;
 }

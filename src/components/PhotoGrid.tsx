@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useSignedUrls } from "../lib/storageUrls";
 
 interface PhotoGridProps {
   images: string[];
@@ -8,9 +9,8 @@ interface PhotoGridProps {
 
 export function PhotoGrid({ images, alt }: PhotoGridProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const visibleImages = useSignedUrls(images.slice(0, 10));
   if (images.length === 0) return null;
-
-  const visibleImages = images.slice(0, 10);
 
   return (
     <>

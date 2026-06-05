@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
 import { useConfirm } from "../lib/ConfirmContext";
 import { residentLabel } from "../lib/residentDisplay";
+import { useSignedUrl } from "../lib/storageUrls";
 import { paths } from "../routes/paths";
 
 const navItems = [
@@ -64,6 +65,7 @@ export function AppLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [textSize, setTextSize] = useState<TextSize>(() => readTextSize(textSizeKey));
+  const profilePhotoUrl = useSignedUrl(profile.profielfoto_url);
 
   useEffect(() => {
     document.documentElement.dataset.textSize = textSize;
@@ -350,7 +352,7 @@ export function AppLayout() {
             </NavLink>
           )}
           <NavLink aria-label="Profiel" className="icon-button profile-button" onClick={() => { setShowNotifications(false); setShowAccessibility(false); }} to={paths.profile}>
-            {profile.profielfoto_url ? <img alt="" className="header-profile-photo" src={profile.profielfoto_url} /> : <UserRound aria-hidden="true" />}
+            {profile.profielfoto_url ? <img alt="" className="header-profile-photo" src={profilePhotoUrl} /> : <UserRound aria-hidden="true" />}
           </NavLink>
         </div>
       </header>

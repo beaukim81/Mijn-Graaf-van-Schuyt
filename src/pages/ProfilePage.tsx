@@ -7,7 +7,8 @@ import { ResidentIdentity } from "../components/ResidentIdentity";
 import { useAuth } from "../lib/AuthContext";
 import { uploadBulletinImages } from "../lib/fileUploads";
 import { floorForHouseNumber, isValidHouseNumber } from "../lib/floorForHouseNumber";
-import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
+import { disablePushNotifications, enablePushNotifications, getPushStatus, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
+import { useSignedUrl } from "../lib/storageUrls";
 import type { NotificationPreference } from "../types";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { useConfirm } from "../lib/ConfirmContext";
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const { configured, deleteAccount, refreshProfile, signOut, updateEmail, updatePassword } = useAuth();
   const confirm = useConfirm();
   const [pushMessage, setPushMessage] = useState("");
+  const [pushStatus, setPushStatus] = useState<"checking" | "enabled" | "not_enabled" | "denied" | "unsupported">("checking");
   const [accountMessage, setAccountMessage] = useState("");
   const [email, setEmail] = useState(profile.email ?? "");
   const [emailMessage, setEmailMessage] = useState("");
@@ -58,12 +60,22 @@ export function ProfilePage() {
     [feedbackItems.items, profile.user_id],
   );
   const photoPreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : profileDraft.profielfoto_url), [photoFile, profileDraft.profielfoto_url]);
+  const resolvedPhotoPreview = useSignedUrl(photoPreview);
+
+  async function refreshPushStatus() {
+    setPushStatus("checking");
+    setPushStatus(await getPushStatus());
+  }
 
   useEffect(() => {
     return () => {
       if (photoPreview.startsWith("blob:")) URL.revokeObjectURL(photoPreview);
     };
   }, [photoPreview]);
+
+  useEffect(() => {
+    void refreshPushStatus();
+  }, []);
 
   async function updatePreference(changes: Partial<NotificationPreference>) {
     const next = { ...preference, ...changes, updated_at: new Date().toISOString() };
@@ -115,6 +127,7 @@ export function ProfilePage() {
     try {
       setPushMessage("");
       await enablePushNotifications(profile, preference);
+      await refreshPushStatus();
       setPushMessage("Pushmeldingen zijn ingeschakeld.");
     } catch (error) {
       setPushMessage(friendlyErrorMessage(error, "Pushmeldingen inschakelen lukt nu niet. Controleer of meldingen in je browser zijn toegestaan."));
@@ -123,6 +136,7 @@ export function ProfilePage() {
 
   async function disablePush() {
     await disablePushNotifications(profile);
+    await refreshPushStatus();
     setPushMessage("Pushmeldingen zijn uitgezet op dit apparaat.");
   }
 
@@ -215,7 +229,7 @@ export function ProfilePage() {
 
       <article className="item-card profile-summary-card">
         <div className="profile-summary">
-          {photoPreview ? <img alt="" className="profile-avatar" src={photoPreview} /> : null}
+          {photoPreview ? <img alt="" className="profile-avatar" src={resolvedPhotoPreview} /> : null}
           <div>
             <p className="chip">{profile.rol}</p>
             <h2>
@@ -260,7 +274,7 @@ export function ProfilePage() {
             <input readOnly value={inferredFloor || "Wordt bepaald op basis van je huisnummer"} />
           </label>
           <div className="profile-photo-editor">
-            {photoPreview ? <img alt="Gekozen profielfoto" className="profile-avatar profile-avatar--large" src={photoPreview} /> : <div className="profile-photo-placeholder">Geen foto</div>}
+            {photoPreview ? <img alt="Gekozen profielfoto" className="profile-avatar profile-avatar--large" src={resolvedPhotoPreview} /> : <div className="profile-photo-placeholder">Geen foto</div>}
             <div className="action-row">
               <label className="button button--soft file-button">
                 <Camera aria-hidden="true" size={18} /> Foto kiezen
@@ -316,7 +330,7 @@ export function ProfilePage() {
             </div>
           </div>
           <p>Gebruik hier het e-mailadres waarmee je wilt inloggen en berichten wilt ontvangen.</p>
-          <p className="muted">Na het wijzigen krijg je op je nieuwe e-mailadres een bevestigingsmail. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres.</p>
+          <p className="muted">Na het wijzigen krijg je op je nieuwe e-mailadres een bevestigingsmail. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres. Een e-mailadres dat al bij een andere bewoner hoort, kan niet worden gebruikt.</p>
           <form className="form-panel form-panel--nested" onSubmit={handleEmailUpdate}>
             <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} placeholder="Nieuw e-mailadres" type="email" value={email} />
             <button className="button button--soft" disabled={emailBusy} type="submit">
@@ -390,10 +404,24 @@ export function ProfilePage() {
             <p className="chip">Notificaties</p>
             <h2>Pushmeldingen</h2>
           </div>
-          <StatusBadge tone={pushSupported() ? "soft" : "warning"}>{pushSupported() ? "Beschikbaar" : "Niet beschikbaar"}</StatusBadge>
+          <StatusBadge tone={pushStatus === "enabled" ? "good" : pushStatus === "denied" || pushStatus === "unsupported" ? "warning" : "soft"}>
+            {pushStatus === "checking"
+              ? "Controleren"
+              : pushStatus === "enabled"
+                ? "Aan op dit apparaat"
+                : pushStatus === "denied"
+                  ? "Niet toegestaan"
+                  : pushStatus === "unsupported"
+                    ? "Niet beschikbaar"
+                    : "Niet ingesteld"}
+          </StatusBadge>
         </div>
         <p>Kies welke pushmeldingen je wilt ontvangen. Standaard staan alleen persoonlijke meldingen en belangrijke gebouwmeldingen aan.</p>
-        <p className="muted">Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat.</p>
+        <p className="muted">
+          {pushStatus === "denied"
+            ? "Meldingen zijn geweigerd in je browser of telefooninstellingen. Zet ze daar eerst weer aan."
+            : "Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat."}
+        </p>
         <div className="settings-list">
           <PreferenceToggle
             label="Persoonlijke meldingen"
@@ -415,8 +443,8 @@ export function ProfilePage() {
           />
         </div>
         <div className="action-row">
-          <button className="button button--soft" onClick={enablePush} type="button">Pushmeldingen toestaan</button>
-          <button className="button button--soft" onClick={disablePush} type="button">Uitzetten op dit apparaat</button>
+          <button className="button button--soft" disabled={!pushSupported() || pushStatus === "denied"} onClick={enablePush} type="button">Pushmeldingen toestaan</button>
+          <button className="button button--soft" disabled={pushStatus !== "enabled"} onClick={disablePush} type="button">Uitzetten op dit apparaat</button>
           <button className="button button--soft" onClick={sendTestPush} type="button">Testmelding sturen</button>
         </div>
         {pushMessage && <p className="muted">{pushMessage}</p>}
