@@ -20,6 +20,7 @@ type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
+type InstallPromptState = { dismissedForever?: boolean; lastShown?: number };
 
 const textSizeOptions: { value: TextSize; label: string }[] = [
   { value: "normal", label: "Normaal" },
@@ -66,10 +67,14 @@ function isFormElementActive() {
 function readInstallPromptState(key: string) {
   try {
     const stored = window.localStorage.getItem(key);
-    return stored ? (JSON.parse(stored) as { dismissedForever?: boolean; lastShown?: number }) : {};
+    return stored ? (JSON.parse(stored) as InstallPromptState) : {};
   } catch {
     return {};
   }
+}
+
+function writeInstallPromptState(key: string, state: InstallPromptState) {
+  window.localStorage.setItem(key, JSON.stringify(state));
 }
 
 export function AppLayout() {
@@ -96,6 +101,7 @@ export function AppLayout() {
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const isIOS = useMemo(isIOSDevice, []);
+  const hasNativeInstallPrompt = Boolean(installPromptEvent);
   const profilePhotoUrl = useSignedUrl(profile.profielfoto_url);
 
   useEffect(() => {
@@ -152,12 +158,11 @@ export function AppLayout() {
     const state = readInstallPromptState(installPromptKey);
     if (state.dismissedForever) return;
     if (state.lastShown && Date.now() - state.lastShown < 24 * 60 * 60 * 1000) return;
-    if (!isIOS && !installPromptEvent) return;
 
     const timer = window.setTimeout(() => {
       if (isFormElementActive()) return;
       setShowInstallPrompt(true);
-      window.localStorage.setItem(installPromptKey, JSON.stringify({ ...state, lastShown: Date.now() }));
+      writeInstallPromptState(installPromptKey, { ...state, lastShown: Date.now() });
     }, 4500);
 
     return () => window.clearTimeout(timer);
@@ -438,7 +443,9 @@ export function AppLayout() {
             <p>
               {isIOS
                 ? "Tik onderaan op Delen en kies daarna 'Zet op beginscherm'."
-                : "Zet Mijn Graaf van Schuyt op je telefoon, zodat je de app sneller opent en meldingen beter werken."}
+                : hasNativeInstallPrompt
+                  ? "Zet Mijn Graaf van Schuyt op je telefoon, zodat je de app sneller opent en meldingen beter werken."
+                  : "Open het browsermenu en kies 'App installeren' of 'Toevoegen aan beginscherm'."}
             </p>
           </div>
           <div className="install-prompt__actions">
@@ -450,10 +457,7 @@ export function AppLayout() {
                   const choice = await installPromptEvent.userChoice;
                   setInstallPromptEvent(null);
                   setShowInstallPrompt(false);
-                  window.localStorage.setItem(
-                    installPromptKey,
-                    JSON.stringify({ dismissedForever: choice.outcome === "accepted", lastShown: Date.now() }),
-                  );
+                  writeInstallPromptState(installPromptKey, { dismissedForever: choice.outcome === "accepted", lastShown: Date.now() });
                 }}
                 type="button"
               >
@@ -464,7 +468,7 @@ export function AppLayout() {
               className="button button--soft"
               onClick={() => {
                 setShowInstallPrompt(false);
-                window.localStorage.setItem(installPromptKey, JSON.stringify({ lastShown: Date.now() }));
+                writeInstallPromptState(installPromptKey, { lastShown: Date.now() });
               }}
               type="button"
             >
@@ -474,7 +478,7 @@ export function AppLayout() {
               className="text-button"
               onClick={() => {
                 setShowInstallPrompt(false);
-                window.localStorage.setItem(installPromptKey, JSON.stringify({ dismissedForever: true, lastShown: Date.now() }));
+                writeInstallPromptState(installPromptKey, { dismissedForever: true, lastShown: Date.now() });
               }}
               type="button"
             >
