@@ -39,6 +39,8 @@ function hasPasswordSetupIntent() {
   return (
     combinedUrlState.includes("type=invite") ||
     combinedUrlState.includes("type=recovery") ||
+    combinedUrlState.includes("access_token") && combinedUrlState.includes("invite") ||
+    combinedUrlState.includes("access_token") && combinedUrlState.includes("recovery") ||
     combinedUrlState.includes("wachtwoord-instellen")
   );
 }

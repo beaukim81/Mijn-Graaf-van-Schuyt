@@ -541,12 +541,12 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     return <LoadingState />;
   }
 
-  if (configured && !user) {
-    return <AuthPage />;
-  }
-
   if (configured && passwordRecovery) {
     return <UpdatePasswordPage />;
+  }
+
+  if (configured && !user) {
+    return <AuthPage />;
   }
 
   if (configured && user && !profile) {
