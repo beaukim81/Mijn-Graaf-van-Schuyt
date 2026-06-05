@@ -9,6 +9,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { UrlPreview } from "../components/UrlPreview";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
 import { useAppData } from "../lib/AppDataContext";
+import { useConfirm } from "../lib/ConfirmContext";
 import { uploadBulletinImages, uploadKnowledgePdf } from "../lib/fileUploads";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { notifyBuildingAnnouncement, notifyUser } from "../lib/pushNotifications";
@@ -82,6 +83,7 @@ const blankAnnouncement = {
 export function AdminPage() {
   const { accessRequests, buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
   const location = useLocation();
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
   const [contactDraft, setContactDraft] = useState<Contact>(blankContact);
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
@@ -104,6 +106,8 @@ export function AdminPage() {
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
   const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
   const pendingAccessRequests = useMemo(() => accessRequests.items.filter((item) => item.status === "Nieuw").length, [accessRequests.items]);
+  const pendingDocuments = useMemo(() => documents.items.filter((item) => item.status !== "Gepubliceerd").length, [documents.items]);
+  const newBuildingReports = useMemo(() => reports.items.filter((item) => item.type_melding === "Appartementencomplex" && item.status !== "Opgelost").length, [reports.items]);
 
   useEffect(() => {
     const hash = location.hash.replace("#", "");
@@ -321,11 +325,11 @@ export function AdminPage() {
 
       <div className="admin-overview" aria-label="Beheeronderdelen">
         <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
-        <AdminMetric active={activeTab === "aanvragen"} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
-        <AdminMetric active={activeTab === "feedback"} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
-        <AdminMetric active={activeTab === "kennisbank"} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
+        <AdminMetric active={activeTab === "aanvragen"} alertCount={pendingAccessRequests} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
+        <AdminMetric active={activeTab === "feedback"} alertCount={openFeedback} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
+        <AdminMetric active={activeTab === "kennisbank"} alertCount={pendingDocuments} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
         <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
-        <AdminMetric active={activeTab === "meldingen"} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
+        <AdminMetric active={activeTab === "meldingen"} alertCount={newBuildingReports} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
         <AdminMetric active={activeTab === "prikbord"} label="Prikbord" onClick={() => setActiveTab("prikbord")} value={activePosts} />
         <AdminMetric active={activeTab === "bewoners"} label="Bewoners" onClick={() => setActiveTab("bewoners")} value={residentsCount} />
       </div>
@@ -384,8 +388,8 @@ export function AdminPage() {
                     <button
                       className="button button--danger"
                       disabled={accessRequestBusyId === request.id}
-                      onClick={() => {
-                        const confirmed = window.confirm(`Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?`);
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: `Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?` });
                         if (confirmed) accessRequests.remove(request.id);
                       }}
                       type="button"
@@ -397,8 +401,8 @@ export function AdminPage() {
                   <div className="admin-row">
                     <button
                       className="button button--danger"
-                      onClick={() => {
-                        const confirmed = window.confirm(`Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?`);
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: `Weet je zeker dat je de aanvraag van ${residentLabel(request.naam_of_bijnaam, request.huisnummer)} wilt verwijderen?` });
                         if (confirmed) accessRequests.remove(request.id);
                       }}
                       type="button"
@@ -496,8 +500,8 @@ export function AdminPage() {
                   </button>
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm(`Weet je zeker dat je feedback "${item.onderwerp}" wilt verwijderen?`);
+                    onClick={async () => {
+                      const confirmed = await confirm({ message: `Weet je zeker dat je feedback "${item.onderwerp}" wilt verwijderen?` });
                       if (confirmed) feedbackItems.remove(item.id);
                     }}
                     type="button"
@@ -561,8 +565,8 @@ export function AdminPage() {
                     <button className="button button--soft" onClick={() => editAnnouncement(announcement)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
                     <button
                       className="button button--danger"
-                      onClick={() => {
-                        const confirmed = window.confirm(`Weet je zeker dat je algemene melding "${announcement.titel}" wilt verwijderen?`);
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: `Weet je zeker dat je algemene melding "${announcement.titel}" wilt verwijderen?` });
                         if (confirmed) buildingAnnouncements.remove(announcement.id);
                       }}
                       type="button"
@@ -685,8 +689,8 @@ export function AdminPage() {
                     <button className="button button--soft" onClick={() => editDocument(document)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
                     <button
                       className="button button--danger"
-                      onClick={() => {
-                        const confirmed = window.confirm(`Weet je zeker dat je document "${document.titel}" wilt verwijderen?`);
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: `Weet je zeker dat je document "${document.titel}" wilt verwijderen?` });
                         if (confirmed) documents.remove(document.id);
                       }}
                       type="button"
@@ -760,8 +764,8 @@ export function AdminPage() {
                     <button className="button button--soft" onClick={() => setContactDraft(contact)} type="button"><Pencil aria-hidden="true" size={18} /> Bewerken</button>
                     <button
                       className="button button--danger"
-                      onClick={() => {
-                        const confirmed = window.confirm(`Weet je zeker dat je contact "${contact.naam}" wilt verwijderen?`);
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: `Weet je zeker dat je contact "${contact.naam}" wilt verwijderen?` });
                         if (confirmed) contacts.remove(contact.id);
                       }}
                       type="button"
@@ -816,8 +820,8 @@ export function AdminPage() {
                 <div className="admin-row">
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm(`Weet je zeker dat je melding "${report.titel}" wilt verwijderen?`);
+                    onClick={async () => {
+                      const confirmed = await confirm({ message: `Weet je zeker dat je melding "${report.titel}" wilt verwijderen?` });
                       if (confirmed) reports.remove(report.id);
                     }}
                     type="button"
@@ -857,16 +861,16 @@ export function AdminPage() {
                 <div className="admin-row">
                   <button
                     className="button button--soft"
-                    onClick={() => {
-                      const confirmed = window.confirm(`Weet je zeker dat je bericht "${post.titel}" wilt afronden en verwijderen?`);
+                    onClick={async () => {
+                      const confirmed = await confirm({ confirmLabel: "Afronden", message: `Weet je zeker dat je bericht "${post.titel}" wilt afronden en verwijderen?` });
                       if (confirmed) bulletinPosts.remove(post.id);
                     }}
                     type="button"
                   >Afronden</button>
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm(`Weet je zeker dat je prikbordbericht "${post.titel}" wilt verwijderen?`);
+                    onClick={async () => {
+                      const confirmed = await confirm({ message: `Weet je zeker dat je prikbordbericht "${post.titel}" wilt verwijderen?` });
                       if (confirmed) bulletinPosts.remove(post.id);
                     }}
                     type="button"
@@ -914,8 +918,11 @@ export function AdminPage() {
                 {resident.user_id !== profile.user_id && (
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm(`Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`);
+                    onClick={async () => {
+                      const confirmed = await confirm({
+                        confirmLabel: "Bewoner verwijderen",
+                        message: `Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`,
+                      });
                       if (confirmed) profiles.remove(resident.id);
                     }}
                     type="button"
@@ -933,9 +940,10 @@ export function AdminPage() {
   );
 }
 
-function AdminMetric({ active, label, onClick, value }: { active?: boolean; label: string; onClick: () => void; value: number }) {
+function AdminMetric({ active, alertCount = 0, label, onClick, value }: { active?: boolean; alertCount?: number; label: string; onClick: () => void; value: number }) {
   return (
     <button className={active ? "active" : ""} onClick={onClick} type="button">
+      {alertCount > 0 && <span aria-label={`${alertCount} nieuw of open`} className="admin-metric-dot" />}
       <strong>{value}</strong>
       <span>{label}</span>
     </button>

@@ -217,6 +217,45 @@ button {
   color: var(--danger);
 }
 
+.confirm-overlay {
+  align-items: center;
+  background: rgba(35, 50, 43, 0.38);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 1600;
+}
+
+.confirm-dialog {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 26px 80px rgba(22, 35, 33, 0.24);
+  max-width: 420px;
+  padding: 22px;
+  width: min(100%, 420px);
+}
+
+.confirm-dialog h2 {
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+}
+
+.confirm-dialog p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.confirm-dialog__actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 18px;
+}
+
 .url-preview {
   background: #f2f7f4;
   border: 1px solid rgba(31, 91, 80, 0.12);
@@ -2484,7 +2523,24 @@ details,
   gap: 3px;
   min-height: 72px;
   padding: 10px 11px;
+  position: relative;
   text-align: left;
+}
+
+.admin-metric-dot {
+  background: var(--danger);
+  border: 2px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 4px 10px rgba(128, 59, 55, 0.22);
+  height: 12px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 12px;
+}
+
+.admin-overview button.active .admin-metric-dot {
+  border-color: var(--primary-dark);
 }
 
 .admin-overview button strong {

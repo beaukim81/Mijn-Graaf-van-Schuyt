@@ -4,6 +4,7 @@ import type { HelpCategory, HelpRequest, Profile } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
+import { useConfirm } from "../lib/ConfirmContext";
 
 const socialCategories: HelpCategory[] = ["Samen eten", "Koffie / thee", "Spelletjesavond", "Filmavond", "Wandelen"];
 const neutralCategories: HelpCategory[] = ["Iets lenen", "Overig"];
@@ -56,6 +57,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
+  const confirm = useConfirm();
   const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
   const copy = copyForCategory(request.categorie);
   const currentUserOffer = request.offers.find((offer) => offer.helper_id === currentUserId);
@@ -98,8 +100,8 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
         {isOwner && (
           <button
             className="button button--soft"
-            onClick={() => {
-              const confirmed = window.confirm("Weet je zeker dat je deze oproep wilt afronden en verwijderen?");
+            onClick={async () => {
+              const confirmed = await confirm({ confirmLabel: "Afronden", message: "Weet je zeker dat je deze oproep wilt afronden en verwijderen?" });
               if (confirmed) onComplete?.(request.id);
             }}
             type="button"
@@ -180,8 +182,8 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
                   )}
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt verwijderen?");
+                    onClick={async () => {
+                      const confirmed = await confirm({ message: "Weet je zeker dat je dit bericht wilt verwijderen?" });
                       if (confirmed) onDeleteMessage?.(request.id, item.id);
                     }}
                     type="button"

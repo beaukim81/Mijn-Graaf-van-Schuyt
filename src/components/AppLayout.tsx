@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
+import { useConfirm } from "../lib/ConfirmContext";
 import { residentLabel } from "../lib/residentDisplay";
 import { paths } from "../routes/paths";
 
@@ -45,6 +46,7 @@ function readStringSet(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
@@ -318,8 +320,8 @@ export function AppLayout() {
                       <button
                         aria-label="Notificatie verwijderen"
                         className="text-button danger"
-                        onClick={() => {
-                          const confirmed = window.confirm("Weet je zeker dat je deze notificatie wilt verwijderen?");
+                        onClick={async () => {
+                          const confirmed = await confirm({ message: "Weet je zeker dat je deze notificatie wilt verwijderen?" });
                           if (confirmed) dismissNotification(notification.id);
                         }}
                         type="button"

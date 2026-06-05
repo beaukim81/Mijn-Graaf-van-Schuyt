@@ -1,6 +1,7 @@
 import { ExternalLink, Mail, MessageCircle, Pencil, Phone, Trash2 } from "lucide-react";
 import type { Contact } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
+import { useConfirm } from "../lib/ConfirmContext";
 
 interface ContactCardProps {
   contact: Contact;
@@ -10,6 +11,7 @@ interface ContactCardProps {
 }
 
 export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardProps) {
+  const confirm = useConfirm();
   return (
     <article className="item-card contact-card">
       <div className="item-card__header">
@@ -48,8 +50,8 @@ export function ContactCard({ contact, isAdmin, onEdit, onDelete }: ContactCardP
           </button>
           <button
             className="button button--danger"
-            onClick={() => {
-              const confirmed = window.confirm(`Weet je zeker dat je ${contact.naam} wilt verwijderen?`);
+            onClick={async () => {
+              const confirmed = await confirm({ message: `Weet je zeker dat je ${contact.naam} wilt verwijderen?` });
               if (confirmed) onDelete?.(contact.id);
             }}
             type="button"

@@ -63,7 +63,8 @@ serve(async (request) => {
       return new Response(JSON.stringify({ error: "Deze aanvraag is al verwerkt." }), { status: 409, headers: corsHeaders });
     }
 
-    const redirectTo = request.headers.get("Origin") || siteUrl;
+    const origin = request.headers.get("Origin") || siteUrl;
+    const redirectTo = `${origin.replace(/\/$/, "")}/?type=invite`;
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(accessRequest.email, {
       data: {
         naam_of_bijnaam: accessRequest.naam_of_bijnaam,

@@ -2,6 +2,7 @@ import { Download, FileText, Pencil, Tag, Trash2 } from "lucide-react";
 import type { KnowledgeDocument } from "../types";
 import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
+import { useConfirm } from "../lib/ConfirmContext";
 
 interface KnowledgeDocumentCardProps {
   document: KnowledgeDocument;
@@ -11,6 +12,7 @@ interface KnowledgeDocumentCardProps {
 }
 
 export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }: KnowledgeDocumentCardProps) {
+  const confirm = useConfirm();
   return (
     <details className="item-card library-card collapsible-card">
       <summary className="item-card__header collapsible-card__summary">
@@ -70,8 +72,8 @@ export function KnowledgeDocumentCard({ canManage, document, onDelete, onEdit }:
           </button>
           <button
             className="button button--danger"
-            onClick={() => {
-              const confirmed = window.confirm("Weet je zeker dat je deze bewonerstip wilt verwijderen?");
+            onClick={async () => {
+              const confirmed = await confirm({ message: "Weet je zeker dat je deze bewonerstip wilt verwijderen?" });
               if (confirmed) onDelete?.(document.id);
             }}
             type="button"

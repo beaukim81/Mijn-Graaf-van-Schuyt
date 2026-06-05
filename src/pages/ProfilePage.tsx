@@ -10,10 +10,12 @@ import { floorForHouseNumber, isValidHouseNumber } from "../lib/floorForHouseNum
 import { disablePushNotifications, enablePushNotifications, mergeNotificationPreference, notifyUser, pushSupported, saveNotificationPreference } from "../lib/pushNotifications";
 import type { NotificationPreference } from "../types";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
+import { useConfirm } from "../lib/ConfirmContext";
 
 export function ProfilePage() {
   const { feedbackItems, notificationPreferences, profile, profiles } = useAppData();
   const { configured, deleteAccount, refreshProfile, signOut, updateEmail, updatePassword } = useAuth();
+  const confirm = useConfirm();
   const [pushMessage, setPushMessage] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
   const [email, setEmail] = useState(profile.email ?? "");
@@ -140,7 +142,10 @@ export function ProfilePage() {
   }
 
   async function handleDeleteAccount() {
-    const confirmed = window.confirm("Weet je zeker dat je je account volledig wilt verwijderen? Je profiel en gekoppelde gegevens worden verwijderd. Dit kun je niet terugdraaien.");
+    const confirmed = await confirm({
+      confirmLabel: "Account verwijderen",
+      message: "Weet je zeker dat je je account volledig wilt verwijderen? Je profiel en gekoppelde gegevens worden verwijderd. Dit kun je niet terugdraaien.",
+    });
     if (!confirmed) return;
     try {
       setAccountMessage("");
@@ -192,7 +197,7 @@ export function ProfilePage() {
       setPasswordMessage("");
       await updatePassword(passwordDraft.password);
       setPasswordDraft({ password: "", repeatPassword: "" });
-      window.alert("Je wachtwoord is gewijzigd. Log daarna opnieuw in met je nieuwe wachtwoord.");
+      setPasswordMessage("Je wachtwoord is gewijzigd. Log opnieuw in met je nieuwe wachtwoord.");
       await signOut();
     } catch (error) {
       setPasswordMessage(friendlyErrorMessage(error, "Wachtwoord wijzigen lukt nu niet. Probeer het later opnieuw."));
@@ -271,8 +276,8 @@ export function ProfilePage() {
               {photoPreview && (
                 <button
                   className="button button--danger"
-                  onClick={() => {
-                    const confirmed = window.confirm("Weet je zeker dat je je profielfoto wilt verwijderen?");
+                  onClick={async () => {
+                    const confirmed = await confirm({ confirmLabel: "Foto verwijderen", message: "Weet je zeker dat je je profielfoto wilt verwijderen?" });
                     if (!confirmed) return;
                     setPhotoFile(null);
                     setProfileDraft({ ...profileDraft, profielfoto_url: "" });

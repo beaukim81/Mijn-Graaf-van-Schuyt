@@ -5,6 +5,7 @@ import { LinkifiedText } from "./LinkifiedText";
 import { PhotoGrid } from "./PhotoGrid";
 import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
+import { useConfirm } from "../lib/ConfirmContext";
 
 interface BulletinPostCardProps {
   post: BulletinPost;
@@ -24,6 +25,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
+  const confirm = useConfirm();
   const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
   const messages = post.messages ?? [];
 
@@ -58,8 +60,8 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
           </button>
           <button
             className="button button--danger"
-            onClick={() => {
-              const confirmed = window.confirm("Weet je zeker dat je dit prikbordbericht wilt verwijderen?");
+            onClick={async () => {
+              const confirmed = await confirm({ message: "Weet je zeker dat je dit prikbordbericht wilt verwijderen?" });
               if (confirmed) onDelete?.(post.id);
             }}
             type="button"
@@ -68,8 +70,8 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
           </button>
           <button
             className="button button--soft"
-            onClick={() => {
-              const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt afronden en verwijderen?");
+            onClick={async () => {
+              const confirmed = await confirm({ confirmLabel: "Afronden", message: "Weet je zeker dat je dit bericht wilt afronden en verwijderen?" });
               if (confirmed) onComplete?.(post.id);
             }}
             type="button"
@@ -136,8 +138,8 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
                   )}
                   <button
                     className="button button--danger"
-                    onClick={() => {
-                      const confirmed = window.confirm("Weet je zeker dat je dit bericht wilt verwijderen?");
+                    onClick={async () => {
+                      const confirmed = await confirm({ message: "Weet je zeker dat je dit bericht wilt verwijderen?" });
                       if (confirmed) onDeleteMessage?.(post.id, item.id);
                     }}
                     type="button"

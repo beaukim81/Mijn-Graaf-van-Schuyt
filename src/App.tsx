@@ -6,6 +6,7 @@ import * as mock from "./data/mockData";
 import { useSupabaseCollection } from "./hooks/useSupabaseCollection";
 import { AppDataContext, type AppDataContextValue } from "./lib/AppDataContext";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
+import { ConfirmProvider } from "./lib/ConfirmContext";
 import {
   accessRequestToRow,
   buildingAnnouncementToRow,
@@ -589,9 +590,11 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <AppDataProvider>
-        <RouterProvider router={router} />
-      </AppDataProvider>
+      <ConfirmProvider>
+        <AppDataProvider>
+          <RouterProvider router={router} />
+        </AppDataProvider>
+      </ConfirmProvider>
     </AuthProvider>
   );
 }

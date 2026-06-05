@@ -33,8 +33,12 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function hasPasswordSetupIntent() {
   if (typeof window === "undefined") return false;
-  const combinedUrlState = `${window.location.search} ${window.location.hash}`.toLowerCase();
-  return combinedUrlState.includes("type=invite") || combinedUrlState.includes("type=recovery");
+  const combinedUrlState = `${window.location.pathname} ${window.location.search} ${window.location.hash}`.toLowerCase();
+  return (
+    combinedUrlState.includes("type=invite") ||
+    combinedUrlState.includes("type=recovery") ||
+    combinedUrlState.includes("wachtwoord-instellen")
+  );
 }
 
 function mapProfile(row: Record<string, unknown>): Profile {
@@ -166,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           const message = String(error.message ?? "").toLowerCase();
           if (message.includes("duplicate") || message.includes("access_requests_email_active_key")) {
-            throw new Error("Er staat al een toegangsaanvraag voor dit e-mailadres open. Wacht op goedkeuring door beheer.");
+            throw new Error("Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.");
           }
           throw error;
         }
@@ -174,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       resetPassword: async (email) => {
         if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/?type=recovery` });
         if (error) throw error;
       },
       updateEmail: async (email) => {

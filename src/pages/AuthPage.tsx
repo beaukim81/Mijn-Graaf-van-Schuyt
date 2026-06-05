@@ -44,7 +44,9 @@ export function AuthPage() {
         setAccessRequested(true);
       }
     } catch (caught) {
-      setError(friendlyErrorMessage(caught, "Inloggen of account maken lukt nu niet. Controleer je gegevens en probeer het opnieuw."));
+      const friendlyMessage = friendlyErrorMessage(caught, "Inloggen of account maken lukt nu niet. Controleer je gegevens en probeer het opnieuw.");
+      setError(friendlyMessage);
+      if (friendlyMessage.includes("staat nog in behandeling")) setAccessRequested(true);
     } finally {
       setBusy(false);
     }

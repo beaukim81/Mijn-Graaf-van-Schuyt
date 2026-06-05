@@ -7,6 +7,7 @@ import { residentLabel } from "../lib/residentDisplay";
 import { LinkifiedText } from "./LinkifiedText";
 import { ResidentIdentity } from "./ResidentIdentity";
 import { StatusBadge } from "./StatusBadge";
+import { useConfirm } from "../lib/ConfirmContext";
 
 interface ReportCardProps {
   report: Report;
@@ -23,6 +24,7 @@ interface ReportCardProps {
 }
 
 export function ReportCard({ report, documents, profiles = [], canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
+  const confirm = useConfirm();
   const relatedDocuments =
     report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
   const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
@@ -107,8 +109,8 @@ export function ReportCard({ report, documents, profiles = [], canResolve, canRe
           </button>
           <button
             className="button button--danger"
-            onClick={() => {
-              const confirmed = window.confirm("Weet je zeker dat je deze melding wilt verwijderen?");
+            onClick={async () => {
+              const confirmed = await confirm({ message: "Weet je zeker dat je deze melding wilt verwijderen?" });
               if (confirmed) onDelete?.(report.id);
             }}
             type="button"

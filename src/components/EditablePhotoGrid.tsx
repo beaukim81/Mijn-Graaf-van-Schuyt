@@ -1,4 +1,5 @@
 import { Trash2 } from "lucide-react";
+import { useConfirm } from "../lib/ConfirmContext";
 
 interface EditablePhotoGridProps {
   images: string[];
@@ -7,6 +8,7 @@ interface EditablePhotoGridProps {
 }
 
 export function EditablePhotoGrid({ images, alt, onRemove }: EditablePhotoGridProps) {
+  const confirm = useConfirm();
   if (images.length === 0) return null;
   const visibleImages = images.slice(0, 10);
 
@@ -17,8 +19,8 @@ export function EditablePhotoGrid({ images, alt, onRemove }: EditablePhotoGridPr
           <img src={image} alt={`${alt} foto ${index + 1}`} />
           <button
             className="editable-photo-grid__remove"
-            onClick={() => {
-              const confirmed = window.confirm(`Weet je zeker dat je foto ${index + 1} wilt verwijderen?`);
+            onClick={async () => {
+              const confirmed = await confirm({ confirmLabel: "Foto verwijderen", message: `Weet je zeker dat je foto ${index + 1} wilt verwijderen?` });
               if (confirmed) onRemove(index);
             }}
             type="button"
