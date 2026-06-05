@@ -94,7 +94,6 @@ export function AuthPage() {
               <input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="Voornaam" required />
               <input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Achternaam optioneel" />
               <input inputMode="numeric" value={houseNumber} onChange={(event) => setHouseNumber(event.target.value)} placeholder="Huisnummer" required />
-              <p className="muted">Gebruik je oneven huisnummer, bijvoorbeeld 24 kan niet en 25 wel.</p>
             </>
           )}
           <input autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="E-mailadres" required type="email" />
