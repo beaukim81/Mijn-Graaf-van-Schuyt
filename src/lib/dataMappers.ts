@@ -394,10 +394,7 @@ export function mapNotificationPreference(row: Row): NotificationPreference {
     user_id: text(row.user_id),
     personal_notifications: row.personal_notifications !== false,
     building_notifications: row.building_notifications !== false,
-    help_notifications: row.help_notifications !== false,
-    report_notifications: row.report_notifications !== false,
-    knowledge_notifications: row.knowledge_notifications !== false,
-    bulletin_notifications: Boolean(row.bulletin_notifications),
+    neighbor_notifications: Boolean(row.neighbor_notifications),
     updated_at: text(row.updated_at),
   };
 }
@@ -407,10 +404,7 @@ export function notificationPreferenceToRow(preference: NotificationPreference) 
     user_id: preference.user_id,
     personal_notifications: preference.personal_notifications,
     building_notifications: preference.building_notifications,
-    help_notifications: preference.help_notifications,
-    report_notifications: preference.report_notifications,
-    knowledge_notifications: preference.knowledge_notifications,
-    bulletin_notifications: preference.bulletin_notifications,
+    neighbor_notifications: preference.neighbor_notifications,
   };
 }
 

@@ -5,10 +5,7 @@ import { isSupabaseConfigured, supabase } from "./supabase";
 export const defaultNotificationPreferences: Omit<NotificationPreference, "id" | "user_id" | "updated_at"> = {
   personal_notifications: true,
   building_notifications: true,
-  help_notifications: false,
-  report_notifications: false,
-  knowledge_notifications: false,
-  bulletin_notifications: false,
+  neighbor_notifications: false,
 };
 
 const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
@@ -152,7 +149,7 @@ export async function notifyUser(userId: string, payload: { title: string; body:
     title: payload.title,
     body: payload.body,
     url: payload.url,
-    category: payload.category,
+    category: "personal",
     importance: "normaal",
   });
 }

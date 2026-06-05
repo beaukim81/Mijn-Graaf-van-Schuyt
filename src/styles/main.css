@@ -177,22 +177,22 @@ button {
 }
 
 .auth-tabs button.active {
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(22, 35, 33, 0.05);
-  color: var(--primary-dark);
+  background: linear-gradient(180deg, #29966d, #16795a);
+  box-shadow: 0 10px 22px rgba(22, 121, 90, 0.2);
+  color: #fff;
 }
 
 .auth-tabs button.active:hover,
 .auth-tabs button.active:focus-visible,
 .auth-tabs button.active:active {
-  background: #fff !important;
-  color: var(--primary-dark) !important;
+  background: linear-gradient(180deg, #2aa675, #16795a) !important;
+  color: #fff !important;
 }
 
 .auth-tabs button.active:hover *,
 .auth-tabs button.active:focus-visible *,
 .auth-tabs button.active:active * {
-  color: var(--primary-dark) !important;
+  color: #fff !important;
   stroke: currentColor !important;
 }
 

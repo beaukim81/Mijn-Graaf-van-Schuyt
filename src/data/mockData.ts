@@ -429,10 +429,7 @@ export const notificationPreferences: NotificationPreference[] = [
     user_id: "demo-user",
     personal_notifications: true,
     building_notifications: true,
-    help_notifications: true,
-    report_notifications: true,
-    knowledge_notifications: true,
-    bulletin_notifications: false,
+    neighbor_notifications: false,
     updated_at: now,
   },
 ];

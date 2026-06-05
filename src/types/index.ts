@@ -234,10 +234,7 @@ export interface NotificationPreference {
   user_id: string;
   personal_notifications: boolean;
   building_notifications: boolean;
-  help_notifications: boolean;
-  report_notifications: boolean;
-  knowledge_notifications: boolean;
-  bulletin_notifications: boolean;
+  neighbor_notifications: boolean;
   updated_at: string;
 }
 

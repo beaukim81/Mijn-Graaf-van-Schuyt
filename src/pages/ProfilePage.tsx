@@ -387,54 +387,28 @@ export function ProfilePage() {
           </div>
           <StatusBadge tone={pushSupported() ? "soft" : "warning"}>{pushSupported() ? "Beschikbaar" : "Niet beschikbaar"}</StatusBadge>
         </div>
-        <p>Ontvang alleen relevante meldingen: persoonlijk voor jou, of belangrijke gebouwmeldingen van beheer.</p>
+        <p>Kies welke pushmeldingen je wilt ontvangen. Standaard staan alleen persoonlijke meldingen en belangrijke gebouwmeldingen aan.</p>
         <p className="muted">Op iPhone werken pushmeldingen alleen wanneer je Mijn Graaf van Schuyt toevoegt aan je beginscherm en meldingen toestaat.</p>
         <div className="settings-list">
           <PreferenceToggle
-            label="Persoonlijk voor mij"
-            description="Bijvoorbeeld als iemand reageert op iets dat jij hebt geplaatst, of als beheer iets aan jouw item terugkoppelt."
+            label="Persoonlijke meldingen"
+            description="Voor terugkoppeling die direct voor jou bedoeld is, zoals een reactie op jouw oproep of prikbordbericht, een statuswijziging van jouw melding, feedback van beheer of een goedgekeurde kennisbanktip."
             checked={preference.personal_notifications}
             onChange={(checked) => updatePreference({ personal_notifications: checked })}
           />
           <PreferenceToggle
-            label="Algemene gebouwmeldingen"
-            description="Belangrijke mededelingen voor alle bewoners, zoals schoonmaak, controles of urgente gebouwinformatie."
+            label="Belangrijke gebouwmeldingen"
+            description="Voor mededelingen van beheer die belangrijk of urgent zijn voor het gebouw, zoals glazenwasser, garageschoonmaak, fietsencontrole of een urgente situatie."
             checked={preference.building_notifications}
             onChange={(checked) => updatePreference({ building_notifications: checked })}
           />
+          <PreferenceToggle
+            label="Nieuwe berichten van buren"
+            description="Voor nieuwe oproepen en prikbordberichten van buren. Deze staat standaard uit, zodat de app rustig blijft."
+            checked={preference.neighbor_notifications}
+            onChange={(checked) => updatePreference({ neighbor_notifications: checked })}
+          />
         </div>
-        <details className="optional-settings">
-          <summary>
-            <span>Meer notificatie-opties</span>
-            <small>Kies zelf of je extra meldingen wilt ontvangen.</small>
-          </summary>
-          <div className="settings-list">
-            <PreferenceToggle
-              label="Oproepen"
-              description="Extra meldingen rond hulpvragen, uitnodigingen en korte afstemming met buren."
-              checked={preference.help_notifications}
-              onChange={(checked) => updatePreference({ help_notifications: checked })}
-            />
-            <PreferenceToggle
-              label="Gebouwmeldingen die ik heb geplaatst"
-              description="Statuswijzigingen of terugkoppeling over een melding die jij zelf hebt aangemaakt."
-              checked={preference.report_notifications}
-              onChange={(checked) => updatePreference({ report_notifications: checked })}
-            />
-            <PreferenceToggle
-              label="Kennisbank"
-              description="Bericht als een door jou gedeelde tip of handleiding is verwerkt."
-              checked={preference.knowledge_notifications}
-              onChange={(checked) => updatePreference({ knowledge_notifications: checked })}
-            />
-            <PreferenceToggle
-              label="Prikbord"
-              description="Extra meldingen over prikbordberichten, zoals spullen, gevonden voorwerpen of praktische berichten."
-              checked={preference.bulletin_notifications}
-              onChange={(checked) => updatePreference({ bulletin_notifications: checked })}
-            />
-          </div>
-        </details>
         <div className="action-row">
           <button className="button button--soft" onClick={enablePush} type="button">Pushmeldingen toestaan</button>
           <button className="button button--soft" onClick={disablePush} type="button">Uitzetten op dit apparaat</button>

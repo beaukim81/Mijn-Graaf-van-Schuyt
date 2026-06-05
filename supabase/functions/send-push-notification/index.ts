@@ -14,7 +14,7 @@ type PushRequest = {
   title: string;
   body: string;
   url?: string;
-  category?: "personal" | "building" | "help" | "report" | "knowledge" | "bulletin";
+  category?: "personal" | "building" | "neighbor" | "help" | "report" | "knowledge" | "bulletin";
   importance?: "normaal" | "belangrijk" | "urgent";
 };
 
@@ -28,10 +28,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 function preferenceColumn(category?: PushRequest["category"]) {
   if (category === "building") return "building_notifications";
-  if (category === "help") return "help_notifications";
-  if (category === "report") return "report_notifications";
-  if (category === "knowledge") return "knowledge_notifications";
-  if (category === "bulletin") return "bulletin_notifications";
+  if (category === "neighbor") return "neighbor_notifications";
   return "personal_notifications";
 }
 
