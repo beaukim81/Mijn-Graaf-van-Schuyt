@@ -16,6 +16,10 @@ const navItems = [
 ];
 
 type TextSize = "normal" | "large" | "xlarge";
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
 
 const textSizeOptions: { value: TextSize; label: string }[] = [
   { value: "normal", label: "Normaal" },
@@ -43,6 +47,31 @@ function readStringSet(key: string) {
   return new Set(stored ? (JSON.parse(stored) as string[]) : []);
 }
 
+function isStandaloneApp() {
+  return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+}
+
+function isIOSDevice() {
+  const platform = window.navigator.platform.toLowerCase();
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(userAgent) || (platform === "macintel" && window.navigator.maxTouchPoints > 1);
+}
+
+function isFormElementActive() {
+  const activeElement = document.activeElement;
+  if (!activeElement) return false;
+  return ["INPUT", "TEXTAREA", "SELECT"].includes(activeElement.tagName);
+}
+
+function readInstallPromptState(key: string) {
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? (JSON.parse(stored) as { dismissedForever?: boolean; lastShown?: number }) : {};
+  } catch {
+    return {};
+  }
+}
+
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,6 +83,7 @@ export function AppLayout() {
   const dismissedKey = `mijn-graaf-van-schuyt:${profile.user_id}:dismissed-notifications`;
   const readNotificationsKey = `mijn-graaf-van-schuyt:${profile.user_id}:read-notifications`;
   const textSizeKey = `mijn-graaf-van-schuyt:${profile.user_id}:text-size`;
+  const installPromptKey = `mijn-graaf-van-schuyt:${profile.user_id}:install-prompt`;
   const notificationMenuRef = useRef<HTMLDivElement>(null);
   const accessibilityMenuRef = useRef<HTMLDivElement>(null);
   const [lastSeenHelp, setLastSeenHelp] = useState(() => readNumber(helpSeenKey));
@@ -63,6 +93,9 @@ export function AppLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [textSize, setTextSize] = useState<TextSize>(() => readTextSize(textSizeKey));
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const isIOS = useMemo(isIOSDevice, []);
   const profilePhotoUrl = useSignedUrl(profile.profielfoto_url);
 
   useEffect(() => {
@@ -103,6 +136,37 @@ export function AppLayout() {
     document.addEventListener("pointerdown", closeMenusOnOutsideClick);
     return () => document.removeEventListener("pointerdown", closeMenusOnOutsideClick);
   }, []);
+
+  useEffect(() => {
+    function handleBeforeInstallPrompt(event: Event) {
+      event.preventDefault();
+      setInstallPromptEvent(event as BeforeInstallPromptEvent);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
+
+  useEffect(() => {
+    if (isStandaloneApp()) return;
+    const state = readInstallPromptState(installPromptKey);
+    if (state.dismissedForever) return;
+    if (state.lastShown && Date.now() - state.lastShown < 24 * 60 * 60 * 1000) return;
+    if (!isIOS && !installPromptEvent) return;
+
+    const timer = window.setTimeout(() => {
+      if (isFormElementActive()) return;
+      setShowInstallPrompt(true);
+      window.localStorage.setItem(installPromptKey, JSON.stringify({ ...state, lastShown: Date.now() }));
+    }, 4500);
+
+    return () => window.clearTimeout(timer);
+  }, [installPromptEvent, installPromptKey, isIOS, location.pathname]);
+
+  useEffect(() => {
+    if (!showInstallPrompt) return;
+    if (isFormElementActive()) setShowInstallPrompt(false);
+  }, [location.pathname, showInstallPrompt]);
 
   const navNotifications = useMemo(
     () => ({
@@ -366,6 +430,59 @@ export function AppLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      {showInstallPrompt && (
+        <section className="install-prompt" aria-live="polite">
+          <div>
+            <strong>Gebruik deze app makkelijker vanaf je beginscherm</strong>
+            <p>
+              {isIOS
+                ? "Tik onderaan op Delen en kies daarna 'Zet op beginscherm'."
+                : "Zet Mijn Graaf van Schuyt op je telefoon, zodat je de app sneller opent en meldingen beter werken."}
+            </p>
+          </div>
+          <div className="install-prompt__actions">
+            {!isIOS && installPromptEvent && (
+              <button
+                className="button"
+                onClick={async () => {
+                  await installPromptEvent.prompt();
+                  const choice = await installPromptEvent.userChoice;
+                  setInstallPromptEvent(null);
+                  setShowInstallPrompt(false);
+                  window.localStorage.setItem(
+                    installPromptKey,
+                    JSON.stringify({ dismissedForever: choice.outcome === "accepted", lastShown: Date.now() }),
+                  );
+                }}
+                type="button"
+              >
+                App installeren
+              </button>
+            )}
+            <button
+              className="button button--soft"
+              onClick={() => {
+                setShowInstallPrompt(false);
+                window.localStorage.setItem(installPromptKey, JSON.stringify({ lastShown: Date.now() }));
+              }}
+              type="button"
+            >
+              Later
+            </button>
+            <button
+              className="text-button"
+              onClick={() => {
+                setShowInstallPrompt(false);
+                window.localStorage.setItem(installPromptKey, JSON.stringify({ dismissedForever: true, lastShown: Date.now() }));
+              }}
+              type="button"
+            >
+              Niet meer tonen
+            </button>
+          </div>
+        </section>
+      )}
 
       <nav className="bottom-nav" aria-label="Hoofdnavigatie">
         {navItems.map(({ to, label, icon: Icon }) => (
