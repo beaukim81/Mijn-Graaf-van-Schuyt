@@ -26,6 +26,8 @@ import type {
   ReportCategory,
   ReportStatus,
   ReportType,
+  SecurityEvent,
+  SecurityEventStatus,
 } from "../types";
 
 type Row = Record<string, unknown>;
@@ -56,6 +58,7 @@ export function mapProfile(row: Row): Profile {
     huisnummer: optionalText(row.huisnummer),
     verdieping_of_gebouwdeel: optionalText(row.verdieping_of_gebouwdeel),
     profielfoto_url: optionalText(row.profielfoto_url),
+    account_geblokkeerd: Boolean(row.account_geblokkeerd),
     rol: row.rol === "admin" ? "admin" : "bewoner",
     email: optionalText(row.email),
     telefoon: optionalText(row.telefoon),
@@ -71,6 +74,7 @@ export function profileToRow(profile: Profile) {
     huisnummer: profile.huisnummer ?? null,
     verdieping_of_gebouwdeel: profile.verdieping_of_gebouwdeel ?? null,
     profielfoto_url: profile.profielfoto_url ?? null,
+    ...(profile.account_geblokkeerd !== undefined ? { account_geblokkeerd: profile.account_geblokkeerd } : {}),
     rol: profile.rol,
     email: profile.email ?? null,
     telefoon: profile.telefoon ?? null,
@@ -435,5 +439,33 @@ export function feedbackItemToRow(item: FeedbackItem) {
     aangemaakt_door_huisnummer: item.aangemaakt_door_huisnummer ?? null,
     beheer_reactie: item.beheer_reactie ?? null,
     opgelost_op: item.opgelost_op ?? null,
+  };
+}
+
+export function mapSecurityEvent(row: Row): SecurityEvent {
+  return {
+    id: text(row.id),
+    type: text(row.type, "email_wijziging_niet_herkend") as SecurityEvent["type"],
+    status: text(row.status, "Nieuw") as SecurityEventStatus,
+    email: optionalText(row.email),
+    nieuwe_email: optionalText(row.nieuwe_email),
+    user_id: optionalText(row.user_id),
+    bericht: text(row.bericht),
+    beheer_reactie: optionalText(row.beheer_reactie),
+    created_at: text(row.created_at),
+    updated_at: text(row.updated_at ?? row.created_at),
+  };
+}
+
+export function securityEventToRow(item: SecurityEvent) {
+  return {
+    id: item.id,
+    type: item.type,
+    status: item.status,
+    email: item.email ?? null,
+    nieuwe_email: item.nieuwe_email ?? null,
+    user_id: item.user_id ?? null,
+    bericht: item.bericht,
+    beheer_reactie: item.beheer_reactie ?? null,
   };
 }

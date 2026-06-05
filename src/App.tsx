@@ -31,9 +31,11 @@ import {
   mapNotificationPreference,
   mapProfile,
   mapReport,
+  mapSecurityEvent,
   notificationPreferenceToRow,
   profileToRow,
   reportToRow,
+  securityEventToRow,
 } from "./lib/dataMappers";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { paths } from "./routes/paths";
@@ -46,8 +48,9 @@ import { HomePage } from "./pages/HomePage";
 import { KnowledgePage } from "./pages/KnowledgePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ReportsPage } from "./pages/ReportsPage";
+import { SecurityReportPage } from "./pages/SecurityReportPage";
 import { UpdatePasswordPage } from "./pages/UpdatePasswordPage";
-import type { AccessRequest, BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "./types";
+import type { AccessRequest, BuildingAnnouncement, BulletinMessage, BulletinPost, Contact, FeedbackItem, HelpMessage, HelpOffer, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report, SecurityEvent } from "./types";
 
 function requireSupabase() {
   if (!supabase) throw new Error("Supabase is nog niet gekoppeld.");
@@ -56,7 +59,8 @@ function requireSupabase() {
 
 function isMissingSchemaColumnError(error: unknown, columns: string[]) {
   const message = error && typeof error === "object" && "message" in error ? String(error.message) : "";
-  return columns.some((column) => message.includes(`'${column}'`) || message.includes(`"${column}"`)) && message.includes("schema cache");
+  return columns.some((column) => message.includes(`'${column}'`) || message.includes(`"${column}"`) || message.includes(column)) &&
+    (message.includes("schema cache") || message.includes("does not exist"));
 }
 
 function omitColumns<T extends Record<string, unknown>>(row: T, columns: string[]) {
@@ -171,9 +175,15 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       if ("verdieping_of_gebouwdeel" in changes) editableChanges.verdieping_of_gebouwdeel = nextItem.verdieping_of_gebouwdeel;
       if ("profielfoto_url" in changes) editableChanges.profielfoto_url = nextItem.profielfoto_url;
       if ("email" in changes) editableChanges.email = nextItem.email;
+      if ("account_geblokkeerd" in changes) editableChanges.account_geblokkeerd = nextItem.account_geblokkeerd;
       const row = profileToRow({ ...nextItem, ...editableChanges });
       const { error } = await requireSupabase().from("profiles").update(row).eq("id", nextItem.id);
-      if (error) throw error;
+      if (error && isMissingSchemaColumnError(error, ["account_geblokkeerd"])) {
+        const { error: retryError } = await requireSupabase().from("profiles").update(omitColumns(row, ["account_geblokkeerd"])).eq("id", nextItem.id);
+        if (retryError) throw retryError;
+      } else if (error) {
+        throw error;
+      }
     },
     deleteItem: async (id: string, item?: Profile) => {
       if (item?.user_id) {
@@ -537,6 +547,30 @@ function AppDataProvider({ children }: { children: ReactNode }) {
   }), [useDatabase]);
   const feedbackItems = useSupabaseCollection(mock.feedbackItems, feedbackOptions);
 
+  const securityEventsOptions = useMemo(() => ({
+    storageKey: "mijn-graaf-van-schuyt:security-events",
+    enabled: useDatabase && profile?.rol === "admin",
+    fetchItems: async () => {
+      const { data, error } = await requireSupabase().from("security_events").select("*").order("created_at", { ascending: false });
+      if (error && isMissingSchemaColumnError(error, ["security_events"])) return [];
+      if (error) throw error;
+      return (data ?? []).map(mapSecurityEvent);
+    },
+    insertItem: async (item: SecurityEvent) => {
+      const { error } = await requireSupabase().from("security_events").upsert(securityEventToRow(item));
+      if (error) throw error;
+    },
+    updateItem: async (_id: string, _changes: Partial<SecurityEvent>, nextItem: SecurityEvent) => {
+      const { error } = await requireSupabase().from("security_events").update(securityEventToRow(nextItem)).eq("id", nextItem.id);
+      if (error) throw error;
+    },
+    deleteItem: async (id: string) => {
+      const { error } = await requireSupabase().from("security_events").delete().eq("id", id);
+      if (error) throw error;
+    },
+  }), [profile?.rol, useDatabase]);
+  const securityEvents = useSupabaseCollection(mock.securityEvents, securityEventsOptions);
+
   if (configured && loading) {
     return <LoadingState />;
   }
@@ -565,6 +599,7 @@ function AppDataProvider({ children }: { children: ReactNode }) {
     buildingAnnouncements,
     notificationPreferences,
     feedbackItems,
+    securityEvents,
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
@@ -588,6 +623,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
+  if (window.location.pathname === "/veiligheid/email-wijziging") {
+    return <SecurityReportPage />;
+  }
+
   return (
     <AuthProvider>
       <ConfirmProvider>

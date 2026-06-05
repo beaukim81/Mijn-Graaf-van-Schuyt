@@ -30,9 +30,10 @@ import type {
   Role,
   ReportCategory,
   ReportStatus,
+  SecurityEventStatus,
 } from "../types";
 
-type AdminTab = "algemeen" | "aanvragen" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
+type AdminTab = "algemeen" | "aanvragen" | "veiligheid" | "feedback" | "kennisbank" | "contacten" | "meldingen" | "prikbord" | "bewoners";
 
 const documentTypes: KnowledgeDocumentType[] = ["Officiële handleiding", "Bewonerstip", "Onderdeleninformatie", "Veelgestelde vraag"];
 const documentStatuses: KnowledgeDocumentStatus[] = ["Concept", "Gepubliceerd", "Te controleren"];
@@ -81,7 +82,7 @@ const blankAnnouncement = {
 };
 
 export function AdminPage() {
-  const { accessRequests, buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports } = useAppData();
+  const { accessRequests, buildingAnnouncements, bulletinPosts, contacts, documents, feedbackItems, profile, profiles, reports, securityEvents } = useAppData();
   const location = useLocation();
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<AdminTab>("algemeen");
@@ -90,6 +91,7 @@ export function AdminPage() {
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
   const [accessRequestBusyId, setAccessRequestBusyId] = useState("");
+  const [accessRequestMessage, setAccessRequestMessage] = useState("");
   const [accessRequestError, setAccessRequestError] = useState("");
   const [documentFormError, setDocumentFormError] = useState("");
   const [documentSaving, setDocumentSaving] = useState(false);
@@ -105,6 +107,7 @@ export function AdminPage() {
   const residentsCount = useMemo(() => profiles.items.length, [profiles.items]);
   const activeBulletinPosts = useMemo(() => bulletinPosts.items.filter((post) => post.status === "Actief"), [bulletinPosts.items]);
   const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
+  const openSecurityEvents = useMemo(() => securityEvents.items.filter((item) => item.status !== "Opgelost").length, [securityEvents.items]);
   const pendingAccessRequests = useMemo(() => accessRequests.items.filter((item) => item.status === "Nieuw").length, [accessRequests.items]);
   const pendingDocuments = useMemo(() => documents.items.filter((item) => item.status !== "Gepubliceerd").length, [documents.items]);
   const newBuildingReports = useMemo(() => reports.items.filter((item) => item.type_melding === "Appartementencomplex" && item.status !== "Opgelost").length, [reports.items]);
@@ -113,6 +116,7 @@ export function AdminPage() {
     const hash = location.hash.replace("#", "");
     if (!hash) return;
     if (hash.startsWith("feedback-")) setActiveTab("feedback");
+    if (hash.startsWith("veiligheid-")) setActiveTab("veiligheid");
     if (hash.startsWith("kennisbank-")) setActiveTab("kennisbank");
     if (hash.startsWith("melding-")) setActiveTab("meldingen");
     if (hash.startsWith("aanvraag-")) setActiveTab("aanvragen");
@@ -284,6 +288,7 @@ export function AdminPage() {
     try {
       setAccessRequestBusyId(request.id);
       setAccessRequestError("");
+      setAccessRequestMessage("");
       const { data, error } = await supabase.functions.invoke("approve-access-request", {
         body: { request_id: request.id },
       });
@@ -306,12 +311,39 @@ export function AdminPage() {
     try {
       setAccessRequestBusyId(request.id);
       setAccessRequestError("");
+      setAccessRequestMessage("");
       await accessRequests.updateAsync(request.id, {
         status: "Geweigerd",
         updated_at: new Date().toISOString(),
       });
     } catch (error) {
       setAccessRequestError(friendlyErrorMessage(error, "Weigeren lukt nu niet. Probeer het later opnieuw."));
+    } finally {
+      setAccessRequestBusyId("");
+    }
+  }
+
+  async function resendAccessInvite(request: AccessRequest) {
+    if (!supabase) {
+      setAccessRequestError("Supabase is nog niet gekoppeld.");
+      return;
+    }
+
+    try {
+      setAccessRequestBusyId(request.id);
+      setAccessRequestError("");
+      setAccessRequestMessage("");
+      const { error } = await supabase.functions.invoke("resend-access-invite", {
+        body: { request_id: request.id },
+      });
+      if (error) throw error;
+      await accessRequests.updateAsync(request.id, {
+        beheer_notitie: `Activatiemail opnieuw verstuurd op ${new Date().toLocaleString("nl-NL")}`,
+        updated_at: new Date().toISOString(),
+      });
+      setAccessRequestMessage(`Activatiemail opnieuw verstuurd naar ${request.email}.`);
+    } catch (error) {
+      setAccessRequestError(friendlyErrorMessage(error, "Activatiemail opnieuw versturen lukt nu niet. Controleer de Supabase-functie en probeer het opnieuw."));
     } finally {
       setAccessRequestBusyId("");
     }
@@ -326,6 +358,7 @@ export function AdminPage() {
       <div className="admin-overview" aria-label="Beheeronderdelen">
         <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
         <AdminMetric active={activeTab === "aanvragen"} alertCount={pendingAccessRequests} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
+        <AdminMetric active={activeTab === "veiligheid"} alertCount={openSecurityEvents} label="Veiligheid" onClick={() => setActiveTab("veiligheid")} value={openSecurityEvents} />
         <AdminMetric active={activeTab === "feedback"} alertCount={openFeedback} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
         <AdminMetric active={activeTab === "kennisbank"} alertCount={pendingDocuments} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
         <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
@@ -346,6 +379,12 @@ export function AdminPage() {
             <div className="notice notice--warning">
               <p>{accessRequestError}</p>
               <button className="text-button" onClick={() => setAccessRequestError("")} type="button">Melding sluiten</button>
+            </div>
+          )}
+          {accessRequestMessage && (
+            <div className="notice">
+              <p>{accessRequestMessage}</p>
+              <button className="text-button" onClick={() => setAccessRequestMessage("")} type="button">Melding sluiten</button>
             </div>
           )}
           {accessRequests.items.map((request) => (
@@ -399,6 +438,16 @@ export function AdminPage() {
                   </div>
                 ) : (
                   <div className="admin-row">
+                    {request.status === "Goedgekeurd" && (
+                      <button
+                        className="button button--soft"
+                        disabled={accessRequestBusyId === request.id}
+                        onClick={() => void resendAccessInvite(request)}
+                        type="button"
+                      >
+                        {accessRequestBusyId === request.id ? "Even geduld" : "Activatiemail opnieuw sturen"}
+                      </button>
+                    )}
                     <button
                       className="button button--danger"
                       onClick={async () => {
@@ -415,6 +464,93 @@ export function AdminPage() {
             </details>
           ))}
           {accessRequests.items.length === 0 && <EmptyState title="Geen toegangsaanvragen" description="Nieuwe bewonersaanvragen verschijnen hier. Na goedkeuring krijgt de bewoner een activatiemail." />}
+        </section>
+      )}
+
+      {activeTab === "veiligheid" && (
+        <section className="admin-section card-list compact-list">
+          {securityEvents.syncError && (
+            <div className="notice notice--warning">
+              <p>{securityEvents.syncError}</p>
+              <button className="text-button" onClick={securityEvents.clearSyncError} type="button">Melding sluiten</button>
+            </div>
+          )}
+          {securityEvents.items.map((event) => {
+            const linkedProfile = profiles.items.find((resident) => {
+              const currentEmail = resident.email?.toLowerCase();
+              return currentEmail && (currentEmail === event.email?.toLowerCase() || currentEmail === event.nieuwe_email?.toLowerCase());
+            });
+            return (
+              <details className="item-card collapsible-card admin-list-card" id={`veiligheid-${event.id}`} key={event.id}>
+                <summary className="item-card__header collapsible-card__summary">
+                  <div>
+                    <p className="chip">E-mailadreswijziging</p>
+                    <h3>Niet herkend door bewoner</h3>
+                    <p className="muted">{new Date(event.created_at).toLocaleDateString("nl-NL")}</p>
+                  </div>
+                  <StatusBadge tone={event.status === "Opgelost" ? "good" : "warning"}>{event.status}</StatusBadge>
+                </summary>
+                <div className="collapsible-card__body">
+                  <p><LinkifiedText text={event.bericht} /></p>
+                  <dl className="meta-list">
+                    {event.email && (
+                      <div>
+                        <dt>Oud e-mailadres</dt>
+                        <dd>{event.email}</dd>
+                      </div>
+                    )}
+                    {event.nieuwe_email && (
+                      <div>
+                        <dt>Nieuw e-mailadres</dt>
+                        <dd>{event.nieuwe_email}</dd>
+                      </div>
+                    )}
+                    {linkedProfile && (
+                      <div>
+                        <dt>Bewoner</dt>
+                        <dd>{residentLabel(linkedProfile.naam_of_bijnaam, linkedProfile.huisnummer)}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <div className="filter-row">
+                    <label className="field">
+                      <span>Status</span>
+                      <select value={event.status} onChange={(changeEvent) => securityEvents.update(event.id, { status: changeEvent.target.value as SecurityEventStatus })}>
+                        <option value="Nieuw">Nieuw</option>
+                        <option value="In behandeling">In behandeling</option>
+                        <option value="Opgelost">Opgelost</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Reactie of notitie beheer</span>
+                      <textarea
+                        onChange={(changeEvent) => securityEvents.update(event.id, { beheer_reactie: changeEvent.target.value })}
+                        placeholder="Bijvoorbeeld: bewoner gebeld, account tijdelijk geblokkeerd..."
+                        value={event.beheer_reactie ?? ""}
+                      />
+                    </label>
+                  </div>
+                  {linkedProfile ? (
+                    <div className="admin-row">
+                      <button
+                        className={linkedProfile.account_geblokkeerd ? "button button--soft" : "button button--danger"}
+                        onClick={() => profiles.update(linkedProfile.id, { account_geblokkeerd: !linkedProfile.account_geblokkeerd })}
+                        type="button"
+                      >
+                        {linkedProfile.account_geblokkeerd ? "Account weer vrijgeven" : "Account tijdelijk blokkeren"}
+                      </button>
+                      <button className="button button--soft" onClick={() => securityEvents.update(event.id, { status: "Opgelost" })} type="button">
+                        Markeer als opgelost
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="muted">Er is geen profiel gevonden met dit e-mailadres. Controleer dit eventueel handmatig in Supabase.</p>
+                  )}
+                </div>
+              </details>
+            );
+          })}
+          {securityEvents.items.length === 0 && <EmptyState title="Geen veiligheidsmeldingen" description="Als iemand via een e-mail aangeeft dat een e-mailadreswijziging niet klopt, verschijnt dat hier." />}
         </section>
       )}
 
@@ -915,6 +1051,13 @@ export function AdminPage() {
                     <option value="admin">admin</option>
                   </select>
                 </label>
+                <button
+                  className={resident.account_geblokkeerd ? "button button--soft" : "button button--danger"}
+                  onClick={() => profiles.update(resident.id, { account_geblokkeerd: !resident.account_geblokkeerd })}
+                  type="button"
+                >
+                  {resident.account_geblokkeerd ? "Account weer vrijgeven" : "Account tijdelijk blokkeren"}
+                </button>
                 {resident.user_id !== profile.user_id && (
                   <button
                     className="button button--danger"

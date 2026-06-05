@@ -72,6 +72,7 @@ export interface Profile {
   huisnummer?: string;
   verdieping_of_gebouwdeel?: string;
   profielfoto_url?: string;
+  account_geblokkeerd?: boolean;
   rol: Role;
   email?: string;
   telefoon?: string;
@@ -250,6 +251,21 @@ export interface FeedbackItem {
   aangemaakt_door_huisnummer?: string;
   beheer_reactie?: string;
   opgelost_op?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SecurityEventStatus = "Nieuw" | "In behandeling" | "Opgelost";
+
+export interface SecurityEvent {
+  id: string;
+  type: "email_wijziging_niet_herkend";
+  status: SecurityEventStatus;
+  email?: string;
+  nieuwe_email?: string;
+  user_id?: string;
+  bericht: string;
+  beheer_reactie?: string;
   created_at: string;
   updated_at: string;
 }

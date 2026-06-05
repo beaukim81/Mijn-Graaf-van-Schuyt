@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { AccessRequest, BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report } from "../types";
+import type { AccessRequest, BuildingAnnouncement, BulletinPost, Contact, FeedbackItem, HelpRequest, KnowledgeDocument, NotificationPreference, Profile, Report, SecurityEvent } from "../types";
 
 export interface DataCollection<T extends { id: string }> {
   items: T[];
@@ -26,6 +26,7 @@ export interface AppDataContextValue {
   buildingAnnouncements: DataCollection<BuildingAnnouncement>;
   notificationPreferences: DataCollection<NotificationPreference>;
   feedbackItems: DataCollection<FeedbackItem>;
+  securityEvents: DataCollection<SecurityEvent>;
 }
 
 export const AppDataContext = createContext<AppDataContextValue | null>(null);

@@ -54,6 +54,7 @@ function mapProfile(row: Record<string, unknown>): Profile {
     huisnummer: row.huisnummer ? String(row.huisnummer) : undefined,
     verdieping_of_gebouwdeel: row.verdieping_of_gebouwdeel ? String(row.verdieping_of_gebouwdeel) : undefined,
     profielfoto_url: row.profielfoto_url ? String(row.profielfoto_url) : undefined,
+    account_geblokkeerd: row.account_geblokkeerd === true,
     rol: row.rol === "admin" ? "admin" : "bewoner",
     email: row.email ? String(row.email) : undefined,
     telefoon: row.telefoon ? String(row.telefoon) : undefined,
@@ -72,6 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     if (data) {
       const mappedProfile = mapProfile(data);
+      if (mappedProfile.account_geblokkeerd) {
+        await supabase.auth.signOut();
+        throw new Error("Dit account is tijdelijk geblokkeerd. Neem contact op met beheer.");
+      }
       if (currentUser.email && mappedProfile.email !== currentUser.email) {
         const { data: syncedProfile } = await supabase
           .from("profiles")
