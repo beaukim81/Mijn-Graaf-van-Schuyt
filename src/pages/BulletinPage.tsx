@@ -45,7 +45,7 @@ export function BulletinPage() {
     return bulletinPosts.items.filter((post) => category === "Alle" || post.categorie === category);
   }, [bulletinPosts.items, category]);
 
-  const canAddImage = draft.categorie === "Gratis af te halen" || draft.categorie === "Gevonden voorwerp";
+  const canAddImage = true;
 
   function resetDraft() {
     setDraft({ titel: "", omschrijving: "", categorie: "Mededeling", contactpersoon: "", image_url: "", image_urls: [], image_name: "", image_files: [] });
