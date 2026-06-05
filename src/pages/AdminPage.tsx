@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
 import { EmptyState } from "../components/EmptyState";
 import { LinkifiedText } from "../components/LinkifiedText";
+import { ResidentIdentity } from "../components/ResidentIdentity";
 import { StatusBadge } from "../components/StatusBadge";
 import { UrlPreview } from "../components/UrlPreview";
 import { contactCategories, knowledgeCategories, reportCategories } from "../data/categories";
@@ -346,10 +347,7 @@ export function AdminPage() {
           {accessRequests.items.map((request) => (
             <details className="item-card collapsible-card admin-list-card" id={`aanvraag-${request.id}`} key={request.id}>
               <summary className="item-card__header collapsible-card__summary">
-                <div>
-                  <p className="chip">{request.huisnummer ? `Huisnummer ${request.huisnummer}` : "Aanvraag"}</p>
-                  <h3>{residentLabel(request.naam_of_bijnaam, request.huisnummer)}</h3>
-                </div>
+                <ResidentIdentity houseNumber={request.huisnummer} name={request.achternaam ? `${request.naam_of_bijnaam} ${request.achternaam}` : request.naam_of_bijnaam} />
                 <StatusBadge tone={request.status === "Nieuw" ? "warning" : request.status === "Goedgekeurd" ? "good" : "soft"}>{request.status}</StatusBadge>
               </summary>
               <div className="collapsible-card__body">
@@ -892,10 +890,7 @@ export function AdminPage() {
           {profiles.items.map((resident) => (
             <details className="item-card collapsible-card admin-list-card admin-resident-card" key={resident.id}>
               <summary className="item-card__header collapsible-card__summary">
-                <div>
-                  <p className="chip">{resident.huisnummer ? `Huisnummer ${resident.huisnummer}` : "Bewoner"}</p>
-                  <h3>{residentLabel(resident.naam_of_bijnaam, resident.huisnummer)}</h3>
-                </div>
+                <ResidentIdentity profile={resident} />
                 <StatusBadge tone={resident.rol === "admin" ? "good" : "soft"}>{resident.rol}</StatusBadge>
               </summary>
               <div className="collapsible-card__body">
@@ -906,7 +901,7 @@ export function AdminPage() {
                   </div>
                   <div>
                     <dt>Huisnummer</dt>
-                    <dd>{resident.huisnummer ?? "Niet ingevuld"}</dd>
+                    <dd>{resident.huisnummer ? `huisnummer ${resident.huisnummer}` : "Niet ingevuld"}</dd>
                   </div>
                 </dl>
                 <label className="field">
