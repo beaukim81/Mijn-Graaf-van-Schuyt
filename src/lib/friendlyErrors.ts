@@ -15,6 +15,10 @@ export function friendlyErrorMessage(error: unknown, fallback = "Er ging iets mi
     return "Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.";
   }
 
+  if (message.includes("al in gebruik") || message.includes("al goedgekeurd")) {
+    return "Dit e-mailadres is al in gebruik. Log in of kies Wachtwoord vergeten.";
+  }
+
   if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
     return "E-mailadres of wachtwoord klopt niet. Controleer je gegevens of kies Wachtwoord vergeten.";
   }
