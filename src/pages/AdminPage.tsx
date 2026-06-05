@@ -40,6 +40,18 @@ const documentStatuses: KnowledgeDocumentStatus[] = ["Concept", "Gepubliceerd", 
 const reportStatuses: ReportStatus[] = ["Nieuw", "Herkend door meerdere bewoners", "Doorgezet naar REBO", "In behandeling", "Opgelost"];
 const announcementImportance: AnnouncementImportance[] = ["normaal", "belangrijk", "urgent"];
 const maxDocumentImages = 10;
+const adminAlertTabs = ["aanvragen", "veiligheid", "feedback", "kennisbank", "meldingen"] as const;
+type AdminAlertTab = (typeof adminAlertTabs)[number];
+
+function readAdminSeenItems(key: string) {
+  if (typeof window === "undefined") return {} as Record<string, string[]>;
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? (JSON.parse(stored) as Record<string, string[]>) : {};
+  } catch {
+    return {};
+  }
+}
 
 async function friendlyFunctionError(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "context" in error) {
@@ -111,6 +123,8 @@ export function AdminPage() {
   const [accessRequestError, setAccessRequestError] = useState("");
   const [documentFormError, setDocumentFormError] = useState("");
   const [documentSaving, setDocumentSaving] = useState(false);
+  const adminSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:admin-seen-items`;
+  const [adminSeenItems, setAdminSeenItems] = useState<Record<string, string[]>>(() => readAdminSeenItems(adminSeenKey));
 
   const documentCount = useMemo(() => documents.items.length, [documents.items]);
   const openReports = useMemo(() => reports.items.filter((report) => report.status !== "Opgelost").length, [reports.items]);
@@ -125,8 +139,50 @@ export function AdminPage() {
   const openFeedback = useMemo(() => feedbackItems.items.filter((item) => item.status !== "Opgelost").length, [feedbackItems.items]);
   const openSecurityEvents = useMemo(() => securityEvents.items.filter((item) => item.status !== "Opgelost").length, [securityEvents.items]);
   const pendingAccessRequests = useMemo(() => accessRequests.items.filter((item) => item.status === "Nieuw").length, [accessRequests.items]);
-  const pendingDocuments = useMemo(() => documents.items.filter((item) => item.status !== "Gepubliceerd").length, [documents.items]);
-  const newBuildingReports = useMemo(() => reports.items.filter((item) => item.type_melding === "Appartementencomplex" && item.status !== "Opgelost").length, [reports.items]);
+  const adminAlertIds = useMemo<Record<AdminAlertTab, string[]>>(
+    () => ({
+      aanvragen: accessRequests.items.filter((item) => item.status === "Nieuw").map((item) => item.id),
+      veiligheid: securityEvents.items.filter((item) => item.status !== "Opgelost").map((item) => item.id),
+      feedback: feedbackItems.items.filter((item) => item.status !== "Opgelost").map((item) => item.id),
+      kennisbank: documents.items.filter((item) => item.status !== "Gepubliceerd").map((item) => item.id),
+      meldingen: reports.items.filter((item) => item.type_melding === "Appartementencomplex" && item.status !== "Opgelost").map((item) => item.id),
+    }),
+    [accessRequests.items, documents.items, feedbackItems.items, reports.items, securityEvents.items],
+  );
+  const adminUnreadCounts = useMemo(
+    () =>
+      Object.fromEntries(adminAlertTabs.map((tab) => {
+        const seen = new Set(adminSeenItems[tab] ?? []);
+        return [tab, adminAlertIds[tab].filter((id) => !seen.has(id)).length];
+      })) as Record<AdminAlertTab, number>,
+    [adminAlertIds, adminSeenItems],
+  );
+
+  useEffect(() => {
+    setAdminSeenItems(readAdminSeenItems(adminSeenKey));
+  }, [adminSeenKey]);
+
+  useEffect(() => {
+    if (!adminAlertTabs.includes(activeTab as AdminAlertTab)) return;
+    const tab = activeTab as AdminAlertTab;
+    const ids = adminAlertIds[tab];
+    if (ids.length === 0) return;
+
+    setAdminSeenItems((current) => {
+      const previous = new Set(current[tab] ?? []);
+      let changed = false;
+      ids.forEach((id) => {
+        if (!previous.has(id)) {
+          previous.add(id);
+          changed = true;
+        }
+      });
+      if (!changed) return current;
+      const next = { ...current, [tab]: [...previous] };
+      window.localStorage.setItem(adminSeenKey, JSON.stringify(next));
+      return next;
+    });
+  }, [activeTab, adminAlertIds, adminSeenKey]);
 
   useEffect(() => {
     const hash = location.hash.replace("#", "");
@@ -381,12 +437,12 @@ export function AdminPage() {
 
       <div className="admin-overview" aria-label="Beheeronderdelen">
         <AdminMetric active={activeTab === "algemeen"} label="Algemeen" onClick={() => setActiveTab("algemeen")} value={importantAnnouncements} />
-        <AdminMetric active={activeTab === "aanvragen"} alertCount={pendingAccessRequests} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
-        <AdminMetric active={activeTab === "veiligheid"} alertCount={openSecurityEvents} label="Veiligheid" onClick={() => setActiveTab("veiligheid")} value={openSecurityEvents} />
-        <AdminMetric active={activeTab === "feedback"} alertCount={openFeedback} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
-        <AdminMetric active={activeTab === "kennisbank"} alertCount={pendingDocuments} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
+        <AdminMetric active={activeTab === "aanvragen"} alertCount={adminUnreadCounts.aanvragen} label="Aanvragen" onClick={() => setActiveTab("aanvragen")} value={pendingAccessRequests} />
+        <AdminMetric active={activeTab === "veiligheid"} alertCount={adminUnreadCounts.veiligheid} label="Veiligheid" onClick={() => setActiveTab("veiligheid")} value={openSecurityEvents} />
+        <AdminMetric active={activeTab === "feedback"} alertCount={adminUnreadCounts.feedback} label="Feedback" onClick={() => setActiveTab("feedback")} value={openFeedback} />
+        <AdminMetric active={activeTab === "kennisbank"} alertCount={adminUnreadCounts.kennisbank} label="Kennisbank" onClick={() => setActiveTab("kennisbank")} value={documentCount} />
         <AdminMetric active={activeTab === "contacten"} label="Contacten" onClick={() => setActiveTab("contacten")} value={contactsCount} />
-        <AdminMetric active={activeTab === "meldingen"} alertCount={newBuildingReports} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
+        <AdminMetric active={activeTab === "meldingen"} alertCount={adminUnreadCounts.meldingen} label="Meldingen" onClick={() => setActiveTab("meldingen")} value={openReports} />
         <AdminMetric active={activeTab === "prikbord"} label="Prikbord" onClick={() => setActiveTab("prikbord")} value={activePosts} />
         <AdminMetric active={activeTab === "bewoners"} label="Bewoners" onClick={() => setActiveTab("bewoners")} value={residentsCount} />
       </div>

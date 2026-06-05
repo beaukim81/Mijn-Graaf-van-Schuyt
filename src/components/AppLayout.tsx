@@ -1,8 +1,7 @@
 ﻿import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
-import { useConfirm } from "../lib/ConfirmContext";
 import { residentLabel } from "../lib/residentDisplay";
 import { useSignedUrl } from "../lib/storageUrls";
 import { paths } from "../routes/paths";
@@ -47,7 +46,6 @@ function readStringSet(key: string) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const confirm = useConfirm();
   const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
@@ -216,7 +214,7 @@ export function AppLayout() {
     [unreadNotifications],
   );
 
-  function markNotificationsAsRead(ids: string[]) {
+  const markNotificationsAsRead = useCallback((ids: string[]) => {
     if (ids.length === 0) return;
     setReadNotifications((current) => {
       const next = new Set(current);
@@ -224,7 +222,7 @@ export function AppLayout() {
       window.localStorage.setItem(readNotificationsKey, JSON.stringify([...next]));
       return next;
     });
-  }
+  }, [readNotificationsKey]);
 
   function dismissNotification(id: string) {
     setDismissedNotifications((current) => {
@@ -236,6 +234,11 @@ export function AppLayout() {
     markNotificationsAsRead([id]);
     setShowNotifications(false);
   }
+
+  useEffect(() => {
+    if (location.pathname !== paths.admin || unreadAdminNotifications.length === 0) return;
+    markNotificationsAsRead(unreadAdminNotifications.map((notification) => notification.id));
+  }, [location.pathname, markNotificationsAsRead, unreadAdminNotifications]);
 
   return (
     <div className="app-shell">
@@ -322,10 +325,7 @@ export function AppLayout() {
                       <button
                         aria-label="Notificatie verwijderen"
                         className="text-button danger"
-                        onClick={async () => {
-                          const confirmed = await confirm({ message: "Weet je zeker dat je deze notificatie wilt verwijderen?" });
-                          if (confirmed) dismissNotification(notification.id);
-                        }}
+                        onClick={() => dismissNotification(notification.id)}
                         type="button"
                       >
                         <Trash2 aria-hidden="true" size={16} />
