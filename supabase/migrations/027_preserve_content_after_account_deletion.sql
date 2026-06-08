@@ -18,14 +18,14 @@ begin
     execute format('alter table %s alter column %I drop not null', item.table_name, item.column_name);
 
     for constraint_name in
-      select constraint.conname
-      from pg_constraint constraint
+      select fk_constraint.conname
+      from pg_constraint fk_constraint
       join pg_attribute attribute
-        on attribute.attrelid = constraint.conrelid
-       and attribute.attnum = any(constraint.conkey)
-      where constraint.conrelid = item.table_name
-        and constraint.contype = 'f'
-        and constraint.confrelid = 'auth.users'::regclass
+        on attribute.attrelid = fk_constraint.conrelid
+       and attribute.attnum = any(fk_constraint.conkey)
+      where fk_constraint.conrelid = item.table_name
+        and fk_constraint.contype = 'f'
+        and fk_constraint.confrelid = 'auth.users'::regclass
         and attribute.attname = item.column_name
     loop
       execute format('alter table %s drop constraint if exists %I', item.table_name, constraint_name);
