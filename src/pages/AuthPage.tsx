@@ -29,6 +29,7 @@ export function AuthPage() {
   const [accessRequested, setAccessRequested] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
   const [blockedSupportEmail, setBlockedSupportEmail] = useState("");
+  const [blockedSupportPhone, setBlockedSupportPhone] = useState("");
   const [blockedSupportOpen, setBlockedSupportOpen] = useState(false);
   const [blockedSupportSent, setBlockedSupportSent] = useState(false);
 
@@ -41,6 +42,7 @@ export function AuthPage() {
     setAccessRequested(false);
     setBlockedMessage("");
     setBlockedSupportEmail("");
+    setBlockedSupportPhone("");
     setBlockedSupportOpen(false);
     setBlockedSupportSent(false);
     if (nextMode === "forgot" && !resetEmail) setResetEmail(email);
@@ -77,6 +79,7 @@ export function AuthPage() {
 
   async function sendBlockedAccountMessage() {
     const supportEmail = blockedSupportEmail.trim().toLowerCase();
+    const supportPhone = blockedSupportPhone.trim();
     if (!supportEmail) {
       setError("Vul je e-mailadres in bij het bericht aan beheer.");
       return;
@@ -94,13 +97,14 @@ export function AuthPage() {
         type: "email_wijziging_niet_herkend",
         status: "Nieuw",
         email: supportEmail,
-        bericht: `Geblokkeerde bewoner vraagt om contact met beheer. E-mailadres: ${supportEmail}. Bericht: ${blockedMessage.trim() || "Geen extra toelichting ingevuld."}`,
+        bericht: `Geblokkeerde bewoner vraagt om contact met beheer. E-mailadres: ${supportEmail}. Telefoonnummer: ${supportPhone || "niet ingevuld"}. Bericht: ${blockedMessage.trim() || "Geen extra toelichting ingevuld."}`,
       });
       if (insertError) throw insertError;
       setBlockedSupportSent(true);
       setBlockedSupportOpen(false);
       setBlockedMessage("");
       setBlockedSupportEmail("");
+      setBlockedSupportPhone("");
       setMessage("Je bericht is verstuurd naar beheer. Beheer kan je account controleren.");
     } catch (caught) {
       setError(friendlyErrorMessage(caught, "Je bericht versturen lukt nu niet. Probeer het later opnieuw of neem contact op met beheer."));
@@ -242,6 +246,17 @@ export function AuthPage() {
                         required
                         type="email"
                         value={blockedSupportEmail}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Telefoonnummer optioneel</span>
+                      <input
+                        autoComplete="tel"
+                        inputMode="tel"
+                        onChange={(event) => setBlockedSupportPhone(event.target.value)}
+                        placeholder="Telefoonnummer"
+                        type="tel"
+                        value={blockedSupportPhone}
                       />
                     </label>
                     <label className="field">

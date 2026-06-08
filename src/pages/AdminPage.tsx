@@ -605,7 +605,7 @@ export function AdminPage() {
                       </select>
                     </label>
                     <label className="field">
-                      <span>Reactie of notitie beheer</span>
+                      <span>Notitie beheer</span>
                       <textarea
                         onChange={(changeEvent) => securityEvents.update(event.id, { beheer_reactie: changeEvent.target.value })}
                         placeholder="Bijvoorbeeld: bewoner gebeld, account tijdelijk geblokkeerd..."

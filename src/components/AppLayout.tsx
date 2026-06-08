@@ -1,10 +1,11 @@
-﻿import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, Phone, Settings, Trash2, UserRound } from "lucide-react";
+import { Bell, BookOpen, ClipboardList, HandHeart, Home, Megaphone, MessageSquareText, Phone, Settings, Trash2, UserRound, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppData } from "../lib/AppDataContext";
 import { residentLabel } from "../lib/residentDisplay";
 import { useSignedUrl } from "../lib/storageUrls";
 import { paths } from "../routes/paths";
+import type { FeedbackItem } from "../types";
 
 const navItems = [
   { to: paths.home, label: "Home", icon: Home },
@@ -97,6 +98,9 @@ export function AppLayout() {
   const [readNotifications, setReadNotifications] = useState(() => readStringSet(readNotificationsKey));
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackDraft, setFeedbackDraft] = useState({ onderwerp: "", bericht: "" });
+  const [feedbackMessage, setFeedbackMessage] = useState("");
   const [textSize, setTextSize] = useState<TextSize>(() => readTextSize(textSizeKey));
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -119,6 +123,7 @@ export function AppLayout() {
     const currentHash = location.hash.replace("#", "");
     setShowNotifications(false);
     setShowAccessibility(false);
+    setShowFeedback(false);
     if (!currentHash) return;
     window.setTimeout(() => {
       document.getElementById(currentHash)?.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -319,6 +324,31 @@ export function AppLayout() {
     setShowNotifications(false);
   }
 
+  function sendFeedback() {
+    const onderwerp = feedbackDraft.onderwerp.trim();
+    const bericht = feedbackDraft.bericht.trim();
+    if (!onderwerp || !bericht) {
+      setFeedbackMessage("Vul een onderwerp en bericht in.");
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    const item: FeedbackItem = {
+      id: crypto.randomUUID(),
+      onderwerp,
+      bericht,
+      status: "Nieuw",
+      aangemaakt_door: profile.user_id,
+      aangemaakt_door_naam: profile.naam_of_bijnaam,
+      aangemaakt_door_huisnummer: profile.huisnummer,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+    feedbackItems.add(item);
+    setFeedbackDraft({ onderwerp: "", bericht: "" });
+    setFeedbackMessage("Dank je, je feedback is verstuurd naar beheer.");
+  }
+
   useEffect(() => {
     if (location.pathname !== paths.admin || unreadAdminNotifications.length === 0) return;
     markNotificationsAsRead(unreadAdminNotifications.map((notification) => notification.id));
@@ -370,6 +400,20 @@ export function AppLayout() {
               </div>
             )}
           </div>
+          <button
+            aria-label="Feedback doorgeven"
+            className="icon-button feedback-button"
+            onClick={() => {
+              setShowAccessibility(false);
+              setShowNotifications(false);
+              setFeedbackMessage("");
+              setShowFeedback(true);
+            }}
+            title="Feedback"
+            type="button"
+          >
+            <MessageSquareText aria-hidden="true" />
+          </button>
           <div className="notification-menu" ref={notificationMenuRef}>
             <button
               aria-label="Notificaties"
@@ -450,6 +494,41 @@ export function AppLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      {showFeedback && (
+        <div className="confirm-overlay" role="presentation">
+          <section aria-modal="true" className="confirm-dialog feedback-dialog" role="dialog">
+            <button aria-label="Feedback sluiten" className="dialog-close-button" onClick={() => setShowFeedback(false)} type="button">
+              <X aria-hidden="true" size={18} />
+            </button>
+            <p className="eyebrow">Feedback</p>
+            <h2>Feedback doorgeven</h2>
+            <p>Geef door wat beter kan of wat niet prettig werkt. Beheer ziet je bericht in het beheerscherm.</p>
+            <form className="page-stack page-stack--small" onSubmit={(event) => { event.preventDefault(); sendFeedback(); }}>
+              <label className="field">
+                <span>Onderwerp</span>
+                <input
+                  onChange={(event) => setFeedbackDraft({ ...feedbackDraft, onderwerp: event.target.value })}
+                  placeholder="Waar gaat je feedback over?"
+                  required
+                  value={feedbackDraft.onderwerp}
+                />
+              </label>
+              <label className="field">
+                <span>Bericht</span>
+                <textarea
+                  onChange={(event) => setFeedbackDraft({ ...feedbackDraft, bericht: event.target.value })}
+                  placeholder="Wat wil je meegeven?"
+                  required
+                  value={feedbackDraft.bericht}
+                />
+              </label>
+              {feedbackMessage && <p className="form-message">{feedbackMessage}</p>}
+              <button className="button button--full" type="submit">Versturen</button>
+            </form>
+          </section>
+        </div>
+      )}
 
       {showInstallPrompt && (
         <section className="install-prompt" aria-live="polite">
