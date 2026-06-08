@@ -12,6 +12,7 @@ import { useSignedUrl } from "../lib/storageUrls";
 import type { NotificationPreference } from "../types";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { useConfirm } from "../lib/ConfirmContext";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 export function ProfilePage() {
   const { feedbackItems, notificationPreferences, profile, profiles } = useAppData();
@@ -61,6 +62,22 @@ export function ProfilePage() {
   );
   const photoPreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : profileDraft.profielfoto_url), [photoFile, profileDraft.profielfoto_url]);
   const resolvedPhotoPreview = useSignedUrl(photoPreview);
+
+  async function notifyAdminAboutEmailChangeRequest(nextEmail: string) {
+    if (!isSupabaseConfigured || !supabase) return;
+    const currentEmail = profile.email?.trim() || "";
+    const resident = [profile.naam_of_bijnaam, profile.achternaam].filter(Boolean).join(" ").trim() || "Bewoner";
+    const houseNumber = profile.huisnummer ? `, huisnummer ${profile.huisnummer}` : "";
+    const { error } = await supabase.from("security_events").insert({
+      type: "email_wijziging_niet_herkend",
+      status: "Nieuw",
+      email: currentEmail || null,
+      nieuwe_email: nextEmail,
+      user_id: profile.user_id,
+      bericht: `E-mailadreswijziging aangevraagd door ${resident}${houseNumber}. Oud e-mailadres: ${currentEmail || "niet bekend"}. Nieuw e-mailadres: ${nextEmail}. Dit is een automatische melding voor beheer. Alleen actie nodig als de bewoner aangeeft dat dit niet klopt.`,
+    });
+    if (error) throw error;
+  }
 
   async function refreshPushStatus() {
     setPushStatus("checking");
@@ -185,8 +202,13 @@ export function ProfilePage() {
       setEmailBusy(true);
       setEmailMessage("");
       await updateEmail(nextEmail);
+      try {
+        await notifyAdminAboutEmailChangeRequest(nextEmail);
+      } catch {
+        // De e-mailadreswijziging is al aangevraagd; deze beheermelding is extra veiligheid.
+      }
       setEmailMessage(
-        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres. Kijk ook in spam of ongewenste mail.",
+        "We hebben een bevestigingsmail gestuurd naar je nieuwe e-mailadres. Alleen via die mail bevestig je de wijziging. Tot die tijd log je nog in met je oude e-mailadres. Beheer krijgt ook een melding van deze wijziging. Kijk ook in spam of ongewenste mail.",
       );
     } catch (error) {
       setEmailMessage(friendlyErrorMessage(error, "E-mailadres wijzigen lukt nu niet. Controleer het adres en probeer het opnieuw."));

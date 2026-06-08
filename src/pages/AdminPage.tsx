@@ -561,12 +561,13 @@ export function AdminPage() {
               const currentEmail = resident.email?.toLowerCase();
               return currentEmail && (currentEmail === event.email?.toLowerCase() || currentEmail === event.nieuwe_email?.toLowerCase());
             });
+            const isChangeRequest = event.bericht.toLowerCase().includes("aangevraagd");
             return (
               <details className="item-card collapsible-card admin-list-card" id={`veiligheid-${event.id}`} key={event.id}>
                 <summary className="item-card__header collapsible-card__summary">
                   <div>
                     <p className="chip">E-mailadreswijziging</p>
-                    <h3>Niet herkend door bewoner</h3>
+                    <h3>{isChangeRequest ? "Wijziging aangevraagd" : "Niet herkend door bewoner"}</h3>
                     <p className="muted">{new Date(event.created_at).toLocaleDateString("nl-NL")}</p>
                   </div>
                   <StatusBadge tone={event.status === "Opgelost" ? "good" : "warning"}>{event.status}</StatusBadge>
@@ -631,7 +632,7 @@ export function AdminPage() {
               </details>
             );
           })}
-          {securityEvents.items.length === 0 && <EmptyState title="Geen veiligheidsmeldingen" description="Als iemand via een e-mail aangeeft dat een e-mailadreswijziging niet klopt, verschijnt dat hier." />}
+          {securityEvents.items.length === 0 && <EmptyState title="Geen veiligheidsmeldingen" description="Aanvragen voor e-mailadreswijzigingen en meldingen die bewoners niet herkennen verschijnen hier." />}
         </section>
       )}
 
