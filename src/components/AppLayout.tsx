@@ -17,6 +17,7 @@ const navItems = [
 ];
 
 type TextSize = "normal" | "large" | "xlarge";
+type FeedbackMode = "choice" | "feedback" | "contact";
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
@@ -99,6 +100,7 @@ export function AppLayout() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode>("choice");
   const [feedbackDraft, setFeedbackDraft] = useState({ onderwerp: "", bericht: "" });
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [textSize, setTextSize] = useState<TextSize>(() => readTextSize(textSizeKey));
@@ -324,7 +326,7 @@ export function AppLayout() {
     setShowNotifications(false);
   }
 
-  function sendFeedback() {
+  function sendFeedback(mode: Exclude<FeedbackMode, "choice">) {
     const onderwerp = feedbackDraft.onderwerp.trim();
     const bericht = feedbackDraft.bericht.trim();
     if (!onderwerp || !bericht) {
@@ -335,7 +337,7 @@ export function AppLayout() {
     const timestamp = new Date().toISOString();
     const item: FeedbackItem = {
       id: crypto.randomUUID(),
-      onderwerp,
+      onderwerp: mode === "contact" ? `Contact met beheer: ${onderwerp}` : onderwerp,
       bericht,
       status: "Nieuw",
       aangemaakt_door: profile.user_id,
@@ -346,7 +348,7 @@ export function AppLayout() {
     };
     feedbackItems.add(item);
     setFeedbackDraft({ onderwerp: "", bericht: "" });
-    setFeedbackMessage("Dank je, je feedback is verstuurd naar beheer.");
+    setFeedbackMessage(mode === "contact" ? "Dank je, je bericht is verstuurd naar beheer." : "Dank je, je feedback is verstuurd naar beheer.");
   }
 
   useEffect(() => {
@@ -407,6 +409,8 @@ export function AppLayout() {
               setShowAccessibility(false);
               setShowNotifications(false);
               setFeedbackMessage("");
+              setFeedbackDraft({ onderwerp: "", bericht: "" });
+              setFeedbackMode("choice");
               setShowFeedback(true);
             }}
             title="Feedback"
@@ -501,31 +505,56 @@ export function AppLayout() {
             <button aria-label="Feedback sluiten" className="dialog-close-button" onClick={() => setShowFeedback(false)} type="button">
               <X aria-hidden="true" size={18} />
             </button>
-            <p className="eyebrow">Feedback</p>
-            <h2>Feedback doorgeven</h2>
-            <p>Geef door wat beter kan of wat niet prettig werkt. Beheer ziet je bericht in het beheerscherm.</p>
-            <form className="page-stack page-stack--small" onSubmit={(event) => { event.preventDefault(); sendFeedback(); }}>
-              <label className="field">
-                <span>Onderwerp</span>
-                <input
-                  onChange={(event) => setFeedbackDraft({ ...feedbackDraft, onderwerp: event.target.value })}
-                  placeholder="Waar gaat je feedback over?"
-                  required
-                  value={feedbackDraft.onderwerp}
-                />
-              </label>
-              <label className="field">
-                <span>Bericht</span>
-                <textarea
-                  onChange={(event) => setFeedbackDraft({ ...feedbackDraft, bericht: event.target.value })}
-                  placeholder="Wat wil je meegeven?"
-                  required
-                  value={feedbackDraft.bericht}
-                />
-              </label>
-              {feedbackMessage && <p className="form-message">{feedbackMessage}</p>}
-              <button className="button button--full" type="submit">Versturen</button>
-            </form>
+            <p className="eyebrow">{feedbackMode === "choice" ? "Bericht aan beheer" : feedbackMode === "contact" ? "Contact" : "Feedback"}</p>
+            <h2>{feedbackMode === "choice" ? "Waar gaat je bericht over?" : feedbackMode === "contact" ? "Contact met beheer" : "Feedback doorgeven"}</h2>
+            {feedbackMode === "choice" ? (
+              <div className="feedback-choice-grid">
+                <button className="button button--full" onClick={() => setFeedbackMode("feedback")} type="button">
+                  Feedback geven
+                </button>
+                <button className="button button--soft button--full" onClick={() => setFeedbackMode("contact")} type="button">
+                  Contact met beheer
+                </button>
+                <p className="muted">Feedback is bedoeld voor verbeteringen aan de app. Contact met beheer is voor een vraag of verzoek aan beheer.</p>
+              </div>
+            ) : (
+              <>
+                <p>
+                  {feedbackMode === "contact"
+                    ? "Stuur een vraag of verzoek naar beheer. Beheer ziet dit bericht in het beheerscherm."
+                    : "Geef door wat beter kan of wat niet prettig werkt. Beheer ziet je bericht in het beheerscherm."}
+                </p>
+                <form className="page-stack page-stack--small" onSubmit={(event) => { event.preventDefault(); sendFeedback(feedbackMode); }}>
+                  <label className="field">
+                    <span>Onderwerp</span>
+                    <input
+                      onChange={(event) => setFeedbackDraft({ ...feedbackDraft, onderwerp: event.target.value })}
+                      placeholder={feedbackMode === "contact" ? "Waar wil je beheer over spreken?" : "Waar gaat je feedback over?"}
+                      required
+                      value={feedbackDraft.onderwerp}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Bericht</span>
+                    <textarea
+                      onChange={(event) => setFeedbackDraft({ ...feedbackDraft, bericht: event.target.value })}
+                      placeholder={feedbackMode === "contact" ? "Typ hier je vraag of verzoek..." : "Wat wil je meegeven?"}
+                      required
+                      value={feedbackDraft.bericht}
+                    />
+                  </label>
+                  {feedbackMessage && <p className="form-message">{feedbackMessage}</p>}
+                  <button className="button button--full" type="submit">Versturen</button>
+                  <button className="button button--soft button--full" onClick={() => {
+                    setFeedbackMode("choice");
+                    setFeedbackDraft({ onderwerp: "", bericht: "" });
+                    setFeedbackMessage("");
+                  }} type="button">
+                    Terug
+                  </button>
+                </form>
+              </>
+            )}
           </section>
         </div>
       )}

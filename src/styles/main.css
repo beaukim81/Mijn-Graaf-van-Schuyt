@@ -260,6 +260,11 @@ button {
   position: relative;
 }
 
+.feedback-choice-grid {
+  display: grid;
+  gap: 10px;
+}
+
 .dialog-close-button {
   align-items: center;
   background: var(--surface-soft);
