@@ -28,6 +28,7 @@ export function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [accessRequested, setAccessRequested] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
+  const [blockedSupportEmail, setBlockedSupportEmail] = useState("");
   const [blockedSupportOpen, setBlockedSupportOpen] = useState(false);
   const [blockedSupportSent, setBlockedSupportSent] = useState(false);
 
@@ -39,6 +40,7 @@ export function AuthPage() {
     setMessage("");
     setAccessRequested(false);
     setBlockedMessage("");
+    setBlockedSupportEmail("");
     setBlockedSupportOpen(false);
     setBlockedSupportSent(false);
     if (nextMode === "forgot" && !resetEmail) setResetEmail(email);
@@ -74,8 +76,9 @@ export function AuthPage() {
   }
 
   async function sendBlockedAccountMessage() {
-    if (!email) {
-      setError("Vul je e-mailadres in, zodat beheer weet om welk account het gaat.");
+    const supportEmail = blockedSupportEmail.trim().toLowerCase();
+    if (!supportEmail) {
+      setError("Vul je e-mailadres in bij het bericht aan beheer.");
       return;
     }
     if (!isSupabaseConfigured || !supabase) {
@@ -90,13 +93,14 @@ export function AuthPage() {
       const { error: insertError } = await supabase.from("security_events").insert({
         type: "email_wijziging_niet_herkend",
         status: "Nieuw",
-        email: email.trim().toLowerCase(),
-        bericht: `Geblokkeerde bewoner vraagt om contact met beheer. E-mailadres: ${email.trim().toLowerCase()}. Bericht: ${blockedMessage.trim() || "Geen extra toelichting ingevuld."}`,
+        email: supportEmail,
+        bericht: `Geblokkeerde bewoner vraagt om contact met beheer. E-mailadres: ${supportEmail}. Bericht: ${blockedMessage.trim() || "Geen extra toelichting ingevuld."}`,
       });
       if (insertError) throw insertError;
       setBlockedSupportSent(true);
       setBlockedSupportOpen(false);
       setBlockedMessage("");
+      setBlockedSupportEmail("");
       setMessage("Je bericht is verstuurd naar beheer. Beheer kan je account controleren.");
     } catch (caught) {
       setError(friendlyErrorMessage(caught, "Je bericht versturen lukt nu niet. Probeer het later opnieuw of neem contact op met beheer."));
@@ -215,11 +219,31 @@ export function AuthPage() {
               <div>
                 <p>Wil je beheer hierover een bericht sturen?</p>
                 {!blockedSupportOpen ? (
-                  <button className="button button--soft button--full" disabled={busy} onClick={() => setBlockedSupportOpen(true)} type="button">
+                  <button
+                    className="button button--soft button--full"
+                    disabled={busy}
+                    onClick={() => {
+                      setBlockedSupportEmail(email);
+                      setBlockedSupportOpen(true);
+                    }}
+                    type="button"
+                  >
                     Bericht aan beheer sturen
                   </button>
                 ) : (
                   <div className="page-stack page-stack--small">
+                    <label className="field">
+                      <span>E-mailadres</span>
+                      <input
+                        autoComplete="email"
+                        inputMode="email"
+                        onChange={(event) => setBlockedSupportEmail(event.target.value)}
+                        placeholder="naam@voorbeeld.nl"
+                        required
+                        type="email"
+                        value={blockedSupportEmail}
+                      />
+                    </label>
                     <label className="field">
                       <span>Bericht aan beheer optioneel</span>
                       <textarea
@@ -228,7 +252,7 @@ export function AuthPage() {
                         value={blockedMessage}
                       />
                     </label>
-                    <button className="button button--full" disabled={busy} onClick={() => void sendBlockedAccountMessage()} type="button">
+                    <button className="button button--full" disabled={busy || !blockedSupportEmail.trim()} onClick={() => void sendBlockedAccountMessage()} type="button">
                       {busy ? "Bezig met versturen" : "Verstuur naar beheer"}
                     </button>
                   </div>

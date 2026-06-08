@@ -562,12 +562,13 @@ export function AdminPage() {
               return currentEmail && (currentEmail === event.email?.toLowerCase() || currentEmail === event.nieuwe_email?.toLowerCase());
             });
             const isChangeRequest = event.bericht.toLowerCase().includes("aangevraagd");
+            const isBlockedAccountMessage = event.bericht.toLowerCase().includes("geblokkeerde bewoner");
             return (
               <details className="item-card collapsible-card admin-list-card" id={`veiligheid-${event.id}`} key={event.id}>
                 <summary className="item-card__header collapsible-card__summary">
                   <div>
-                    <p className="chip">E-mailadreswijziging</p>
-                    <h3>{isChangeRequest ? "Wijziging aangevraagd" : "Niet herkend door bewoner"}</h3>
+                    <p className="chip">{isBlockedAccountMessage ? "Geblokkeerd account" : "E-mailadreswijziging"}</p>
+                    <h3>{isBlockedAccountMessage ? "Bewoner vraagt contact met beheer" : isChangeRequest ? "Wijziging aangevraagd" : "Niet herkend door bewoner"}</h3>
                     <p className="muted">{new Date(event.created_at).toLocaleDateString("nl-NL")}</p>
                   </div>
                   <StatusBadge tone={event.status === "Opgelost" ? "good" : "warning"}>{event.status}</StatusBadge>
