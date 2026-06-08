@@ -118,6 +118,7 @@ export function AdminPage() {
   const [documentDraft, setDocumentDraft] = useState(blankDocument);
   const [announcementDraft, setAnnouncementDraft] = useState(blankAnnouncement);
   const [feedbackReplies, setFeedbackReplies] = useState<Record<string, string>>({});
+  const [feedbackActionMessage, setFeedbackActionMessage] = useState("");
   const [accessRequestBusyId, setAccessRequestBusyId] = useState("");
   const [accessRequestMessage, setAccessRequestMessage] = useState("");
   const [accessRequestError, setAccessRequestError] = useState("");
@@ -636,6 +637,12 @@ export function AdminPage() {
 
       {activeTab === "feedback" && (
         <section className="admin-section card-list compact-list">
+          {feedbackActionMessage && (
+            <div className="notice notice--success">
+              <p>{feedbackActionMessage}</p>
+              <button className="text-button" onClick={() => setFeedbackActionMessage("")} type="button">Melding sluiten</button>
+            </div>
+          )}
           {feedbackItems.syncError && (
             <div className="notice notice--warning">
               <p>{feedbackItems.syncError}</p>
@@ -679,6 +686,7 @@ export function AdminPage() {
                         updated_at: new Date().toISOString(),
                       });
                       setFeedbackReplies((current) => ({ ...current, [item.id]: "" }));
+                      setFeedbackActionMessage("Reactie verstuurd naar de bewoner.");
                       if (reply) {
                         void notifyUser(item.aangemaakt_door, {
                           title: "Reactie op je feedback",
@@ -690,7 +698,7 @@ export function AdminPage() {
                     }}
                     type="button"
                   >
-                    Reactie opslaan
+                    Verstuur reactie
                   </button>
                   <button
                     className="button button--soft"
@@ -703,6 +711,7 @@ export function AdminPage() {
                         updated_at: new Date().toISOString(),
                       });
                       setFeedbackReplies((current) => ({ ...current, [item.id]: "" }));
+                      setFeedbackActionMessage("Feedback is gemarkeerd als opgelost.");
                       void notifyUser(item.aangemaakt_door, {
                         title: "Feedback opgelost",
                         body: reply || `Je feedback is gemarkeerd als opgelost: ${item.onderwerp}`,
