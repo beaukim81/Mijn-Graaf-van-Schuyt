@@ -31,6 +31,13 @@ interface AccessRequestInput {
 
 const pendingAccessRequestMessage = "Je aanvraag is al ontvangen en staat nog in behandeling. Je hoeft niets opnieuw te versturen.";
 const existingAccountMessage = "Dit e-mailadres is al in gebruik. Log in of kies Wachtwoord vergeten.";
+const blockedAccountMessage = "Dit account is tijdelijk geblokkeerd. Neem contact op met beheer.";
+const blockedLoginMessageKey = "mijn-graaf-van-schuyt:blocked-login-message";
+
+function rememberBlockedLoginMessage() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(blockedLoginMessageKey, blockedAccountMessage);
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -76,8 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) {
       const mappedProfile = mapProfile(data);
       if (mappedProfile.account_geblokkeerd) {
+        rememberBlockedLoginMessage();
         await supabase.auth.signOut();
-        throw new Error("Dit account is tijdelijk geblokkeerd. Neem contact op met beheer.");
+        throw new Error(blockedAccountMessage);
       }
       if (currentUser.email && mappedProfile.email !== currentUser.email) {
         const { data: syncedProfile } = await supabase

@@ -375,6 +375,10 @@ button {
   gap: var(--content-gap);
 }
 
+.page-stack--small {
+  gap: 10px;
+}
+
 .intro,
 .page-heading {
   display: grid;

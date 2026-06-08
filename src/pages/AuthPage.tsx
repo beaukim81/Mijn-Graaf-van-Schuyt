@@ -1,8 +1,18 @@
 import { FormEvent, useState } from "react";
-import { KeyRound, LogIn, UserPlus } from "lucide-react";
+import { KeyRound, LogIn, ShieldAlert, UserPlus } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { friendlyErrorMessage } from "../lib/friendlyErrors";
 import { isValidHouseNumber } from "../lib/floorForHouseNumber";
+import { isSupabaseConfigured, supabase } from "../lib/supabase";
+
+const blockedLoginMessageKey = "mijn-graaf-van-schuyt:blocked-login-message";
+
+function readBlockedLoginMessage() {
+  if (typeof window === "undefined") return "";
+  const message = window.sessionStorage.getItem(blockedLoginMessageKey) ?? "";
+  if (message) window.sessionStorage.removeItem(blockedLoginMessageKey);
+  return message;
+}
 
 export function AuthPage() {
   const { requestAccess, resetPassword, signIn } = useAuth();
@@ -14,15 +24,23 @@ export function AuthPage() {
   const [lastName, setLastName] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => readBlockedLoginMessage());
   const [busy, setBusy] = useState(false);
   const [accessRequested, setAccessRequested] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState("");
+  const [blockedSupportOpen, setBlockedSupportOpen] = useState(false);
+  const [blockedSupportSent, setBlockedSupportSent] = useState(false);
+
+  const isBlockedLogin = error.toLowerCase().includes("tijdelijk geblokkeerd");
 
   function switchMode(nextMode: "login" | "signup" | "forgot") {
     setMode(nextMode);
     setError("");
     setMessage("");
     setAccessRequested(false);
+    setBlockedMessage("");
+    setBlockedSupportOpen(false);
+    setBlockedSupportSent(false);
     if (nextMode === "forgot" && !resetEmail) setResetEmail(email);
   }
 
@@ -48,7 +66,40 @@ export function AuthPage() {
     } catch (caught) {
       const friendlyMessage = friendlyErrorMessage(caught, "Inloggen of account maken lukt nu niet. Controleer je gegevens en probeer het opnieuw.");
       setError(friendlyMessage);
+      setBlockedSupportSent(false);
       if (friendlyMessage.includes("staat nog in behandeling")) setAccessRequested(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendBlockedAccountMessage() {
+    if (!email) {
+      setError("Vul je e-mailadres in, zodat beheer weet om welk account het gaat.");
+      return;
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      setError("Je bericht kan nu niet worden verstuurd. Neem contact op met beheer.");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { error: insertError } = await supabase.from("security_events").insert({
+        type: "email_wijziging_niet_herkend",
+        status: "Nieuw",
+        email: email.trim().toLowerCase(),
+        bericht: `Geblokkeerde bewoner vraagt om contact met beheer. E-mailadres: ${email.trim().toLowerCase()}. Bericht: ${blockedMessage.trim() || "Geen extra toelichting ingevuld."}`,
+      });
+      if (insertError) throw insertError;
+      setBlockedSupportSent(true);
+      setBlockedSupportOpen(false);
+      setBlockedMessage("");
+      setMessage("Je bericht is verstuurd naar beheer. Beheer kan je account controleren.");
+    } catch (caught) {
+      setError(friendlyErrorMessage(caught, "Je bericht versturen lukt nu niet. Probeer het later opnieuw of neem contact op met beheer."));
     } finally {
       setBusy(false);
     }
@@ -158,6 +209,33 @@ export function AuthPage() {
             <p className="muted">Log in met je e-mailadres en wachtwoord.</p>
           )}
           {error && <p className="form-message form-message--error">{error}</p>}
+          {mode === "login" && isBlockedLogin && !blockedSupportSent && (
+            <div className="notice notice--warning">
+              <ShieldAlert aria-hidden="true" size={22} />
+              <div>
+                <p>Wil je beheer hierover een bericht sturen?</p>
+                {!blockedSupportOpen ? (
+                  <button className="button button--soft button--full" disabled={busy} onClick={() => setBlockedSupportOpen(true)} type="button">
+                    Bericht aan beheer sturen
+                  </button>
+                ) : (
+                  <div className="page-stack page-stack--small">
+                    <label className="field">
+                      <span>Bericht aan beheer optioneel</span>
+                      <textarea
+                        onChange={(event) => setBlockedMessage(event.target.value)}
+                        placeholder="Typ hier kort wat er aan de hand is..."
+                        value={blockedMessage}
+                      />
+                    </label>
+                    <button className="button button--full" disabled={busy} onClick={() => void sendBlockedAccountMessage()} type="button">
+                      {busy ? "Bezig met versturen" : "Verstuur naar beheer"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {message && <p className="form-message">{message}</p>}
           <button className="button button--full" disabled={busy || (mode === "signup" && accessRequested)} type="submit">
             <KeyRound aria-hidden="true" size={18} />{" "}
