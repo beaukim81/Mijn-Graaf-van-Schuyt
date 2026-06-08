@@ -260,9 +260,17 @@ function AppDataProvider({ children }: { children: ReactNode }) {
       if (reportsError) throw reportsError;
       if (confirmationsError) throw confirmationsError;
       return (reportRows ?? []).map((row) => {
-        const confirmations = (confirmationRows ?? []).filter((item) => item.report_id === row.id && item.herkent_probleem).length;
+        const confirmedUserIds = new Set(
+          (confirmationRows ?? [])
+            .filter((item) => item.report_id === row.id && item.herkent_probleem)
+            .map((item) => String(item.user_id)),
+        );
+        if (row.aangemaakt_door && !confirmedUserIds.has(String(row.aangemaakt_door))) {
+          confirmedUserIds.add(String(row.aangemaakt_door));
+        }
+        const confirmations = confirmedUserIds.size;
         const declined = (confirmationRows ?? []).filter((item) => item.report_id === row.id && !item.herkent_probleem).length;
-        const current = (confirmationRows ?? []).find((item) => item.report_id === row.id && item.user_id === user?.id);
+        const current = row.aangemaakt_door === user?.id ? undefined : (confirmationRows ?? []).find((item) => item.report_id === row.id && item.user_id === user?.id);
         const response: Report["current_user_response"] | undefined = current ? (current.herkent_probleem ? "confirmed" : "declined") : undefined;
         return mapReport(row, confirmations, declined, response);
       });

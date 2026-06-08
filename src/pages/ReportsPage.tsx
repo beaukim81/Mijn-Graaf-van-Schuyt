@@ -5,6 +5,9 @@ import { ReportCard } from "../components/ReportCard";
 import { SearchBar } from "../components/SearchBar";
 import { StatusBadge } from "../components/StatusBadge";
 import { EditablePhotoGrid } from "../components/EditablePhotoGrid";
+import { LinkifiedText } from "../components/LinkifiedText";
+import { PhotoGrid } from "../components/PhotoGrid";
+import { ResidentIdentity } from "../components/ResidentIdentity";
 import { UrlPreview } from "../components/UrlPreview";
 import { StorageLink } from "../components/StorageLink";
 import { reportCategories } from "../data/categories";
@@ -105,7 +108,7 @@ export function ReportsPage() {
         bijgewerkt_op: timestamp,
         confirmations: 1,
         declined: 0,
-        current_user_response: "confirmed",
+        current_user_response: undefined,
         image_urls: imageUrls,
       };
       await reports.addAsync(report);
@@ -122,6 +125,7 @@ export function ReportsPage() {
   function confirmReport(id: string) {
     const report = reports.items.find((item) => item.id === id);
     if (!report) return;
+    if (report.aangemaakt_door === profile.user_id) return;
     if (report.current_user_response === "confirmed") {
       reports.update(id, {
         confirmations: Math.max(0, report.confirmations - 1),
@@ -282,6 +286,7 @@ export function ReportsPage() {
             report={report}
             documents={documents.items}
             profiles={profiles.items}
+            canConfirm={report.aangemaakt_door !== profile.user_id}
             canResolve={report.aangemaakt_door === profile.user_id}
             canRetractRebo={report.rebo_melding_door === profile.user_id}
             onConfirm={confirmReport}
@@ -332,8 +337,14 @@ export function ReportsPage() {
 }
 
 function ResolvedReportItem({ report, documents, profiles }: { report: Report; documents: KnowledgeDocument[]; profiles: Profile[] }) {
-  const solvedBy = report.opgelost_door_naam ? `Opgelost door ${residentLabel(report.opgelost_door_naam)}` : "Opgelost";
   const solution = report.oplossing_omschrijving || "Er is geen extra toelichting toegevoegd.";
+  const profilesByUserId = useMemo(() => new Map(profiles.map((item) => [item.user_id, item])), [profiles]);
+  const relatedDocuments =
+    report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
+  const resolver = report.opgelost_door ? profilesByUserId.get(report.opgelost_door) : undefined;
+  const solvedBy = report.opgelost_door
+    ? `Opgelost door ${resolver ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam) : "Bewoner"}`
+    : "Opgelost";
 
   return (
     <details className="resolved-report">
@@ -348,7 +359,39 @@ function ResolvedReportItem({ report, documents, profiles }: { report: Report; d
           <small>{solvedBy}</small>
         </span>
       </summary>
-      <ReportCard report={report} documents={documents} profiles={profiles} />
+      <div className="resolved-report__body">
+        <div className="resident-byline">
+          <span>Geplaatst door</span>
+          <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+        </div>
+        <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
+        <p><LinkifiedText text={report.omschrijving} /></p>
+        <dl className="meta-list">
+          <div>
+            <dt>Locatie</dt>
+            <dd>{report.locatie_in_gebouw}</dd>
+          </div>
+          <div>
+            <dt>Herkenningen</dt>
+            <dd>{report.confirmations} bewoners</dd>
+          </div>
+        </dl>
+        <aside className="related-box">
+          <strong>Oplossing</strong>
+          <span><LinkifiedText text={solution} /></span>
+          {report.opgelost_door_naam && <span>{solvedBy}</span>}
+        </aside>
+        {relatedDocuments.length > 0 && (
+          <aside className="related-box">
+            <strong>Bijbehorende documenten</strong>
+            {relatedDocuments.map((document) => (
+              <StorageLink href={document.pdf_url} key={document.id}>
+                {document.titel} · {document.documenttype}
+              </StorageLink>
+            ))}
+          </aside>
+        )}
+      </div>
     </details>
   );
 }

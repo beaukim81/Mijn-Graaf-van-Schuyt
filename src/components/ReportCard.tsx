@@ -13,6 +13,7 @@ interface ReportCardProps {
   report: Report;
   documents: KnowledgeDocument[];
   profiles?: Profile[];
+  canConfirm?: boolean;
   canResolve?: boolean;
   canRetractRebo?: boolean;
   onConfirm?: (id: string) => void;
@@ -23,7 +24,7 @@ interface ReportCardProps {
   onResolve?: (id: string, resolution: string) => void;
 }
 
-export function ReportCard({ report, documents, profiles = [], canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
+export function ReportCard({ report, documents, profiles = [], canConfirm = true, canResolve, canRetractRebo, onConfirm, onForwardToRebo, onRetractRebo, onEdit, onDelete, onResolve }: ReportCardProps) {
   const confirm = useConfirm();
   const relatedDocuments =
     report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
@@ -31,6 +32,10 @@ export function ReportCard({ report, documents, profiles = [], canResolve, canRe
   const [resolution, setResolution] = useState("");
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
   const showRentalMaintenanceLink = isLikelyRentalMaintenance(report);
+  const reboReporter = report.rebo_melding_door ? profilesByUserId.get(report.rebo_melding_door) : undefined;
+  const reboReporterLabel = reboReporter ? residentLabel(reboReporter.naam_of_bijnaam, reboReporter.huisnummer, reboReporter.achternaam) : "Een bewoner";
+  const resolver = report.opgelost_door ? profilesByUserId.get(report.opgelost_door) : undefined;
+  const resolverLabel = resolver ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam) : "Bewoner";
 
   async function copySummary() {
     await navigator.clipboard.writeText(reboSummary(report));
@@ -44,7 +49,7 @@ export function ReportCard({ report, documents, profiles = [], canResolve, canRe
           <h2>{report.titel}</h2>
           <div className="resident-byline">
             <span>Geplaatst door</span>
-            <ResidentIdentity compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+            <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
           </div>
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>
@@ -75,16 +80,18 @@ export function ReportCard({ report, documents, profiles = [], canResolve, canRe
         <aside className="related-box">
           <strong>Al doorgegeven aan REBO</strong>
           <span>
-            {report.rebo_melding_door_naam ? `${residentLabel(report.rebo_melding_door_naam)} heeft aangegeven dat deze melding is doorgegeven aan REBO.` : "Een bewoner heeft aangegeven dat deze melding is doorgegeven aan REBO."}
+            {reboReporterLabel} heeft aangegeven dat deze melding is doorgegeven aan REBO.
             {" "}Herken je dit ook? Dan kun je eventueel zelf ook een melding doen met dezelfde samenvatting.
           </span>
         </aside>
       )}
       {report.status !== "Opgelost" && (
         <div className="action-row report-actions">
-          <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
-            <Check aria-hidden="true" size={18} /> {report.current_user_response === "confirmed" ? "Herkenning intrekken" : "Ik heb dit ook"}
-          </button>
+          {canConfirm && (
+            <button className={report.current_user_response === "confirmed" ? "button" : "button button--soft"} onClick={() => onConfirm?.(report.id)} type="button">
+              <Check aria-hidden="true" size={18} /> {report.current_user_response === "confirmed" ? "Herkenning intrekken" : "Ik heb dit ook"}
+            </button>
+          )}
           <a className="button button--soft" href="https://www.thuisbijrebo.nl/mijn-rebo/inloggen" target="_blank" rel="noreferrer">
             <Send aria-hidden="true" size={18} /> {forwardedToRebo ? "Zelf ook melden bij REBO" : "Melding bij REBO doen"}
           </a>
@@ -141,7 +148,7 @@ export function ReportCard({ report, documents, profiles = [], canResolve, canRe
         <aside className="related-box">
           <strong>Oplossing</strong>
           <span><LinkifiedText text={report.oplossing_omschrijving} /></span>
-          {report.opgelost_door_naam && <span>Toegevoegd door {residentLabel(report.opgelost_door_naam)}</span>}
+          {report.opgelost_door && <span>Toegevoegd door {resolverLabel}</span>}
         </aside>
       )}
       {relatedDocuments.length > 0 && (

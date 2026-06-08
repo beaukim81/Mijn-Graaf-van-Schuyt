@@ -80,7 +80,7 @@ function writeInstallPromptState(key: string, state: InstallPromptState) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, reports } = useAppData();
+  const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, profiles, reports } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -103,6 +103,12 @@ export function AppLayout() {
   const isIOS = useMemo(isIOSDevice, []);
   const hasNativeInstallPrompt = Boolean(installPromptEvent);
   const profilePhotoUrl = useSignedUrl(profile.profielfoto_url);
+  const profilesByUserId = useMemo(() => new Map(profiles.items.map((item) => [item.user_id, item])), [profiles.items]);
+  const residentNotificationLabel = useCallback((userId: string, name?: string, houseNumber?: string) => {
+    const linkedProfile = profilesByUserId.get(userId);
+    if (!linkedProfile) return "Bewoner";
+    return residentLabel(linkedProfile.naam_of_bijnaam ?? name, linkedProfile.huisnummer ?? houseNumber, linkedProfile.achternaam);
+  }, [profilesByUserId]);
 
   useEffect(() => {
     document.documentElement.dataset.textSize = textSize;
@@ -200,7 +206,7 @@ export function AppLayout() {
           id: `help-${request.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${request.titel}`,
-          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
+          description: `${residentNotificationLabel(message.author_id, message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.help}#hulp-${request.id}`,
         }));
     });
@@ -213,7 +219,7 @@ export function AppLayout() {
           id: `bulletin-${post.id}-${message.id}`,
           date: Date.parse(message.aangemaakt_op) || 0,
           title: `Reactie op ${post.titel}`,
-          description: `${residentLabel(message.author_name, message.author_house_number)}: ${message.message}`,
+          description: `${residentNotificationLabel(message.author_id, message.author_name, message.author_house_number)}: ${message.message}`,
           to: `${paths.bulletin}#prikbord-${post.id}`,
         }));
     });
@@ -272,7 +278,7 @@ export function AppLayout() {
     return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications, ...adminNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [accessRequests.items, buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items]);
+  }, [accessRequests.items, buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items, residentNotificationLabel]);
 
   const unreadNotifications = useMemo(
     () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),

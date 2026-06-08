@@ -1155,7 +1155,7 @@ export function AdminPage() {
                     onClick={async () => {
                       const confirmed = await confirm({
                         confirmLabel: "Bewoner verwijderen",
-                        message: `Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} volledig wilt verwijderen? Het account en gekoppelde gegevens worden verwijderd.`,
+                        message: `Weet je zeker dat je ${residentLabel(resident.naam_of_bijnaam, resident.huisnummer)} wilt verwijderen? Het account wordt verwijderd. Berichten die handig zijn voor bewoners kunnen anoniem blijven staan onder de naam Bewoner.`,
                       });
                       if (confirmed) profiles.remove(resident.id);
                     }}

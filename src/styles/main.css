@@ -1460,11 +1460,18 @@ summary {
   line-height: 1.35;
 }
 
+.resolved-report__body,
 .resolved-report > .item-card {
   border: 0;
   border-top: 1px solid var(--line);
   border-radius: 0 0 14px 14px;
   box-shadow: none;
+}
+
+.resolved-report__body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
 }
 
 @media (min-width: 560px) {

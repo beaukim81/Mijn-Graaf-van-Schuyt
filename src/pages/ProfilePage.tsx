@@ -158,7 +158,7 @@ export function ProfilePage() {
   async function handleDeleteAccount() {
     const confirmed = await confirm({
       confirmLabel: "Account verwijderen",
-      message: "Weet je zeker dat je je account volledig wilt verwijderen? Je profiel en gekoppelde gegevens worden verwijderd. Dit kun je niet terugdraaien.",
+      message: "Weet je zeker dat je je account volledig wilt verwijderen? Je naam, huisnummer en profielfoto worden niet meer getoond. Berichten die handig zijn voor bewoners kunnen blijven staan onder de naam Bewoner.",
     });
     if (!confirmed) return;
     try {
@@ -319,7 +319,7 @@ export function ProfilePage() {
             <h2>Wat zien andere bewoners?</h2>
           </div>
         </div>
-        <p>Je naam, huisnummer, profielfoto en geplaatste berichten zijn zichtbaar voor ingelogde bewoners.</p>
+        <p>Je naam, huisnummer, profielfoto en geplaatste berichten zijn zichtbaar voor ingelogde bewoners zolang je account actief is.</p>
         <p className="muted">Je e-mailadres is niet openbaar zichtbaar. Dat gebruiken we alleen voor je account, inloggen en belangrijke accountmails.</p>
       </article>
 
@@ -462,7 +462,7 @@ export function ProfilePage() {
             <StatusBadge tone="warning">Let op</StatusBadge>
           </div>
           <p>Wil je de app niet meer gebruiken, dan kun je je account volledig verwijderen.</p>
-          <p className="muted">Je profiel en gekoppelde gegevens worden verwijderd. Dit kan niet ongedaan worden gemaakt.</p>
+          <p className="muted">Je naam, huisnummer en profielfoto worden dan niet meer getoond. Berichten die handig zijn voor bewoners kunnen blijven staan onder de naam Bewoner.</p>
           <button className="button button--danger" onClick={handleDeleteAccount} type="button">
             <Trash2 aria-hidden="true" size={18} /> Account verwijderen
           </button>

@@ -79,7 +79,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
           <h2>{request.titel}</h2>
           <div className="resident-byline">
             <span>Geplaatst door</span>
-            <ResidentIdentity compact houseNumber={request.aanmaker_huisnummer} name={request.aanmaker_naam} profile={profilesByUserId.get(request.aangemaakt_door)} />
+            <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={request.aanmaker_huisnummer} name={request.aanmaker_naam} profile={profilesByUserId.get(request.aangemaakt_door)} />
           </div>
         </div>
         <StatusBadge tone={displayStatus === "Afgerond" ? "good" : "soft"}>{displayStatus}</StatusBadge>
@@ -116,7 +116,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
           {request.offers.map((offer) => (
             <div className="neighbor-offer" key={offer.id}>
               <Home aria-hidden="true" size={18} />
-              <ResidentIdentity compact houseNumber={offer.helper_house_number} name={offer.helper_name} profile={profilesByUserId.get(offer.helper_id)} />
+              <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={offer.helper_house_number} name={offer.helper_name} profile={profilesByUserId.get(offer.helper_id)} />
               {offer.contact_allowed && offer.contact_info && offer.contact_info !== `Huisnummer ${offer.helper_house_number}` ? (
                 <small>{offer.contact_info}</small>
               ) : null}
@@ -133,7 +133,7 @@ export function HelpRequestCard({ request, isOwner, currentUserId, isAdmin, prof
         ) : (
           request.messages.map((item) => (
             <div className="chat-message" key={item.id}>
-              <ResidentIdentity compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
+              <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />

@@ -9,16 +9,21 @@ export function collectiveMessage(count: number) {
   if (count >= 10) return "Groot gedeeld probleem binnen het gebouw.";
   if (count >= 5) return "Dit lijkt mogelijk een collectief gebouwprobleem.";
   if (count >= 3) return "Meerdere bewoners herkennen dit probleem.";
+  if (count >= 2) return "Een andere bewoner herkent dit ook.";
   return "Dit lijkt nog een individuele melding.";
 }
 
 export function adviceForReport(report: Report) {
-  if (report.type_melding === "Alleen mijn woning" && report.confirmations < 3) {
+  if (report.type_melding === "Alleen mijn woning" && report.confirmations <= 1) {
     return "Dit lijkt een individuele melding. Meld dit rechtstreeks bij REBO als het onder verhuuronderhoud valt.";
   }
 
-  if (report.confirmations >= 3 || report.type_melding !== "Alleen mijn woning") {
-    return "Meerdere bewoners herkennen dit probleem. Dit kan geschikt zijn voor een gezamenlijke melding of aanvullende individuele meldingen bij REBO.";
+  if (report.confirmations >= 2) {
+    return "Omdat andere bewoners dit ook herkennen, kan dit mogelijk een gezamenlijke melding worden. Bewoners kunnen daarnaast zelf ook een individuele melding bij REBO doen.";
+  }
+
+  if (report.type_melding !== "Alleen mijn woning") {
+    return "Dit is gemeld als een probleem dat mogelijk meerdere woningen of het appartementencomplex raakt. Herken je dit ook, dan kan dit helpen om te bepalen of een gezamenlijke melding passend is.";
   }
 
   return "Er is een probleem gemeld. Herken je dit ook?";

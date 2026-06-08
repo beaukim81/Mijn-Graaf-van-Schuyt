@@ -7,17 +7,19 @@ interface ResidentIdentityProps {
   houseNumber?: string;
   profile?: Profile;
   compact?: boolean;
+  anonymizeWhenProfileMissing?: boolean;
 }
 
-export function ResidentIdentity({ compact, houseNumber, name, profile }: ResidentIdentityProps) {
+export function ResidentIdentity({ anonymizeWhenProfileMissing, compact, houseNumber, name, profile }: ResidentIdentityProps) {
   const profilePhotoUrl = useSignedUrl(profile?.profielfoto_url);
+  const shouldAnonymize = anonymizeWhenProfileMissing && !profile;
   const displayName = residentName(
-    profile?.naam_of_bijnaam ?? name,
-    profile?.achternaam,
+    shouldAnonymize ? "Bewoner" : profile?.naam_of_bijnaam ?? name,
+    shouldAnonymize ? undefined : profile?.achternaam,
   );
-  const displayHouseNumber = profile?.huisnummer ?? houseNumber;
+  const displayHouseNumber = shouldAnonymize ? undefined : profile?.huisnummer ?? houseNumber;
 
-  if (!profile?.profielfoto_url) {
+  if (shouldAnonymize || !profile?.profielfoto_url) {
     return (
       <span className="resident-identity resident-identity--text">
         <span className="resident-identity__name">{displayName}</span>
