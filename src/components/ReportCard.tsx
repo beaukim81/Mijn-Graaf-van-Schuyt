@@ -33,9 +33,17 @@ export function ReportCard({ report, documents, profiles = [], canConfirm = true
   const forwardedToRebo = report.status === "Doorgezet naar REBO";
   const showRentalMaintenanceLink = isLikelyRentalMaintenance(report);
   const reboReporter = report.rebo_melding_door ? profilesByUserId.get(report.rebo_melding_door) : undefined;
-  const reboReporterLabel = reboReporter ? residentLabel(reboReporter.naam_of_bijnaam, reboReporter.huisnummer, reboReporter.achternaam) : "Een bewoner";
+  const reboReporterLabel = reboReporter
+    ? residentLabel(reboReporter.naam_of_bijnaam, reboReporter.huisnummer, reboReporter.achternaam)
+    : report.rebo_melding_door
+      ? residentLabel(report.rebo_melding_door_naam)
+      : "Een bewoner";
   const resolver = report.opgelost_door ? profilesByUserId.get(report.opgelost_door) : undefined;
-  const resolverLabel = resolver ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam) : "Bewoner";
+  const resolverLabel = resolver
+    ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam)
+    : report.opgelost_door
+      ? residentLabel(report.opgelost_door_naam)
+      : "Bewoner";
 
   async function copySummary() {
     await navigator.clipboard.writeText(reboSummary(report));
@@ -49,7 +57,7 @@ export function ReportCard({ report, documents, profiles = [], canConfirm = true
           <h2>{report.titel}</h2>
           <div className="resident-byline">
             <span>Geplaatst door</span>
-            <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+            <ResidentIdentity anonymizeWhenProfileMissing={!report.aangemaakt_door} compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
           </div>
         </div>
         <StatusBadge tone={report.status === "Opgelost" ? "good" : "soft"}>{report.status}</StatusBadge>

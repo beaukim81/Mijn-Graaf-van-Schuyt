@@ -1413,75 +1413,8 @@ summary {
   gap: 10px;
 }
 
-.resolved-report {
-  background: var(--surface);
-  box-shadow: var(--shadow-soft);
-  padding: 0;
-}
-
-.resolved-report summary {
-  align-items: center;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr;
-  list-style: none;
-  padding: 14px;
-}
-
-.resolved-report summary::-webkit-details-marker {
-  display: none;
-}
-
-.resolved-report summary::after {
-  color: var(--primary-dark);
-  content: "Lees meer";
-  font-size: 0.88rem;
-  font-weight: 800;
-}
-
-.resolved-report[open] summary::after {
-  content: "Sluiten";
-}
-
-.resolved-report__main,
-.resolved-report__meta {
-  display: grid;
-  gap: 5px;
-}
-
-.resolved-report__main strong {
-  color: var(--text);
-  line-height: 1.25;
-}
-
-.resolved-report__main small,
-.resolved-report__meta small {
-  color: var(--muted);
-  line-height: 1.35;
-}
-
-.resolved-report__body,
-.resolved-report > .item-card {
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0 0 14px 14px;
-  box-shadow: none;
-}
-
 .resolved-report__body {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-}
-
-@media (min-width: 560px) {
-  .resolved-report summary {
-    grid-template-columns: 1fr auto auto;
-  }
-
-  .resolved-report__meta {
-    justify-items: end;
-  }
+  padding-top: 16px;
 }
 
 .neighbor-box,

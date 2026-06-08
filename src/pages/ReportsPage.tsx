@@ -343,27 +343,23 @@ function ResolvedReportItem({ report, documents, profiles }: { report: Report; d
     report.type_melding === "Appartementencomplex" ? [] : relevantDocuments(report.categorie, documents);
   const resolver = report.opgelost_door ? profilesByUserId.get(report.opgelost_door) : undefined;
   const solvedBy = report.opgelost_door
-    ? `Opgelost door ${resolver ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam) : "Bewoner"}`
+    ? `Opgelost door ${resolver ? residentLabel(resolver.naam_of_bijnaam, resolver.huisnummer, resolver.achternaam) : residentLabel(report.opgelost_door_naam)}`
     : "Opgelost";
 
   return (
-    <details className="resolved-report">
-      <summary>
-        <span className="resolved-report__main">
-          <span className="chip">{report.categorie}</span>
-          <strong>{report.titel}</strong>
-          <small>{solution}</small>
-        </span>
-        <span className="resolved-report__meta">
-          <StatusBadge tone="good">Opgelost</StatusBadge>
-          <small>{solvedBy}</small>
-        </span>
-      </summary>
-      <div className="resolved-report__body">
-        <div className="resident-byline">
-          <span>Geplaatst door</span>
-          <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+    <details className="item-card collapsible-card resolved-report">
+      <summary className="item-card__header collapsible-card__summary">
+        <div>
+          <p className="chip">{report.categorie}</p>
+          <h2>{report.titel}</h2>
+          <div className="resident-byline">
+            <span>Geplaatst door</span>
+            <ResidentIdentity anonymizeWhenProfileMissing={!report.aangemaakt_door} compact houseNumber={report.aangemaakt_door_huisnummer} name={report.aangemaakt_door_naam} profile={profilesByUserId.get(report.aangemaakt_door)} />
+          </div>
         </div>
+        <StatusBadge tone="good">Opgelost</StatusBadge>
+      </summary>
+      <div className="collapsible-card__body resolved-report__body">
         <PhotoGrid images={report.image_urls ?? []} alt={report.titel} />
         <p><LinkifiedText text={report.omschrijving} /></p>
         <dl className="meta-list">

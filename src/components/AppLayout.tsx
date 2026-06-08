@@ -106,7 +106,7 @@ export function AppLayout() {
   const profilesByUserId = useMemo(() => new Map(profiles.items.map((item) => [item.user_id, item])), [profiles.items]);
   const residentNotificationLabel = useCallback((userId: string, name?: string, houseNumber?: string) => {
     const linkedProfile = profilesByUserId.get(userId);
-    if (!linkedProfile) return "Bewoner";
+    if (!linkedProfile) return userId ? residentLabel(name, houseNumber) : "Bewoner";
     return residentLabel(linkedProfile.naam_of_bijnaam ?? name, linkedProfile.huisnummer ?? houseNumber, linkedProfile.achternaam);
   }, [profilesByUserId]);
 

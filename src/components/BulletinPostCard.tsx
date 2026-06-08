@@ -44,7 +44,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
           <h2>{post.titel}</h2>
           <div className="resident-byline">
             <span>Geplaatst door</span>
-            <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={post.aangemaakt_door_huisnummer} name={post.aangemaakt_door_naam} profile={profilesByUserId.get(post.aangemaakt_door)} />
+            <ResidentIdentity anonymizeWhenProfileMissing={!post.aangemaakt_door} compact houseNumber={post.aangemaakt_door_huisnummer} name={post.aangemaakt_door_naam} profile={profilesByUserId.get(post.aangemaakt_door)} />
           </div>
         </div>
         <StatusBadge tone={post.status === "Actief" ? "soft" : "good"}>{post.status}</StatusBadge>
@@ -89,7 +89,7 @@ export function BulletinPostCard({ post, isOwner, isAdmin, currentUserId, profil
         ) : (
           messages.map((item) => (
             <div className="chat-message" key={item.id}>
-              <ResidentIdentity anonymizeWhenProfileMissing compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
+              <ResidentIdentity anonymizeWhenProfileMissing={!item.author_id} compact houseNumber={item.author_house_number} name={item.author_name} profile={profilesByUserId.get(item.author_id)} />
               {editingMessageId === item.id ? (
                 <div className="chat-edit">
                   <input value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
