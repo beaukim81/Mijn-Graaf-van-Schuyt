@@ -80,7 +80,7 @@ function writeInstallPromptState(key: string, state: InstallPromptState) {
 export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, profiles, reports } = useAppData();
+  const { accessRequests, buildingAnnouncements, bulletinPosts, documents, feedbackItems, helpRequests, profile, profiles, reports, securityEvents } = useAppData();
   const isHome = location.pathname === paths.home;
   const isAdmin = profile.rol === "admin";
   const helpSeenKey = `mijn-graaf-van-schuyt:${profile.user_id}:seen-help`;
@@ -272,13 +272,22 @@ export function AppLayout() {
               description: request.email,
               to: `${paths.admin}#aanvraag-${request.id}`,
             })),
+          ...securityEvents.items
+            .filter((event) => event.status !== "Opgelost")
+            .map((event) => ({
+              id: `admin-security-${event.id}-${event.created_at}-${event.status}`,
+              date: Date.parse(event.created_at) || 0,
+              title: "Nieuwe veiligheidsmelding",
+              description: event.bericht,
+              to: `${paths.admin}#veiligheid-${event.id}`,
+            })),
         ]
       : [];
 
     return [...buildingNotifications, ...helpNotifications, ...bulletinNotifications, ...feedbackNotifications, ...adminNotifications]
       .filter((notification) => !dismissedNotifications.has(notification.id))
       .sort((a, b) => b.date - a.date);
-  }, [accessRequests.items, buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items, residentNotificationLabel]);
+  }, [accessRequests.items, buildingAnnouncements.items, bulletinPosts.items, dismissedNotifications, documents.items, feedbackItems.items, helpRequests.items, isAdmin, profile.user_id, reports.items, residentNotificationLabel, securityEvents.items]);
 
   const unreadNotifications = useMemo(
     () => personalNotifications.filter((notification) => !readNotifications.has(notification.id)),

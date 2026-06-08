@@ -200,6 +200,11 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
   const addAsync = useCallback(
     async (item: T) => {
       setSyncError(undefined);
+      pendingUpsertIds.current.add(item.id);
+      pendingDeleteIds.current.delete(item.id);
+      persistSet(pendingUpsertKey, pendingUpsertIds.current);
+      persistSet(pendingDeleteKey, pendingDeleteIds.current);
+      setItems((current) => [item, ...current.filter((currentItem) => currentItem.id !== item.id)]);
       if (options.enabled && isSupabaseConfigured && supabase) {
         await options.insertItem(item);
       }
@@ -207,7 +212,6 @@ export function useSupabaseCollection<T extends WithId>(initialItems: T[], optio
       pendingDeleteIds.current.delete(item.id);
       persistSet(pendingUpsertKey, pendingUpsertIds.current);
       persistSet(pendingDeleteKey, pendingDeleteIds.current);
-      setItems((current) => [item, ...current.filter((currentItem) => currentItem.id !== item.id)]);
     },
     [options, pendingDeleteKey, pendingUpsertKey],
   );

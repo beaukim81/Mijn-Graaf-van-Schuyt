@@ -628,6 +628,18 @@ export function AdminPage() {
                   ) : (
                     <p className="muted">Er is geen profiel gevonden met dit e-mailadres. Controleer dit eventueel handmatig in Supabase.</p>
                   )}
+                  <div className="admin-row">
+                    <button
+                      className="button button--danger"
+                      onClick={async () => {
+                        const confirmed = await confirm({ message: "Weet je zeker dat je deze veiligheidsmelding wilt verwijderen?" });
+                        if (confirmed) securityEvents.remove(event.id);
+                      }}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={18} /> Veiligheidsmelding verwijderen
+                    </button>
+                  </div>
                 </div>
               </details>
             );
